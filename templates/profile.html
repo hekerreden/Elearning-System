@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}{{ target.full_name }} · Profile{% endblock %}
+{% block page_title %}👤 {{ target.full_name }}{% endblock %}
+{% block page_sub %}
+  @{{ target.username }} · <span class="badge badge-purple">{{ target_role }}</span>
+{% endblock %}
+
+{% block nav_items %}
+<li><a class="adminnav" href="{{ url_for('dashboard') }}"><span>🏠 Dashboard</span></a></li>
+{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-2 mb2">
+  <div class="card">
+    <div class="card-title"><h2>Profile Info</h2></div>
+    <p><b>Username:</b> @{{ target.username }}</p>
+    <p><b>Full name:</b> {{ target.full_name }}</p>
+    <p><b>Role:</b> <span class="badge badge-purple">{{ target_role }}</span></p>
+    <p><b>Status:</b>
+      {% if target.status == 'active' %}
+        <span class="badge badge-green">Active</span>
+      {% elif target.status == 'pending_delete' %}
+        <span class="badge badge-yellow">Pending Delete</span>
+      {% elif target.status == 'appealed' %}
+        <span class="badge badge-blue">Appealed</span>
+      {% else %}
+        <span class="badge badge-gray">{{ target.status }}</span>
+      {% endif %}
+    </p>
+    <p><b>Member since:</b> {{ target.created_at }}</p>
+    {% if is_owner and target.public_id %}
+      <p class="mt1">
+        <b>Your ID:</b>
+        <code data-copy="{{ target.public_id }}" title="Click to copy" style="cursor:pointer;">
+          {{ target.public_id }} 📋
+        </code>
+      </p>
+    {% endif %}
+
+    <div style="margin-top:16px;">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="goBack()">← Back</button>
+    </div>
+  </div>
+
+  {% if target_role == 'Student' %}
+  <div class="card">
+    <div class="card-title"><h2>🏆 Stats</h2></div>
+    <div class="grid grid-3">
+      <div class="stat">
+        <div class="label">Points</div>
+        <div class="value">{{ total_points }}</div>
+      </div>
+      <div class="stat">
+        <div class="label">Rank</div>
+        <div class="value">{{ '#' + rank|string if rank else '—' }}</div>
+      </div>
+      <div class="stat">
+        <div class="label">Attempts</div>
+        <div class="value">{{ results|length }}</div>
+      </div>
+    </div>
+    <div class="pill-row mt2" style="justify-content:center;">
+      <span class="medal medal-Gold">🥇 {{ medals.Gold }}</span>
+      <span class="medal medal-Silver">🥈 {{ medals.Silver }}</span>
+      <span class="medal medal-Bronze">🥉 {{ medals.Bronze }}</span>
+    </div>
+  </div>
+  {% elif target_role == 'Teacher' %}
+  <div class="card">
+    <div class="card-title"><h2>📚 Studies Created</h2></div>
+    <div class="stat">
+      <div class="label">Total Studies</div>
+      <div class="value">{{ studies|length }}</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if target_role == 'Student' and results %}
+<div class="card mb2">
+  <div class="card-title"><h2>Quiz History</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Study</th><th>Result</th><th>Score</th><th>Medal</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+          <td><b>{{ r.study_title }}</b></td>
+          <td>{% if r.correct %}<span class="badge badge-green">Correct</span>
+              {% else %}<span class="badge badge-red">Wrong</span>{% endif %}</td>
+          <td>{{ r.score }}</td>
+          <td>{% if r.medal %}<span class="medal medal-{{ r.medal }}">{{ r.medal }}</span>
+              {% else %}—{% endif %}</td>
+          <td class="muted small">{{ r.timestamp }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if target_role == 'Student' and attendance %}
+<div class="card mb2">
+  <div class="card-title"><h2>Attendance</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Teacher</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for a in attendance %}
+        <tr>
+          <td>{{ a.date }}</td>
+          <td>{{ a.teacher_name }}</td>
+          <td>
+            {% if a.status == 'Present' %}<span class="badge badge-green">Present</span>
+            {% elif a.status == 'Late' %}<span class="badge badge-yellow">Late</span>
+            {% else %}<span class="badge badge-red">Absent</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if target_role == 'Student' and leaderboard %}
+<div class="card mb2">
+  <div class="card-title"><h2>🏆 Leaderboard</h2></div>
+  <div id="lb-profile"><p class="empty">Loading…</p></div>
+</div>
+{% endif %}
+
+{% if target_role == 'Teacher' and studies %}
+<div class="card">
+  <div class="card-title"><h2>Studies</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Title</th><th>Type</th><th>Created</th></tr>
+      </thead>
+      <tbody>
+        {% for s in studies %}
+        <tr>
+          <td><b>{{ s.title }}</b></td>
+          <td><span class="badge badge-blue">{{ s.type|replace('_',' ') }}</span></td>
+          <td class="muted small">{{ s.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ─── Leaderboard for profile page ─── */
+(function(){
+  var lb = document.getElementById('lb-profile');
+  if (!lb) return;
+  fetch('/api/leaderboard')
+    .then(function(r){return r.json();})
+    .then(function(rows){
+      if (!rows.length) { lb.innerHTML = '<p class="empty">No students ranked yet.</p>'; return; }
+      lb.innerHTML = rows.slice(0,10).map(function(r){
+        var cls = r.rank===1?'top1':r.rank===2?'top2':r.rank===3?'top3':'';
+        return '<div class="lb-row '+cls+'">'
+             + '<div class="lb-rank">#'+r.rank+'</div>'
+             + '<div class="lb-name">'+r.full_name+' <span class="muted small">@'+r.username+'</span></div>'
+             + '<div class="lb-pts">'+r.points+' pts</div>'
+             + '</div>';
+      }).join('');
+    })
+    .catch(function(){});
+})();
+</script>
+{% endblock %}

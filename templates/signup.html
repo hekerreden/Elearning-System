@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Sign Up{% endblock %}
+{% block auth_content %}
+
+<div class="auth-card">
+  <div class="auth-head">
+    <div style="background: #22c55e;display:inline-block;padding:12px;border-radius:50%;">
+      <svg xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 24 24" fill="none" stroke="#111"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           style="width:40px;height:40px;display:block;">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+        <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+      </svg>
+    </div>
+    <h1>Create Account</h1>
+    <p class="muted small">Join EduPortal</p>
+  </div>
+
+  <form method="POST" action="{{ url_for('signup') }}" class="form" data-no-ajax>
+    <label>Role *
+      <select name="role" required>
+        <option value="">-- Select Role --</option>
+        <option value="Teacher" {% if form_data.role == 'Teacher' %}selected{% endif %}>👨‍🏫 Teacher</option>
+        <option value="Student" {% if form_data.role == 'Student' %}selected{% endif %}>🎒 Student</option>
+      </select>
+    </label>
+
+    <label>Full Name *
+      <input type="text" name="full_name" required
+             value="{{ form_data.full_name or '' }}"
+             placeholder="e.g. Juan Dela Cruz">
+    </label>
+
+    <label>Username *
+      <input type="text" name="username" required
+             autocomplete="username"
+             value="{{ form_data.username or '' }}"
+             placeholder="e.g. juan123">
+    </label>
+
+    <label>Password *
+      <input type="password" name="password" required minlength="8"
+             autocomplete="new-password"
+             placeholder="At least 8 characters">
+    </label>
+
+    <label>Confirm Password *
+      <input type="password" name="password_confirm" required minlength="8"
+             autocomplete="new-password"
+             placeholder="Re-type your password">
+    </label>
+
+    <button class="btn btn-green btn-block" type="submit">
+      ✨ Create Account
+    </button>
+  </form>
+
+  <div class="auth-foot">
+    <p class="muted">
+      Already have an account?
+      <a href="{{ url_for('login') }}" style="font-weight:700;">Login →</a>
+    </p>
+  </div>
+</div>
+
+{% endblock %}

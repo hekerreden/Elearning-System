@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}System Console{% endblock %}
+{% block auth_content %}
+
+<div class="auth-card" style="border:2px solid rgba(168,85,247,.4);">
+  <div class="auth-head">
+    <div style="background: #a855f7;display:inline-block;padding:12px;border-radius:50%;">
+      <svg xmlns="http://www.w3.org/2000/svg"
+           viewBox="0 0 24 24" fill="none" stroke="#fff"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           style="width:40px;height:40px;display:block;">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M12 3l8 4v5c0 4.5 -3 8.5 -8 9c-5 -0.5 -8 -4.5 -8 -9v-5l8 -4z" />
+        <path d="M9 12l2 2l4 -4" />
+      </svg>
+    </div>
+    <h1 style="color:#d8b4fe;">System Console</h1>
+    <p class="muted small">Restricted access — Super Admin only</p>
+  </div>
+
+  <form method="POST" action="{{ url_for('super_admin_login') }}" class="form" data-no-ajax>
+    <label>Username
+      <input type="text" name="username" required autocomplete="username"
+             placeholder="Admin username"
+             style="border-color:rgba(168,85,247,.3);">
+    </label>
+    <label>Password
+      <input type="password" name="password" required
+             autocomplete="current-password" placeholder="••••••••"
+             style="border-color:rgba(168,85,247,.3);">
+    </label>
+    <button class="btn btn-purple btn-block" type="submit">
+      🔐 Access Console
+    </button>
+  </form>
+
+  <div class="auth-foot">
+    <p class="muted small">
+      This page is for system owners only.<br>
+      Normal users should use the
+      <a href="{{ url_for('login') }}" style="font-weight:700;">regular login</a>.
+    </p>
+  </div>
+</div>
+
+{% endblock %}
