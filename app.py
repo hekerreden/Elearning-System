@@ -61,7 +61,9 @@ import routes_student_activity
 import routes_quiz
 import routes_attendance
 import routes_misc
+import routes_account
 
+routes_account.register(app)
 routes_auth.register(app)
 routes_dashboard.register(app)
 routes_connections.register(app)
