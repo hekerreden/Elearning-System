@@ -39,11 +39,14 @@ textarea{resize:vertical;min-height:70px}
 .btn:hover{transform:translateY(-1px);text-decoration:none}
 .btn-blue{background:var(--blue)}.btn-blue:hover{background:var(--blue-hover)}
 .btn-green{background:var(--green)}.btn-red{background:var(--red)}
+.btn-yellow{background:var(--yellow);color:#111}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
 .btn-ghost:hover{background:#333}
 .btn-sm{padding:6px 12px;font-size:.8rem}
 .tag{display:inline-block;background:#151517;border:1px solid var(--border);
   border-radius:999px;padding:2px 10px;font-size:.72rem;color:var(--text-dim)}
+.tag-admin{background:rgba(168,85,247,.15);border-color:rgba(168,85,247,.4);
+  color:#d8b4fe;font-weight:700}
 .pill-row{display:flex;gap:6px;flex-wrap:wrap}
 .muted{color:var(--muted)}.small{font-size:.8rem}
 .row-between{display:flex;gap:10px;justify-content:space-between;
@@ -80,7 +83,12 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 <div class="card">
   <div class="card-title">
     <h1>✏️ Build Activity</h1>
-    <span class="tag">Page {{ page_idx + 1 }} / {{ study.total_pages }}</span>
+    <div class="pill-row">
+      {% if is_admin %}
+        <span class="tag tag-admin">🛡️ Admin Mode</span>
+      {% endif %}
+      <span class="tag">Page {{ page_idx + 1 }} / {{ study.total_pages }}</span>
+    </div>
   </div>
   <div class="pill-row">
     <span class="tag">{{ study.type|replace('_',' ')|capitalize }}</span>
@@ -186,7 +194,11 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
     {% if page_idx > 0 %}
       <a href="/teacher/activity/{{ study.id }}/{{ page_idx - 1 }}" class="btn btn-ghost">← Previous</a>
     {% else %}
-      <button type="button" class="btn btn-ghost" id="cancelStudyBtn">Cancel</button>
+      {% if is_admin %}
+        <a href="{{ url_for('super_admin_page') }}#studies" class="btn btn-ghost">← Back to Admin</a>
+      {% else %}
+        <button type="button" class="btn btn-ghost" id="cancelStudyBtn">Cancel</button>
+      {% endif %}
     {% endif %}
     {% if page_idx + 1 < study.total_pages %}
       <button type="submit" class="btn btn-blue">Save & Next →</button>
@@ -216,10 +228,15 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 </script>
 
 {% else %}
-{# ═══════════ PREVIEW ═══════════ #}
+{# ═══════════ PREVIEW MODE ═══════════ #}
 
 <div class="card">
-  <div class="card-title"><h1>📋 Preview</h1></div>
+  <div class="card-title">
+    <h1>📋 Preview</h1>
+    {% if is_admin %}
+      <span class="tag tag-admin">🛡️ Admin Mode</span>
+    {% endif %}
+  </div>
   <h2>{{ study.title }}</h2>
   {% if study.direction %}
     <p class="muted small" style="font-style:italic;margin-top:.4rem;">{{ study.direction }}</p>
@@ -319,7 +336,11 @@ Slide 2 content…">{{ slide_lines|join('\n') }}</textarea>
 <div class="row-between">
   <a href="/teacher/activity/{{ study.id }}/0" class="btn btn-ghost">← Edit Again</a>
   <div class="row-inline">
-    <a href="{{ url_for('teacher_page') }}" class="btn btn-ghost">Cancel</a>
+    {% if is_admin %}
+      <a href="{{ url_for('super_admin_page') }}#studies" class="btn btn-ghost">Cancel</a>
+    {% else %}
+      <a href="{{ url_for('teacher_page') }}" class="btn btn-ghost">Cancel</a>
+    {% endif %}
     <form method="POST" action="/api/studies/{{ study.id }}/publish" style="display:inline;">
       <button type="submit" class="btn btn-green">🚀 Publish to Students</button>
     </form>

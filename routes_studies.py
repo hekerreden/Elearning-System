@@ -11,6 +11,17 @@ from helpers import (current_user, find_study, is_study_locked,
 from decorators import role_required
 
 
+def can_edit_study(actor, study):
+    """True kung study owner si actor OR SuperAdmin."""
+    if not study:
+        return False
+    if study["teacher_id"] == actor.id:
+        return True
+    if actor.role == "SuperAdmin":
+        return True
+    return False
+
+
 def register(app):
 
     @app.route("/api/studies/create_draft", methods=["POST"])
@@ -90,11 +101,11 @@ def register(app):
         return jsonify({"id": new_id})
 
     @app.route("/api/studies/<stid>/update", methods=["POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def update_study(stid):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             flash("Not found or not yours.", "error")
             return redirect(url_for("teacher_page"))
 
@@ -125,14 +136,16 @@ def register(app):
             "updated_at": now_str(),
         })
         flash("Settings updated. Now edit questions.", "success")
+        if actor.role == "SuperAdmin":
+            return redirect(url_for("super_admin_page"))
         return redirect(url_for("teacher_page"))
 
     @app.route("/api/studies/<stid>/save_page/<int:page_idx>", methods=["POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def save_page(stid, page_idx):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             flash("Study not found.", "error")
             return redirect(url_for("teacher_page"))
         if is_study_locked(study):
@@ -176,11 +189,11 @@ def register(app):
         return redirect(f"/teacher/activity/{stid}/preview")
 
     @app.route("/teacher/activity/<stid>/<int:page_idx>", methods=["GET", "POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def activity_builder(stid, page_idx):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             flash("Study not found or not yours.", "error")
             return redirect(url_for("teacher_page"))
         if is_study_locked(study):
@@ -199,14 +212,19 @@ def register(app):
             study["edit_started_at"] = now_dt().strftime("%Y-%m-%d %H:%M:%S")
             study["entered_activity"] = True
 
-        return render_template("activity.html", study=study, page_idx=page_idx)
+        return render_template(
+            "activity.html",
+            study=study,
+            page_idx=page_idx,
+            is_admin=(actor.role == "SuperAdmin"),
+        )
 
     @app.route("/teacher/activity/<stid>/preview", methods=["GET", "POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def activity_preview(stid):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             flash("Study not found or not yours.", "error")
             return redirect(url_for("teacher_page"))
         if is_study_locked(study):
@@ -221,14 +239,19 @@ def register(app):
             study["edit_started_at"] = now_dt().strftime("%Y-%m-%d %H:%M:%S")
             study["entered_activity"] = True
 
-        return render_template("activity.html", study=study, is_preview=True)
+        return render_template(
+            "activity.html",
+            study=study,
+            is_preview=True,
+            is_admin=(actor.role == "SuperAdmin"),
+        )
 
     @app.route("/api/studies/<stid>/publish", methods=["POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def publish_study(stid):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             flash("Study not found.", "error")
             return redirect(url_for("teacher_page"))
         if is_study_locked(study):
@@ -254,19 +277,29 @@ def register(app):
         study["visible_from"] = (now_dt() + timedelta(seconds=10)).strftime("%Y-%m-%d %H:%M:%S")
         study["updated_at"] = now_str()
 
-        for s in active_students_for_teacher(actor.id):
+        # Notify students of the ORIGINAL teacher (study owner)
+        for s in active_students_for_teacher(study["teacher_id"]):
             notify(s.id, "📚 New Study Posted",
-                   f"{actor.full_name} posted '{study['title']}'. Available in 10 seconds.",
+                   f"'{study['title']}' is now available. Check it in 10 seconds.",
                    link="/student#studies", kind="study")
+
+        # If admin nag-publish, notify yung teacher
+        if actor.role == "SuperAdmin" and study["teacher_id"] != actor.id:
+            notify(study["teacher_id"], "✏️ Study Updated by Admin",
+                   f"'{study['title']}' was edited and re-published by SuperAdmin.",
+                   link="/teacher#studies", kind="info")
+
         flash(f"'{study['title']}' published! Students will see it in 10 seconds.", "success")
+        if actor.role == "SuperAdmin":
+            return redirect(url_for("super_admin_page"))
         return redirect(url_for("teacher_page"))
 
     @app.route("/api/studies/<stid>/save_slides", methods=["POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def save_slides(stid):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             return jsonify({"ok": False, "error": "Not found"}), 404
         if is_study_locked(study):
             return jsonify({"ok": False, "error": "Study is locked."}), 403
@@ -286,11 +319,11 @@ def register(app):
         return jsonify({"ok": True, "count": len(clean)})
 
     @app.route("/api/studies/<stid>/start_edit", methods=["POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def start_edit_study(stid):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             return jsonify({"ok": False, "error": "Not found"}), 404
         if is_study_locked(study):
             return jsonify({"ok": False, "error": "Study is locked."}), 403
@@ -300,18 +333,19 @@ def register(app):
             study["edit_started_at"] = now_dt().strftime("%Y-%m-%d %H:%M:%S")
             study["entered_activity"] = False
             study["updated_at"] = now_str()
-            for s in active_students_for_teacher(actor.id):
+            # Notify students of the original teacher
+            for s in active_students_for_teacher(study["teacher_id"]):
                 notify(s.id, "📚 Study Update",
                        f"'{study['title']}' is being updated. Please wait.",
                        link="/student#studies", kind="info")
         return jsonify({"ok": True, "status": study["status"]})
 
     @app.route("/api/studies/<stid>/cancel_edit", methods=["POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def cancel_edit_study(stid):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             return jsonify({"ok": False, "error": "Not found"}), 404
 
         if study.get("status") == "editing":
@@ -325,11 +359,11 @@ def register(app):
         return jsonify({"ok": True, "status": study["status"]})
 
     @app.route("/api/studies/<stid>/cancel", methods=["POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def cancel_study(stid):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             return jsonify({"ok": False, "error": "Not found"}), 404
 
         has_content = any(
@@ -343,11 +377,11 @@ def register(app):
         return jsonify({"ok": True, "kept": False})
 
     @app.route("/api/studies/<stid>/delete", methods=["POST"])
-    @role_required("Teacher")
+    @role_required("Teacher", "SuperAdmin")
     def delete_study(stid):
         actor = current_user()
         study = find_study(stid)
-        if not study or study["teacher_id"] != actor.id:
+        if not can_edit_study(actor, study):
             flash("Not found.", "error")
             return redirect(url_for("teacher_page"))
         if study.get("has_attempts"):
@@ -357,4 +391,6 @@ def register(app):
         studies.remove(study)
         quiz_results[:] = [r for r in quiz_results if r["study_id"] != stid]
         flash("Study deleted.", "success")
+        if actor.role == "SuperAdmin":
+            return redirect(url_for("super_admin_page"))
         return redirect(url_for("teacher_page"))

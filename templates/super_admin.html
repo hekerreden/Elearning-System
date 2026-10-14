@@ -103,7 +103,7 @@
             <th>Username</th>
             <th>Full name</th>
             <th>Status</th>
-            <th style="width:110px;">Actions</th>
+            <th style="width:140px;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -128,9 +128,19 @@
               {% endif %}
             </td>
             <td>
-              <button class="btn btn-blue btn-sm"
-                      data-action="view-user"
-                      data-user-id="{{ u.id }}">👁 View</button>
+              <div class="row-inline">
+                <button class="btn btn-blue btn-sm"
+                        data-action="view-user"
+                        data-user-id="{{ u.id }}">👁 View</button>
+                {% if u.status != 'deleted' %}
+                <button class="btn btn-yellow btn-sm"
+                        data-action="edit-username"
+                        data-user-id="{{ u.id }}"
+                        data-user-username="{{ u.username }}"
+                        data-user-name="{{ u.full_name }}"
+                        title="Edit username">✏️</button>
+                {% endif %}
+              </div>
             </td>
           </tr>
           {% else %}
@@ -156,7 +166,7 @@
             <th>Username</th>
             <th>Full name</th>
             <th>Status</th>
-            <th style="width:110px;">Actions</th>
+            <th style="width:140px;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -181,9 +191,19 @@
               {% endif %}
             </td>
             <td>
-              <button class="btn btn-blue btn-sm"
-                      data-action="view-user"
-                      data-user-id="{{ u.id }}">👁 View</button>
+              <div class="row-inline">
+                <button class="btn btn-blue btn-sm"
+                        data-action="view-user"
+                        data-user-id="{{ u.id }}">👁 View</button>
+                {% if u.status != 'deleted' %}
+                <button class="btn btn-yellow btn-sm"
+                        data-action="edit-username"
+                        data-user-id="{{ u.id }}"
+                        data-user-username="{{ u.username }}"
+                        data-user-name="{{ u.full_name }}"
+                        title="Edit username">✏️</button>
+                {% endif %}
+              </div>
             </td>
           </tr>
           {% else %}
@@ -256,7 +276,16 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Title</th><th>Teacher</th><th>Type</th><th>Timer</th><th>Score</th><th>Penalty</th><th>Created</th></tr>
+          <tr>
+            <th>Title</th>
+            <th>Teacher</th>
+            <th>Type</th>
+            <th>Timer</th>
+            <th>Score</th>
+            <th>Penalty</th>
+            <th>Created</th>
+            <th style="width:100px;">Actions</th>
+          </tr>
         </thead>
         <tbody>
           {% for s in studies %}
@@ -268,9 +297,14 @@
             <td><span class="badge badge-green">+{{ s.score }}</span></td>
             <td><span class="badge badge-red">-{{ s.penalty }}</span></td>
             <td class="muted small">{{ s.created_at }}</td>
+            <td>
+              <a class="btn btn-yellow btn-sm"
+                 href="/teacher/activity/{{ s.id }}/0"
+                 title="Edit activity">✏️ Edit</a>
+            </td>
           </tr>
           {% else %}
-          <tr><td colspan="7" class="empty">No studies yet.</td></tr>
+          <tr><td colspan="8" class="empty">No studies yet.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -300,10 +334,40 @@
 
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <a class="btn btn-blue btn-sm" id="vu_profileBtn" href="#">👤 Profile</a>
+      <button type="button" class="btn btn-purple btn-sm" id="vu_editUserBtn">✏️ Edit Username</button>
       <button type="button" class="btn btn-yellow btn-sm" id="vu_resetBtn">🔑 Reset Password</button>
       <button type="button" class="btn btn-red btn-sm" id="vu_deleteBtn">🗑 Delete</button>
       <button type="button" class="btn btn-ghost btn-sm" data-close>Close</button>
     </div>
+  </div>
+</div>
+
+{# ═══════════════ EDIT USERNAME MODAL ═══════════════ #}
+<div class="modal-backdrop" id="editUsernameModal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>✏️ Edit Username</h3>
+      <button class="icon-btn" type="button" data-close>×</button>
+    </div>
+    <p class="muted small mb1">
+      User: <b id="eu_name">—</b>
+    </p>
+    <form method="POST" id="editUsernameForm" class="form" data-no-ajax>
+      <label>New Username *
+        <input type="text" name="username" id="eu_username" required
+               minlength="3" maxlength="30"
+               placeholder="New username"
+               pattern="[a-zA-Z0-9_.\-]+"
+               title="Letters, numbers, _ . - only">
+      </label>
+      <p class="muted small">
+        ⚠️ User must use the new username on next login.
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn-yellow">💾 Save Username</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -426,7 +490,7 @@
 
   var currentUser = null;
 
-  /* View user modal */
+  /* ═══ VIEW USER MODAL ═══ */
   document.addEventListener('click', function (ev) {
     var btn = ev.target.closest('[data-action="view-user"]');
     if (!btn) return;
@@ -463,12 +527,15 @@
 
     document.getElementById('vu_profileBtn').href = '/profile/' + u.username;
 
+    var editUserBtn = document.getElementById('vu_editUserBtn');
     var resetBtn = document.getElementById('vu_resetBtn');
     var delBtn = document.getElementById('vu_deleteBtn');
     if (u.role === 'SuperAdmin' || u.status === 'deleted') {
+      editUserBtn.style.display = 'none';
       resetBtn.style.display = 'none';
       delBtn.style.display = 'none';
     } else {
+      editUserBtn.style.display = 'inline-flex';
       resetBtn.style.display = 'inline-flex';
       delBtn.style.display = 'inline-flex';
     }
@@ -476,7 +543,36 @@
     window.openModal('viewUserModal');
   });
 
-  /* Reset button inside modal */
+  /* ═══ EDIT USERNAME (from view modal) ═══ */
+  document.getElementById('vu_editUserBtn')?.addEventListener('click', function () {
+    if (!currentUser) return;
+    window.closeModal('viewUserModal');
+    openEditUsernameModal(currentUser);
+  });
+
+  /* ═══ EDIT USERNAME (from table — direct button) ═══ */
+  document.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('[data-action="edit-username"]');
+    if (!btn) return;
+    ev.preventDefault();
+
+    var uid = btn.getAttribute('data-user-id');
+    var u = findUser(uid);
+    if (!u) return;
+    currentUser = u;
+    openEditUsernameModal(u);
+  });
+
+  function openEditUsernameModal(u) {
+    document.getElementById('eu_name').textContent =
+      u.full_name + ' (@' + u.username + ')';
+    document.getElementById('eu_username').value = u.username;
+    document.getElementById('editUsernameForm').action =
+      '/api/admin/users/' + u.id + '/edit-username';
+    window.openModal('editUsernameModal');
+  }
+
+  /* ═══ RESET PASSWORD ═══ */
   document.getElementById('vu_resetBtn')?.addEventListener('click', function () {
     if (!currentUser) return;
     window.closeModal('viewUserModal');
@@ -487,7 +583,7 @@
     window.openModal('resetPasswordModal');
   });
 
-  /* Delete button inside modal */
+  /* ═══ DELETE ═══ */
   document.getElementById('vu_deleteBtn')?.addEventListener('click', function () {
     if (!currentUser) return;
     window.closeModal('viewUserModal');
@@ -498,7 +594,7 @@
     window.openModal('flagUserModal');
   });
 
-  /* Confirm reset */
+  /* ═══ CONFIRM RESET ═══ */
   document.getElementById('confirmResetBtn')?.addEventListener('click', function () {
     var uid = currentUser ? currentUser.id : null;
     if (!uid) return;
@@ -530,10 +626,13 @@
     });
   });
 
-  /* Auto-open deletes section if hash */
+  /* ═══ AUTO-OPEN SECTIONS ═══ */
   if (window.location.hash === '#deletes') {
     var nav = document.querySelector('.adminnav[data-section="deletes"]');
     if (nav) nav.click();
+  } else if (window.location.hash === '#studies') {
+    var nav2 = document.querySelector('.adminnav[data-section="studies"]');
+    if (nav2) nav2.click();
   }
 })();
 </script>

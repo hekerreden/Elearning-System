@@ -8,11 +8,11 @@ Main entry point — lahat ng routes naka-split sa routes_*.py
 
 # ⚠️ DNS patch MUST be first — bago lahat ng imports
 # Para gumana ang MongoDB Atlas sa Android
-
 try:
     import dns_patch
 except ImportError:
     pass  # Not needed on Render (Linux has proper DNS)
+
 import os
 from flask import (Flask, render_template, request, redirect,
                    url_for, session, jsonify)
@@ -55,6 +55,7 @@ import routes_connections
 import routes_profile
 import routes_notifications
 import routes_admin
+import routes_admin_extra
 import routes_studies
 import routes_student_activity
 import routes_quiz
@@ -67,6 +68,7 @@ routes_connections.register(app)
 routes_profile.register(app)
 routes_notifications.register(app)
 routes_admin.register(app)
+routes_admin_extra.register(app)
 routes_studies.register(app)
 routes_student_activity.register(app)
 routes_quiz.register(app)
@@ -182,7 +184,8 @@ def se(e):
 
 # ═══════════════════════════════════════════════════════════════
 # RUN APP
-# ═══════════════════════════════════════════════════════════════if __name__ == "__main__":
+# ═══════════════════════════════════════════════════════════════
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     debug_mode = os.environ.get("FLASK_DEBUG", "0") == "1"
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
