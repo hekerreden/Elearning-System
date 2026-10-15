@@ -4,7 +4,7 @@ from flask import render_template
 from storage import (users, studies, quiz_results, attendance, connections)
 from helpers import (current_user, now_dt, today_str, classmates_of,
                      active_teachers_for_student, active_students_for_teacher,
-                     build_leaderboard, cleanup_empty_drafts,
+                     cleanup_empty_drafts,
                      cleanup_stale_editing, is_study_locked,
                      get_active_session_count, find_user_by_id)
 from decorators import role_required
@@ -17,6 +17,7 @@ def register(app):
     @role_required("SuperAdmin")
     def super_admin_page():
         u = current_user()
+
         pending_deletes = [x for x in users
                            if x.status in ("pending_delete", "appealed")]
 
@@ -31,9 +32,9 @@ def register(app):
             all_users=[user_with_reset_info(x) for x in users
                        if x.status != "deleted"],
             teachers=[user_with_reset_info(x) for x in users
-                      if x.role == "Teacher"],
+                      if x.role == "Teacher" and x.status == "active"],
             students=[user_with_reset_info(x) for x in users
-                      if x.role == "Student"],
+                      if x.role == "Student" and x.status == "active"],
             studies=studies,
             results=quiz_results,
             attendance=attendance,
@@ -182,10 +183,6 @@ def register(app):
         my_attendance = [a for a in attendance if a["student_id"] == u.id]
         my_attendance.sort(key=lambda a: a["date"], reverse=True)
 
-        lb = build_leaderboard()
-        my_rank = next((r["rank"] for r in lb if r["id"] == u.id), None)
-        my_points = sum(r["score"] for r in my_results)
-
         return render_template(
             "student.html",
             user=u,
@@ -196,9 +193,6 @@ def register(app):
             studies=safe_studies,
             results=my_results,
             attendance=my_attendance,
-            leaderboard=lb,
-            my_rank=my_rank,
-            my_points=my_points,
             my_id=u.id,
             show_temp_reset=u.reset_pending,
             temp_password=u.temp_password if u.reset_pending else None,

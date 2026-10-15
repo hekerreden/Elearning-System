@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Uploads + leaderboard."""
-from flask import jsonify, send_from_directory
+"""Uploads."""
+from flask import send_from_directory
 from werkzeug.utils import secure_filename
 from storage import UPLOAD_DIR
-from helpers import current_user, build_leaderboard
 from decorators import role_required
 
 
@@ -14,10 +13,3 @@ def register(app):
     def serve_upload(fname):
         fname = secure_filename(fname)
         return send_from_directory(UPLOAD_DIR, fname)
-
-    @app.route("/api/leaderboard")
-    def api_leaderboard():
-        u = current_user()
-        if not u:
-            return jsonify([])
-        return jsonify(build_leaderboard())

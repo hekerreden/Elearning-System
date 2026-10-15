@@ -49,38 +49,6 @@ def current_user():
     return find_user_by_id(uid)
 
 
-def calc_medal(pct):
-    if pct >= 90:
-        return "Gold"
-    if pct >= 75:
-        return "Silver"
-    if pct >= 60:
-        return "Bronze"
-    return None
-
-
-def build_leaderboard():
-    rows = []
-    for st in users:
-        if st.role != "Student" or not st.is_active():
-            continue
-        st_results = [r for r in quiz_results if r["student_id"] == st.id]
-        total = sum(r["score"] for r in st_results)
-        medals = [r["medal"] for r in st_results if r.get("medal")]
-        rows.append({
-            "id": st.id, "username": st.username, "full_name": st.full_name,
-            "points": total,
-            "gold": medals.count("Gold"),
-            "silver": medals.count("Silver"),
-            "bronze": medals.count("Bronze"),
-            "medals": medals, "attempts": len(st_results),
-        })
-    rows.sort(key=lambda r: (-r["points"], r["username"]))
-    for i, r in enumerate(rows, 1):
-        r["rank"] = i
-    return rows
-
-
 def role_home(role):
     return {"SuperAdmin": "super_admin_page",
             "Teacher": "teacher_page",

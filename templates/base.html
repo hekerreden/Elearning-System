@@ -36,7 +36,7 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
 .center{text-align:center}
 .mt1{margin-top:.6rem}.mt2{margin-top:1.2rem}.mb1{margin-bottom:.6rem}.mb2{margin-bottom:1.2rem}
 
-/* ═══════════════ SIDEBAR (DESKTOP) ═══════════════ */
+/* ═══════════════ SIDEBAR ═══════════════ */
 .sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);
   position:fixed;top:0;left:0;height:100vh;height:100dvh;
   transition:width .3s ease;z-index:100;border-right:1px solid var(--sidebar-border);
@@ -71,49 +71,179 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
 
 .sidebar > nav{flex:1 1 auto;min-height:0;display:flex;overflow:hidden;}
 .box-links li{margin-bottom:2px}
-.box-links li a.adminnav,
-.box-links li a.logout{display:flex;align-items:center;gap:12px;
+.box-links li a.adminnav{display:flex;align-items:center;gap:12px;
   padding:10px 13px;color:#ccc;text-decoration:none;border-radius:8px;
   transition:.15s;white-space:nowrap;cursor:pointer;font-size:13.5px;font-weight:500;}
-.box-links li a.adminnav:hover,
-.box-links li a.logout:hover{background:var(--blue);color:#fff;text-decoration:none}
+.box-links li a.adminnav:hover{background:var(--blue);color:#fff;text-decoration:none}
 .box-links li a.adminnav.active{background:var(--blue);color:#fff;font-weight:600}
 
 .icon{width:20px;height:20px;flex-shrink:0;stroke:currentColor;fill:none;
   stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
-.sidebar.collapsed .box-links li a.adminnav span,
-.sidebar.collapsed .box-links li a.logout span{display:none}
+.sidebar.collapsed .box-links li a.adminnav span{display:none}
 
 /* ═══════════════ MAIN PANEL ═══════════════ */
 .parent-panel{margin-left:var(--sidebar-w);transition:margin-left .3s ease;
   min-height:100vh;padding:20px 24px 40px;}
 .sidebar.collapsed ~ .parent-panel{margin-left:var(--sidebar-col)}
 
-/* ═══════════════ TOPBAR (DESKTOP) ═══════════════ */
+/* ═══════════════ TOPBAR ═══════════════ */
 .topbar{display:flex;align-items:center;justify-content:space-between;
   gap:12px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:14px;
   border-bottom:1px solid var(--border);}
 .topbar-left h1{font-size:1.4rem;color:#fff;margin:0}
 .topbar-left .sub{color:var(--text-dim);font-size:.85rem;margin-top:2px}
-.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative}
 
 .mobile-menu-btn{
   display:none;
-  background:transparent;
-  border:none;
-  color:#fff;
-  cursor:pointer;
-  padding:8px;
-  border-radius:8px;
-  transition:.15s;
-  flex-shrink:0;
-  align-items:center;
-  justify-content:center;
+  background:transparent;border:none;color:#fff;cursor:pointer;
+  padding:8px;border-radius:8px;transition:.15s;flex-shrink:0;
+  align-items:center;justify-content:center;
 }
 .mobile-menu-btn:hover{background:var(--blue)}
 .mobile-menu-btn svg{width:22px;height:22px;stroke:currentColor}
 
 .sidebar-backdrop{display:none}
+
+/* ═══════════════ SIDEBAR FOOTER (My Profile) ═══════════════ */
+.sidebar-footer{
+  flex-shrink:0;
+  padding:10px;
+  border-top:1px solid var(--sidebar-border);
+}
+.sidebar-footer .profile-nav-link{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 13px;
+  color:#ccc;
+  text-decoration:none;
+  border-radius:8px;
+  transition:.15s;
+  white-space:nowrap;
+  font-size:13.5px;
+  font-weight:500;
+  cursor:pointer;
+}
+.sidebar-footer .profile-nav-link:hover{
+  background:var(--blue);
+  color:#fff;
+  text-decoration:none;
+}
+.sidebar-footer .profile-nav-link .icon{
+  width:20px;height:20px;flex-shrink:0;
+  stroke:currentColor;fill:none;
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+.sidebar-footer .profile-nav-link.active {
+  background: var(--blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Pang PC lang - may mouse lang may hover */
+@media (hover: hover) and (pointer: fine) {
+  .sidebar-footer .profile-nav-link:hover,
+  .sidebar-footer .profile-nav-link.active:hover {
+    background: var(--blue);
+    color: #fff;
+  }
+}
+
+
+/* Collapsed state */
+.sidebar.collapsed .sidebar-footer .profile-nav-link span{
+  display:none;
+}
+.sidebar.collapsed .sidebar-footer .profile-nav-link{
+  justify-content:center;
+  padding:10px;
+}
+
+/* ═══════════════ PROFILE DROPDOWN (Edurie-style) ═══════════════ */
+.profile-btn{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:inline-flex;align-items:center;justify-content:center;
+  font-weight:700;color:#fff;font-size:.95rem;cursor:pointer;
+  border:2px solid var(--border);transition:.15s ease;
+  text-decoration:none;flex-shrink:0;padding:0;
+}
+.profile-btn:hover{
+  border-color:var(--blue);
+  box-shadow:0 0 12px rgba(24,119,242,.45);
+}
+
+.profile-dropdown{
+  position:absolute;
+  top:calc(100% + 10px);
+  right:0;
+  width:280px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:0 20px 50px rgba(0,0,0,.75);
+  z-index:250;
+  overflow:hidden;
+  display:none;
+  animation:pdFadeIn .18s ease;
+}
+.profile-dropdown.active{display:block}
+@keyframes pdFadeIn{
+  from{opacity:0;transform:translateY(-8px) scale(.97)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+.pd-header{
+  display:flex;align-items:center;gap:12px;
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg-2);
+}
+.pd-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:#fff;font-size:1.05rem;flex-shrink:0;
+}
+.pd-info{overflow:hidden;min-width:0;flex:1}
+.pd-info b{
+  display:block;color:#fff;font-size:.95rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pd-info small{
+  display:block;color:var(--text-dim);font-size:.78rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  margin-top:1px;
+}
+.pd-role{
+  display:inline-block;padding:2px 8px;border-radius:999px;
+  font-size:.62rem;font-weight:700;text-transform:uppercase;
+  background:rgba(24,119,242,.18);color:#7cb3ff;
+  border:1px solid rgba(24,119,242,.4);margin-top:4px;
+}
+
+.pd-body{padding:6px}
+.pd-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;border-radius:8px;
+  color:var(--text);font-size:.9rem;font-weight:500;
+  cursor:pointer;transition:.15s;text-decoration:none;
+  border:none;background:transparent;width:100%;text-align:left;
+  font-family:inherit;
+}
+.pd-item:hover{background:rgba(24,119,242,.12);text-decoration:none}
+.pd-item.danger{color:#fca5a5}
+.pd-item.danger:hover{background:rgba(239,68,68,.12)}
+.pd-item svg{
+  width:18px;height:18px;flex-shrink:0;
+  stroke:currentColor;fill:none;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+}
+.pd-sep{
+  border:none;border-top:1px solid var(--border);
+  margin:4px 8px;
+}
 
 /* ═══════════════ GRIDS / CARDS ═══════════════ */
 .grid{display:grid;gap:14px}
@@ -154,7 +284,7 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
 .icon-btn{background:transparent;border:none;color:var(--muted);
   font-size:1.3rem;cursor:pointer;line-height:1;padding:0 4px}
 
-/* ═══════════════ BADGES / MEDALS ═══════════════ */
+/* ═══════════════ BADGES ═══════════════ */
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;
   font-size:.68rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
 .badge-blue{background:rgba(24,119,242,.18);color:#7cb3ff;border:1px solid rgba(24,119,242,.4)}
@@ -207,6 +337,11 @@ input[type=checkbox]{width:auto}
   line-height:1.6;white-space:pre-wrap;}
 .flash-close{background:none;border:none;color:inherit;font-size:1.2rem;
   cursor:pointer;line-height:1;opacity:.7}
+.flash.hiding{animation:flashOut .35s ease forwards}
+@keyframes flashOut{
+  from{opacity:1;transform:translateY(0);max-height:100px;}
+  to{opacity:0;transform:translateY(-8px);max-height:0;padding:0;margin:0;overflow:hidden;}
+}
 
 /* ═══════════════ MODALS ═══════════════ */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);
@@ -223,6 +358,69 @@ input[type=checkbox]{width:auto}
   gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
 .modal-head h3{margin:0;color:#fff}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+
+/* ═══════════════ SUB-MODAL STACK ═══════════════ */
+.modal-backdrop.sub-modal{
+  z-index: 9999 !important;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(2px);
+}
+/* FIX: Force sub-modal on top */
+
+
+
+/* ═══════════════ SETTINGS LAYOUT ═══════════════ */
+.settings-profile{
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:16px;padding-bottom:14px;
+  border-bottom:1px solid var(--border);
+}
+.settings-profile .pd-avatar{width:52px;height:52px;font-size:1.2rem}
+.settings-profile-info{flex:1;min-width:0}
+.settings-profile-info b{
+  display:block;color:#fff;font-size:1rem;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.settings-profile-info small{
+  display:block;color:var(--text-dim);font-size:.82rem;margin-top:1px;
+}
+
+.settings-rows{display:flex;flex-direction:column;gap:8px}
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:12px 14px;border-radius:8px;
+  background:var(--bg-2);border:1px solid var(--border);
+  transition:.15s;
+}
+.settings-row:hover{border-color:rgba(24,119,242,.45)}
+.settings-row-label{flex:1;min-width:0}
+.settings-row-label > label{
+  display:block;font-size:.68rem;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text-dim);font-weight:700;
+  margin-bottom:2px;
+}
+.settings-row-label > p{
+  margin:0;font-size:.9rem;color:#fff;font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.settings-row-label .desc{
+  font-size:.74rem;color:var(--text-dim);
+  margin-top:3px;line-height:1.4;
+}
+
+/* Feedback boxes for sub-modals */
+.modal-feedback{
+  display:none;padding:10px 14px;border-radius:8px;
+  font-size:.86rem;font-weight:500;margin-bottom:12px;
+}
+.modal-feedback.error{
+  background:rgba(239,68,68,.13);
+  border:1px solid rgba(239,68,68,.45);color:#fecaca;
+}
+.modal-feedback.success{
+  background:rgba(34,197,94,.13);
+  border:1px solid rgba(34,197,94,.45);color:#bbf7d0;
+}
 
 /* ═══════════════ CONTENT SECTIONS ═══════════════ */
 .content-section{display:none;animation:fadeIn .3s ease}
@@ -293,13 +491,6 @@ input[type=checkbox]{width:auto}
 .notif-item p{color:var(--muted);font-size:.78rem;margin:0}
 .notif-item small{color:var(--text-dim);font-size:.7rem}
 
-.topbar-avatar{width:38px;height:38px;border-radius:50%;
-  background:linear-gradient(135deg,var(--blue),var(--purple));
-  display:inline-flex;align-items:center;justify-content:center;
-  font-weight:700;color:#fff;font-size:.95rem;cursor:pointer;
-  border:2px solid var(--border);transition:.15s ease;text-decoration:none;flex-shrink:0;}
-.topbar-avatar:hover{border-color:var(--blue);transform:scale(1.06);text-decoration:none;}
-
 /* ═══════════════ AUTH ═══════════════ */
 .auth-root{min-height:100vh;display:flex;flex-direction:column;
   align-items:center;padding:24px 16px;overflow-y:auto;
@@ -316,11 +507,8 @@ input[type=checkbox]{width:auto}
 .auth-foot{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);
   text-align:center;font-size:.86rem}
 
-/* ═══════════════════════════════════════════════════════════════
-   MOBILE — Clean Edurie-style Drawer Layout
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════ MOBILE ═══════════════ */
 @media(max-width:768px){
-  /* ─── Sidebar as overlay drawer ─── */
   .sidebar{
     width:270px;
     transform:translateX(-100%);
@@ -329,138 +517,93 @@ input[type=checkbox]{width:auto}
     z-index:350;
   }
   .sidebar.open{transform:translateX(0)}
-
-  /* ─── Full-width content ─── */
-  .parent-panel{
-    margin-left:0 !important;
-    padding:0 0 40px 0;
-  }
-
-  /* ─── Backdrop ─── */
+  .parent-panel{margin-left:0 !important;padding:0 0 40px 0;}
   .sidebar-backdrop{
-    display:block;
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.65);
-    backdrop-filter:blur(2px);
-    z-index:340;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .25s ease;
+    display:block;position:fixed;inset:0;
+    background:rgba(0,0,0,.65);backdrop-filter:blur(2px);
+    z-index:340;opacity:0;pointer-events:none;transition:opacity .25s ease;
   }
   .sidebar-backdrop.active{opacity:1;pointer-events:auto}
-
-  /* ─── Show hamburger ─── */
   .mobile-menu-btn{display:inline-flex}
 
-  /* ═══ CLEAN MOBILE TOPBAR ═══ */
   .topbar{
-    display:flex;
-    flex-wrap:wrap;
-    gap:0;
-    margin-bottom:0;
-    padding:10px 14px;
-    border-bottom:1px solid var(--border);
-    background:var(--card);
-    position:sticky;
-    top:0;
-    z-index:50;
-    align-items:center;
+    flex-wrap:nowrap;gap:0;margin-bottom:0;
+    padding:10px 14px;border-bottom:1px solid var(--border);
+    background:var(--card);position:sticky;top:0;z-index:50;align-items:center;
   }
-
-  /* Row 1: [☰] [title] [bell] [avatar] */
   .mobile-menu-btn{order:1;flex-shrink:0}
-  .topbar-left{
-    order:2;
-    flex:1;
-    min-width:0;
-    overflow:hidden;
-    margin-left:4px;
-  }
-  .topbar-left h1{
-    font-size:1rem;
-    font-weight:600;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    color:#fff;
-    margin:0;
-  }
-  .topbar-left .sub{
-    font-size:.72rem;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    color:var(--text-dim);
-    margin-top:1px;
-  }
-  .topbar-left .sub code{
-    font-size:.68rem;
-    padding:.05rem .3rem;
-  }
+  .topbar-left{order:2;flex:1;min-width:0;overflow:hidden;margin-left:4px;}
+  .topbar-left h1{font-size:1rem;font-weight:600;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;color:#fff;margin:0;}
+  .topbar-left .sub{font-size:.72rem;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;color:var(--text-dim);margin-top:1px;}
+  .topbar-left .sub code{font-size:.68rem;padding:.05rem .3rem;}
 
-  .topbar-right{
-    order:3;
-    display:flex;
-    align-items:center;
-    gap:4px;
-    flex-shrink:0;
-    flex-wrap:nowrap;
-  }
-  /* Hide role badge on mobile */
+  .topbar-right{order:3;display:flex;align-items:center;gap:4px;
+    flex-shrink:0;flex-wrap:nowrap;}
   .topbar-right .badge{display:none}
-  /* Hide search on mobile — nasa sidebar o hidden */
   .topbar-right .global-search{display:none}
-  /* Smaller bell + avatar */
   .notif-bell{padding:6px}
   .notif-bell svg{width:20px;height:20px}
-  .topbar-avatar{width:34px;height:34px;font-size:.85rem}
+  .profile-btn{width:34px;height:34px;font-size:.85rem}
 
-  /* ═══ CONTENT AREA ═══ */
+  .profile-dropdown{
+    position:fixed;
+    top:56px;
+    right:14px;
+    left:14px;
+    width:auto;
+    max-width:340px;
+    margin-left:auto;
+  }
+  .sidebar-footer .profile-nav-link.active:{
+    background: var(--blue) !important;
+    color: #fff !important;
+    opacity: 0.9;
+  }
+  .box-links li a.adminnav.active{background:var(--blue);color:#fff;font-weight:600}
+  
+  .sidebar-footer .profile-nav-link {
+    -webkit-tap-highlight-color: transparent; /* tanggalin yung gray flash sa Android */
+    transition: background 0.2s ease;
+  }
+
+
   .flash-wrap{margin:14px 14px 0}
   .content-section{padding:0 14px}
   .content-section.active{padding:0 14px}
 
-  /* ═══ STATS GRID — 2 columns on mobile ═══ */
   .grid-4{grid-template-columns:repeat(2,1fr);gap:10px}
   .grid-3{grid-template-columns:repeat(2,1fr);gap:10px}
   .grid-2{grid-template-columns:1fr;gap:10px}
 
-  /* ═══ CARDS ═══ */
   .card{padding:14px;margin-top:14px}
-  .card-title h2,
-  .card-title h3{font-size:1rem}
+  .card-title h2,.card-title h3{font-size:1rem}
   .stat{padding:12px 14px}
   .stat .label{font-size:.62rem}
   .stat .value{font-size:1.4rem}
 
-  /* ═══ TABLES — horizontal scroll ═══ */
   .table-wrap{
-    margin-left:-14px;
-    margin-right:-14px;
-    border-radius:0;
-    border-left:none;
-    border-right:none;
+    margin-left:-14px;margin-right:-14px;
+    border-radius:0;border-left:none;border-right:none;
   }
   table{min-width:auto;font-size:.8rem}
   th,td{padding:8px 10px}
   th{font-size:.65rem}
 
-  /* ═══ TIMER SMALLER ═══ */
   .timer{font-size:2rem}
   .timer-box{padding:12px;margin:12px 0}
-
-  /* ═══ MODAL PADDING ═══ */
   .modal{padding:18px;max-width:100%}
   .modal-lg{max-width:100%}
+  .settings-row{flex-direction:column;align-items:stretch}
+  .settings-row .btn{width:100%;justify-content:center}
 }
 
-/* Extra small phones */
 @media(max-width:400px){
   .grid-4{grid-template-columns:1fr}
   .grid-3{grid-template-columns:1fr}
   .topbar-left h1{font-size:.95rem}
-  .topbar-avatar{width:30px;height:30px;font-size:.8rem}
+  .profile-btn{width:30px;height:30px;font-size:.8rem}
 }
 </style>
 </head>
@@ -485,18 +628,23 @@ input[type=checkbox]{width:auto}
     <nav>
       <ul class="box-links">
         {% block nav_items %}{% endblock %}
-        <li>
-          <a class="logout" href="{{ url_for('logout') }}">
-            <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-              <path d="M14 8v-2a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2"/>
-              <path d="M9 12h12l-3-3"/>
-              <path d="M18 15l3-3"/>
-            </svg>
-            <span>Logout</span>
-          </a>
-        </li>
       </ul>
     </nav>
+
+
+    {# ═══ FIXED BOTTOM: MY PROFILE (Teacher/Student only) ═══ #}
+    {% if current_username and current_role in ('Teacher', 'Student') %}
+    <div class="sidebar-footer">
+      <a class="adminnav profile-nav-link"
+         href="{{ url_for('profile', username=current_username) }}">
+        <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 21v-1a7 7 0 0 1 7-7h2a7 7 0 0 1 7 7v1"/>
+        </svg>
+        <span>👤 My Profile</span>
+      </a>
+    </div>
+    {% endif %}
   </aside>
 
   <div class="parent-panel">
@@ -531,15 +679,39 @@ input[type=checkbox]{width:auto}
           <span id="notifDot" class="notif-dot{% if not unread_notifications %} hidden{% endif %}"></span>
         </button>
 
-        {% if current_user_obj %}
-        <a class="topbar-avatar"
-           href="{{ url_for('profile', username=current_username) }}"
-           title="{{ current_username }} · {{ current_role }}">
+        <button id="profileBtn" class="profile-btn" type="button" title="Account">
           {{ current_username[0]|upper if current_username else '?' }}
-        </a>
-        {% endif %}
+        </button>
 
-        <span class="badge badge-blue">{{ current_role }}</span>
+        <!-- ═══ PROFILE DROPDOWN (Edurie-style) ═══ -->
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="pd-header">
+            <div class="pd-avatar">{{ current_username[0]|upper if current_username else '?' }}</div>
+            <div class="pd-info">
+              <b>{{ current_user_obj.full_name }}</b>
+              <small>@{{ current_username }}</small>
+              <span class="pd-role">{{ current_role }}</span>
+            </div>
+          </div>
+          <div class="pd-body">
+            <button type="button" class="pd-item" id="pdSettingsBtn">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              <span>Settings</span>
+            </button>
+            <hr class="pd-sep">
+            <a href="{{ url_for('logout') }}" class="pd-item danger">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              <span>Log out</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -574,7 +746,6 @@ input[type=checkbox]{width:auto}
 </div>
 
 {% else %}
-{# ==================== AUTH LAYOUT ==================== #}
 <div class="auth-root">
   <div class="auth-wrap">
     <div class="flash-wrap">
@@ -611,9 +782,142 @@ input[type=checkbox]{width:auto}
   </div>
 </div>
 
-<!-- ================= CHANGE PASSWORD MODAL ================= -->
+<!-- ================= ACCOUNT SETTINGS MODAL (z-1000) ================= -->
 {% if current_user_obj and current_role in ('Teacher', 'Student') %}
-<div class="modal-backdrop" id="changePasswordModal">
+<div class="modal-backdrop" id="accountSettingsModal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>⚙️ Account Settings</h3>
+      <button class="icon-btn" type="button" data-close>×</button>
+    </div>
+
+    <!-- Profile header -->
+    <div class="settings-profile">
+      <div class="pd-avatar">{{ current_username[0]|upper if current_username else '?' }}</div>
+      <div class="settings-profile-info">
+        <b>{{ current_user_obj.full_name }}</b>
+        <small>@{{ current_username }}</small>
+        <span class="pd-role" style="margin-top:4px;">{{ current_role }}</span>
+      </div>
+    </div>
+
+    <!-- Rows -->
+    <div class="settings-rows">
+
+      <!-- Full Name -->
+      <div class="settings-row">
+        <div class="settings-row-label">
+          <label>Full Name</label>
+          <p>{{ current_user_obj.full_name }}</p>
+          <div class="desc">Ipapakita ang pangalang ito sa iyong profile at dashboard.</div>
+        </div>
+        <button type="button" class="btn btn-blue btn-sm"
+                data-open="editFullNameModal">Edit</button>
+      </div>
+
+      <!-- Username -->
+      <div class="settings-row">
+        <div class="settings-row-label">
+          <label>Username</label>
+          <p>@{{ current_username }}</p>
+          <div class="desc">Ginagamit ito para mag-login at makita ka ng ibang users.</div>
+        </div>
+        <button type="button" class="btn btn-purple btn-sm"
+                data-open="editUsernameModal">Change</button>
+      </div>
+
+      <!-- Password -->
+      <div class="settings-row">
+        <div class="settings-row-label">
+          <label>Password</label>
+          <p>••••••••</p>
+          <div class="desc">Palitan regularly para sa seguridad ng account.</div>
+        </div>
+        <button type="button" class="btn btn-yellow btn-sm"
+                data-open="changePasswordModal">Change</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ================= EDIT FULL NAME (sub-modal z-1100) ================= -->
+{% if current_user_obj and current_role in ('Teacher', 'Student') %}
+<div class="modal-backdrop sub-modal" id="editFullNameModal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>✏️ Edit Full Name</h3>
+      <button class="icon-btn" type="button" data-close>×</button>
+    </div>
+    <p class="muted small mb1">
+      Ipapakita ang pangalang ito sa iyong profile, dashboard, at notifications.
+    </p>
+
+    <div class="modal-feedback error profile-error"></div>
+    <div class="modal-feedback success profile-success"></div>
+
+    <form class="form profile-edit-form"
+          method="POST"
+          action="{{ url_for('update_own_profile') }}"
+          data-no-ajax>
+      <input type="hidden" name="field" value="full_name">
+      <label>Full Name *
+        <input type="text" name="value"
+               required minlength="2" maxlength="100"
+               data-default="{{ current_user_obj.full_name }}"
+               value="{{ current_user_obj.full_name }}"
+               placeholder="Enter your full name"
+               autocomplete="name">
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn-blue">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= EDIT USERNAME (sub-modal z-1100) ================= -->
+<div class="modal-backdrop sub-modal" id="editUsernameModal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>✏️ Change Username</h3>
+      <button class="icon-btn" type="button" data-close>×</button>
+    </div>
+    <p class="muted small mb1">
+      Ang username ay ginagamit para mag-login. Siguraduhing walang spaces at hindi pa taken.
+    </p>
+
+    <div class="modal-feedback error profile-error"></div>
+    <div class="modal-feedback success profile-success"></div>
+
+    <form class="form profile-edit-form"
+          method="POST"
+          action="{{ url_for('update_own_profile') }}"
+          data-no-ajax>
+      <input type="hidden" name="field" value="username">
+      <label>Username *
+        <input type="text" name="value"
+               required minlength="3" maxlength="30"
+               pattern="[a-zA-Z0-9_]+"
+               data-default="{{ current_username }}"
+               value="{{ current_username }}"
+               placeholder="e.g. juan_dela_cruz"
+               autocomplete="username">
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+        <button type="submit" class="btn btn-purple">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- ================= CHANGE PASSWORD MODAL (sub-modal z-1100) ================= -->
+{% if current_user_obj and current_role in ('Teacher', 'Student') %}
+<div class="modal-backdrop sub-modal" id="changePasswordModal">
   <div class="modal">
     <div class="modal-head">
       <h3>🔒 Change Password</h3>
@@ -668,9 +972,32 @@ input[type=checkbox]{width:auto}
 (function () {
   'use strict';
 
-  /* ═══ SIDEBAR REFERENCES — lookup every time (hindi cached) ═══ */
   function getSidebar() { return document.getElementById('sidebarPanel'); }
   function getBackdrop() { return document.getElementById('sidebarBackdrop'); }
+
+  /* ═══ AUTO-DISMISS FLASH (10 seconds) ═══ */
+  var FLASH_DISMISS_MS = 10000;
+
+  function autoDismissFlash(el, delayMs) {
+    if (!el) return;
+    if (el._dismissTimer) clearTimeout(el._dismissTimer);
+    el._dismissTimer = setTimeout(function () {
+      el.classList.add('hiding');
+      setTimeout(function () {
+        if (el.parentElement) el.parentElement.removeChild(el);
+      }, 400);
+    }, delayMs || FLASH_DISMISS_MS);
+  }
+
+  function attachAutoDismissToFlashes() {
+    var flashes = document.querySelectorAll('.flash-wrap .flash');
+    flashes.forEach(function (f) {
+      if (f.dataset.autoDismiss === '1') return;
+      f.dataset.autoDismiss = '1';
+      autoDismissFlash(f, FLASH_DISMISS_MS);
+    });
+  }
+  window.attachAutoDismissToFlashes = attachAutoDismissToFlashes;
 
   /* ═══ DESKTOP COLLAPSE ═══ */
   try {
@@ -697,11 +1024,52 @@ input[type=checkbox]{width:auto}
     document.body.style.overflow = '';
   }
 
-  /* ═══ GLOBAL CLICK HANDLER — Event Delegation ═══ */
-  /* Lahat ng click-based interactions ay dito naka-handle — hindi nawawala pag AJAX replace */
+  /* ═══ PROFILE DROPDOWN ═══ */
+  function toggleProfileDropdown() {
+    var dd = document.getElementById('profileDropdown');
+    if (!dd) return;
+    if (dd.classList.contains('active')) {
+      dd.classList.remove('active');
+    } else {
+      dd.classList.add('active');
+      var np = document.getElementById('notifPanel');
+      if (np) np.classList.remove('active');
+    }
+  }
+
+  function closeProfileDropdown() {
+    var dd = document.getElementById('profileDropdown');
+    if (dd) dd.classList.remove('active');
+  }
+
+  /* ═══ GLOBAL CLICK HANDLER ═══ */
   document.addEventListener('click', function (e) {
 
-    /* ─── 1. Burger button ─── */
+    /* ─── 1. Profile button ─── */
+    if (e.target.closest('#profileBtn')) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleProfileDropdown();
+      return;
+    }
+
+    /* ─── 2. Settings button inside dropdown ─── */
+    if (e.target.closest('#pdSettingsBtn')) {
+      e.preventDefault();
+      closeProfileDropdown();
+      window.openModal('accountSettingsModal');
+      return;
+    }
+
+    /* ─── 3. Click outside dropdown → close ─── */
+    var dd = document.getElementById('profileDropdown');
+    if (dd && dd.classList.contains('active')) {
+      if (!e.target.closest('#profileDropdown') && !e.target.closest('#profileBtn')) {
+        closeProfileDropdown();
+      }
+    }
+
+    /* ─── 4. Burger button ─── */
     if (e.target.closest('#mobileMenuBtn')) {
       e.preventDefault();
       e.stopPropagation();
@@ -714,13 +1082,13 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 2. Sidebar backdrop ─── */
+    /* ─── 5. Sidebar backdrop ─── */
     if (e.target.closest('#sidebarBackdrop')) {
       closeMobileSidebar();
       return;
     }
 
-    /* ─── 3. Desktop toggle collapse button ─── */
+    /* ─── 6. Desktop toggle ─── */
     if (e.target.closest('#toggleBtn')) {
       e.preventDefault();
       var sidebar = getSidebar();
@@ -733,7 +1101,7 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 4. Notification bell ─── */
+    /* ─── 7. Notification bell ─── */
     if (e.target.closest('#notifBell')) {
       e.preventDefault();
       var notifPanel = document.getElementById('notifPanel');
@@ -742,12 +1110,13 @@ input[type=checkbox]{width:auto}
         notifPanel.classList.remove('active');
       } else {
         notifPanel.classList.add('active');
+        closeProfileDropdown();
         loadNotifications();
       }
       return;
     }
 
-    /* ─── 5. Close notification button ─── */
+    /* ─── 8. Close notification ─── */
     if (e.target.closest('#closeNotifBtn')) {
       e.preventDefault();
       var np = document.getElementById('notifPanel');
@@ -755,14 +1124,14 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 6. Mark all read ─── */
+    /* ─── 9. Mark all read ─── */
     if (e.target.closest('#markAllReadBtn')) {
       e.preventDefault();
       markAllRead();
       return;
     }
 
-    /* ─── 7. Clickable stat cards ─── */
+    /* ─── 10. Clickable stats ─── */
     var statCard = e.target.closest('.stat.clickable');
     if (statCard) {
       var target = statCard.getAttribute('data-goto');
@@ -771,7 +1140,7 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 8. Close notif panel on outside click ─── */
+    /* ─── 11. Close notif panel on outside click ─── */
     var notifPanel = document.getElementById('notifPanel');
     if (notifPanel && notifPanel.classList.contains('active')) {
       if (!e.target.closest('#notifPanel') && !e.target.closest('#notifBell')) {
@@ -780,7 +1149,7 @@ input[type=checkbox]{width:auto}
     }
   });
 
-  /* ═══ SECTION SWITCHING — Event Delegation ═══ */
+  /* ═══ SECTION SWITCHING ═══ */
   document.addEventListener('click', function (e) {
     var nav = e.target.closest('.adminnav[data-section]');
     if (!nav) return;
@@ -804,23 +1173,19 @@ input[type=checkbox]{width:auto}
     window.scrollTo(0, 0);
   });
 
-  /* ═══ AUTO-CLOSE DRAWER on nav click ═══ */
   document.addEventListener('click', function (e) {
-    var nav = e.target.closest('.adminnav[data-section], .logout');
+    var nav = e.target.closest('.adminnav[data-section]');
     if (!nav) return;
     if (window.innerWidth <= 768) {
       setTimeout(closeMobileSidebar, 200);
     }
   });
 
-  /* ═══ AUTO-CLOSE on resize ═══ */
   window.addEventListener('resize', function () {
-    if (window.innerWidth > 768) {
-      closeMobileSidebar();
-    }
+    if (window.innerWidth > 768) closeMobileSidebar();
   });
 
-  /* ═══ SCROLL ACTIVE NAV INTO VIEW ═══ */
+  /* ═══ SCROLL ACTIVE NAV ═══ */
   function scrollActiveNavIntoView() {
     var boxLinks = document.querySelector('.box-links');
     if (!boxLinks) return;
@@ -849,17 +1214,32 @@ input[type=checkbox]{width:auto}
     if (opener) {
       e.preventDefault();
       var modalId = opener.dataset.open;
-      if (modalId === 'changePasswordModal') {
-        var errBox = document.getElementById('cpErrorBox');
-        var okBox = document.getElementById('cpSuccessBox');
-        var cpF = document.getElementById('changePasswordForm');
-        if (errBox) errBox.style.display = 'none';
-        if (okBox) okBox.style.display = 'none';
-        if (cpF) cpF.reset();
+      var modalEl = document.getElementById(modalId);
+
+      if (modalEl) {
+        /* Hide all feedback boxes */
+        modalEl.querySelectorAll('.modal-feedback').forEach(function (b) {
+          b.style.display = 'none';
+        });
+        /* Reset inputs with data-default */
+        modalEl.querySelectorAll('input[name="value"][data-default]').forEach(function (inp) {
+          inp.value = inp.dataset.default;
+        });
+        /* Reset change-password form + boxes */
+        if (modalId === 'changePasswordModal') {
+          var errBox = document.getElementById('cpErrorBox');
+          var okBox = document.getElementById('cpSuccessBox');
+          var cpF = document.getElementById('changePasswordForm');
+          if (errBox) errBox.style.display = 'none';
+          if (okBox) okBox.style.display = 'none';
+          if (cpF) cpF.reset();
+        }
       }
+
       window.openModal(modalId);
       return;
     }
+
     var closer = e.target.closest('[data-close]');
     if (closer) {
       e.preventDefault();
@@ -867,18 +1247,31 @@ input[type=checkbox]{width:auto}
       if (m) m.classList.remove('active');
       return;
     }
+
     if (e.target.classList.contains('modal-backdrop')) {
       e.target.classList.remove('active');
     }
   });
 
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.modal-backdrop.active').forEach(function (m) {
-        m.classList.remove('active');
+    if (e.key !== 'Escape') return;
+
+    var modals = Array.prototype.slice.call(
+      document.querySelectorAll('.modal-backdrop.active')
+    );
+
+    if (modals.length > 0) {
+      modals.sort(function (a, b) {
+        var za = parseInt(window.getComputedStyle(a).zIndex, 10) || 0;
+        var zb = parseInt(window.getComputedStyle(b).zIndex, 10) || 0;
+        return za - zb;
       });
-      closeMobileSidebar();
+      modals[modals.length - 1].classList.remove('active');
+      return;
     }
+
+    closeMobileSidebar();
+    closeProfileDropdown();
   });
 
   /* ═══ NOTIFICATIONS ═══ */
@@ -970,7 +1363,42 @@ input[type=checkbox]{width:auto}
 
   /* ═══ DOMContentLoaded ═══ */
   document.addEventListener('DOMContentLoaded', function () {
-    /* Restore section */
+
+    attachAutoDismissToFlashes();
+
+    try {
+      var pendingFlash = sessionStorage.getItem('pending_flash_html');
+      if (pendingFlash) {
+        sessionStorage.removeItem('pending_flash_html');
+        var flashWrap = document.querySelector('.flash-wrap');
+        if (flashWrap) {
+          flashWrap.innerHTML = pendingFlash;
+          attachAutoDismissToFlashes();
+        }
+      }
+    } catch (e) { }
+
+    if (window.MutationObserver) {
+      var flashWrap = document.querySelector('.flash-wrap');
+      if (flashWrap) {
+        var observer = new MutationObserver(function (mutations) {
+          var hasNew = false;
+          mutations.forEach(function (m) {
+            if (m.addedNodes && m.addedNodes.length) {
+              m.addedNodes.forEach(function (n) {
+                if (n.nodeType === 1 &&
+                    (n.classList && n.classList.contains('flash'))) {
+                  hasNew = true;
+                }
+              });
+            }
+          });
+          if (hasNew) attachAutoDismissToFlashes();
+        });
+        observer.observe(flashWrap, { childList: true });
+      }
+    }
+
     var hashTarget = (window.location.hash || '').replace('#', '').trim();
     var savedSection = null;
     try { savedSection = sessionStorage.getItem('ui_active_section'); } catch (e) { }
@@ -1032,6 +1460,7 @@ input[type=checkbox]{width:auto}
     if (form.id === 'changePasswordForm') return;
     if (form.id === 'settingForm') return;
     if (form.id === 'flagUserForm') return;
+    if (form.classList.contains('profile-edit-form')) return;
 
     ev.preventDefault();
 
@@ -1087,11 +1516,12 @@ input[type=checkbox]{width:auto}
         oldContent.innerHTML = newContent.innerHTML;
       }
 
+      attachAutoDismissToFlashes();
+
       document.querySelectorAll('.modal-backdrop.active').forEach(function (m) {
         m.classList.remove('active');
       });
 
-      /* Re-apply active section */
       try {
         var savedSection = sessionStorage.getItem('ui_active_section');
         if (savedSection) {
@@ -1172,6 +1602,143 @@ input[type=checkbox]{width:auto}
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
     });
+  }, true);
+
+  /* ═══ PROFILE EDIT FORMS (Full Name / Username) ═══ */
+
+  document.addEventListener('submit', function(ev) {
+    var form = ev.target;
+    if (!form.classList.contains('profile-edit-form')) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    
+    var modalEl = form.closest('.modal');
+    var errBox = modalEl.querySelector('.profile-error');
+    var okBox = modalEl.querySelector('.profile-success');
+    var submitBtn = form.querySelector('button[type="submit"]');
+    
+    if (errBox) errBox.style.display = 'none';
+    if (okBox) okBox.style.display = 'none';
+    
+    var origText = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving…';
+    }
+    
+    var fd = new FormData(form);
+    fd.append('_ajax', '1');
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(function(r) {
+        return r.json().then(function(j) { return { status: r.status, json: j }; });
+      })
+      .then(function(res) {
+        var data = res.json || {};
+        if (res.status >= 200 && res.status < 300 && data.ok) {
+          /* ─── SUCCESS ─── */
+          if (okBox) {
+            okBox.textContent = '✅ ' + (data.message || 'Updated successfully!');
+            okBox.style.display = 'block';
+          }
+          
+          /* ─── UPDATE UI IN-PLACE (walang reload) ─── */
+          
+          // Full name changed
+          if (data.new_full_name) {
+            var nf = data.new_full_name;
+            
+            // Profile dropdown (base.html topbar)
+            document.querySelectorAll('.pd-info b').forEach(function(el) {
+              el.textContent = nf;
+            });
+            
+            // Settings modal header
+            document.querySelectorAll('.settings-profile-info b').forEach(function(el) {
+              el.textContent = nf;
+            });
+            
+            // Settings row value
+            document.querySelectorAll('.settings-row').forEach(function(row) {
+              var lbl = row.querySelector('.settings-row-label > label');
+              if (lbl && lbl.textContent.trim() === 'Full Name') {
+                var p = row.querySelector('.settings-row-label > p');
+                if (p) p.textContent = nf;
+              }
+            });
+            
+            // Update data-default ng input para sa susunod na open
+            var inp = form.querySelector('input[name="value"]');
+            if (inp) inp.dataset.default = nf;
+          }
+          
+          // Username changed
+          if (data.new_username) {
+            var nu = data.new_username;
+            
+            // Profile dropdown small @username
+            document.querySelectorAll('.pd-info small').forEach(function(el) {
+              el.textContent = '@' + nu;
+            });
+            
+            // Settings modal header small @username
+            document.querySelectorAll('.settings-profile-info small').forEach(function(el) {
+              el.textContent = '@' + nu;
+            });
+            
+            // Settings row value
+            document.querySelectorAll('.settings-row').forEach(function(row) {
+              var lbl = row.querySelector('.settings-row-label > label');
+              if (lbl && lbl.textContent.trim() === 'Username') {
+                var p = row.querySelector('.settings-row-label > p');
+                if (p) p.textContent = '@' + nu;
+              }
+            });
+            
+            // Profile button initial (topbar)
+            var pb = document.getElementById('profileBtn');
+            if (pb) pb.textContent = nu.charAt(0).toUpperCase();
+            
+            // Settings avatar initial
+            document.querySelectorAll('.settings-profile .pd-avatar').forEach(function(el) {
+              el.textContent = nu.charAt(0).toUpperCase();
+            });
+            
+            // Update data-default
+            var inp2 = form.querySelector('input[name="value"]');
+            if (inp2) inp2.dataset.default = nu;
+          }
+          
+          // Close ONLY the sub-modal (settings remains open ✅)
+          setTimeout(function() {
+            var backdrop = form.closest('.modal-backdrop');
+            if (backdrop) backdrop.classList.remove('active');
+          }, 1100);
+          
+        } else {
+          if (errBox) {
+            errBox.textContent = '❌ ' + (data.error || 'Something went wrong.');
+            errBox.style.display = 'block';
+          }
+        }
+      })
+      .catch(function(err) {
+        if (errBox) {
+          errBox.textContent = '❌ Network error: ' + err.message;
+          errBox.style.display = 'block';
+        }
+      })
+      .finally(function() {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = origText;
+        }
+      });
   }, true);
 
   /* ═══ CONFIRM DIALOG ═══ */

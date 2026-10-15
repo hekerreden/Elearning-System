@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Student{% endblock %}
-{% block page_title %}Student Dashboard{% endblock %}
-{% block page_sub %}{{ user.full_name }} · ID: <code data-copy="{{ my_id }}" title="Click to copy" style="cursor:pointer;">{{ my_id }} 📋</code>{% endblock %}
+{% block page_title %}Student{% endblock %}
+{% block page_sub %}{{ user.full_name }}{% endblock %}
 
 {% block nav_items %}
 <li><a class="adminnav active" data-section="overview"><span>🏠 Overview</span></a></li>
@@ -10,7 +10,6 @@
 <li><a class="adminnav" data-section="classmates"><span>👥 Classmates</span></a></li>
 <li><a class="adminnav" data-section="studies"><span>📚 Studies</span></a></li>
 <li><a class="adminnav" data-section="history"><span>📝 Quiz History</span></a></li>
-<li><a class="adminnav" data-section="account"><span>⚙️ Account</span></a></li>
 {% endblock %}
 
 {% block content %}
@@ -18,12 +17,6 @@
 {# ═══════════════ OVERVIEW ═══════════════ #}
 <section class="content-section active" data-section="overview">
   <div class="grid grid-4 mb2">
-    <div class="stat clickable" data-goto="history">
-      <div class="label">My Points</div><div class="value">{{ my_points }}</div>
-    </div>
-    <div class="stat clickable" data-goto="history">
-      <div class="label">My Rank</div><div class="value">{{ '#' + my_rank|string if my_rank else '—' }}</div>
-    </div>
     <div class="stat clickable" data-goto="teachers">
       <div class="label">Teachers</div><div class="value">{{ teachers|length }}</div>
     </div>
@@ -33,16 +26,12 @@
   </div>
 
   {% if teachers|length == 0 %}
-  <div class="card" style="border-left:3px solid var(--blue);">
-    <h2>👋 Welcome!</h2>
+  <div class="card">
+    <h2>Welcome!</h2>
     <p class="muted mt1">You haven't joined a class yet. Ask your teacher for their <b>ID</b> and enter it in the <b>Connect</b> tab to get started.</p>
   </div>
   {% endif %}
-
-  <div class="card mt2">
-    <div class="card-title"><h2>🏆 Leaderboard</h2></div>
-    <div id="lb-student"><p class="empty">Loading…</p></div>
-  </div>
+  
 </section>
 
 {# ═══════════════ CONNECT ═══════════════ #}
@@ -101,8 +90,8 @@
   {% endif %}
 
   {% if pending_in %}
-  <div class="card mt2" style="border-left:3px solid #eab308;">
-    <div class="card-title"><h2>📥 Incoming Requests</h2></div>
+  <div class="card mt2">
+    <div class="card-title"><h2>Incoming Requests</h2></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Teacher</th><th>Sent</th><th>Actions</th></tr></thead>
@@ -203,7 +192,7 @@
     <div class="card-title"><h2>Quiz History</h2></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Study</th><th>Result</th><th>Score</th><th>Medal</th><th>Date</th></tr></thead>
+        <thead><tr><th>Study</th><th>Result</th><th>Score</th><th>Date</th></tr></thead>
         <tbody>
           {% for r in results %}
           <tr>
@@ -211,8 +200,6 @@
             <td>{% if r.correct %}<span class="badge badge-green">Correct</span>
                 {% else %}<span class="badge badge-red">Wrong</span>{% endif %}</td>
             <td>{{ r.score }}</td>
-            <td>{% if r.medal %}<span class="medal medal-{{ r.medal }}">{{ r.medal }}</span>
-                {% else %}—{% endif %}</td>
             <td class="muted small">{{ r.timestamp }}</td>
           </tr>
           {% else %}
@@ -353,49 +340,7 @@
   </div>
 </section>
 
-{# ═══════════════ EDIT USERNAME MODAL ═══════════════ #}
-<div class="modal-backdrop" id="editUsernameModal">
-  <div class="modal modal-sm">
-    <div class="modal-head">
-      <h3>✏️ Change Username</h3>
-      <button class="icon-btn" type="button" data-close>×</button>
-    </div>
-    <p class="muted small mb1">
-      Current username: <code id="eu_current">{{ user.username }}</code>
-    </p>
-    <form method="POST" id="editUsernameForm"
-          action="{{ url_for('change_own_username') }}"
-          class="form" data-no-ajax>
-      <label>New Username *
-        <input type="text" name="username" id="eu_username" required
-               minlength="3" maxlength="30"
-               placeholder="Enter new username"
-               pattern="[a-zA-Z0-9_.\-]+"
-               title="Letters, numbers, _ . - only"
-               autocomplete="off">
-      </label>
-      <p class="muted small">
-        ⚠️ Use the new username on next login.
-      </p>
 
-      <div id="euErrorBox"
-           style="display:none;background:rgba(239,68,68,.13);
-                  border:1px solid rgba(239,68,68,.45);color:#fecaca;
-                  padding:10px 14px;border-radius:8px;font-size:.86rem;
-                  font-weight:500;margin-top:8px;"></div>
-      <div id="euSuccessBox"
-           style="display:none;background:rgba(34,197,94,.13);
-                  border:1px solid rgba(34,197,94,.45);color:#bbf7d0;
-                  padding:10px 14px;border-radius:8px;font-size:.86rem;
-                  font-weight:500;margin-top:8px;"></div>
-
-      <div class="modal-actions">
-        <button type="button" class="btn btn-ghost" data-close>Cancel</button>
-        <button type="submit" class="btn btn-purple" id="euSubmitBtn">💾 Save Username</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 {% endblock %}
 
@@ -454,73 +399,9 @@ document.querySelectorAll('.stat.clickable').forEach(function (card) {
     window.location.href = '/student/activity/' + id;
   });
 
-  /* Leaderboard */
-  var lb = document.getElementById('lb-student');
-  if(lb){
-    fetch('/api/leaderboard').then(function(r){return r.json()}).then(function(rows){
-      if(!rows.length){ lb.innerHTML = '<p class="empty">No students ranked yet.</p>'; return; }
-      lb.innerHTML = rows.slice(0,10).map(function(r){
-        var cls = r.rank===1?'top1':r.rank===2?'top2':r.rank===3?'top3':'';
-        return '<div class="lb-row '+cls+'"><div class="lb-rank">#'+r.rank+'</div>'+
-               '<div class="lb-name">'+r.full_name+'</div>'+
-               '<div class="lb-pts">'+r.points+' pts</div></div>';
-      }).join('');
-    });
-  }
 
-  /* ═══ EDIT USERNAME FORM ═══ */
-  var euForm = document.getElementById('editUsernameForm');
-  if (euForm) {
-    euForm.addEventListener('submit', function(ev){
-      ev.preventDefault();
-      ev.stopPropagation();
 
-      var errBox = document.getElementById('euErrorBox');
-      var okBox = document.getElementById('euSuccessBox');
-      var submitBtn = document.getElementById('euSubmitBtn');
-      var input = document.getElementById('eu_username');
 
-      errBox.style.display = 'none';
-      okBox.style.display = 'none';
-
-      var origText = submitBtn.textContent;
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Saving…';
-
-      var fd = new FormData(euForm);
-      fd.append('_ajax', '1');
-
-      fetch(euForm.action, {
-        method: 'POST', body: fd, credentials: 'same-origin',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      })
-      .then(function(r){ return r.json().then(function(j){ return {status: r.status, json: j}; }); })
-      .then(function(res){
-        var data = res.json || {};
-        if (res.status >= 200 && res.status < 300 && data.ok) {
-          okBox.textContent = '✅ ' + (data.message || 'Username updated!');
-          okBox.style.display = 'block';
-          var cur = document.getElementById('eu_current');
-          if (cur) cur.textContent = data.new_username || input.value;
-          setTimeout(function(){
-            window.closeModal('editUsernameModal');
-            window.location.reload();
-          }, 1200);
-        } else {
-          errBox.textContent = '❌ ' + (data.error || 'Something went wrong.');
-          errBox.style.display = 'block';
-        }
-      })
-      .catch(function(err){
-        errBox.textContent = '❌ Network error: ' + err.message;
-        errBox.style.display = 'block';
-      })
-      .finally(function(){
-        submitBtn.disabled = false;
-        submitBtn.textContent = origText;
-      });
-    }, true);
-  }
 })();
 </script>
 {% endblock %}

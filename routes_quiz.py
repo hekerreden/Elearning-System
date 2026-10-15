@@ -6,7 +6,7 @@ import os as _os
 from flask import request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 from storage import quiz_results, UPLOAD_DIR
-from helpers import (current_user, find_study, calc_medal,
+from helpers import (current_user, find_study,
                      active_teachers_for_student, now_str, notify)
 from decorators import role_required
 
@@ -143,17 +143,13 @@ def register(app):
                 "file": file_info,
             })
 
-        max_score = score_per * len(pages) or 1
-        pct = (max(total_score, 0) / max_score) * 100
-        medal = calc_medal(pct) if not has_manual else None
-
         quiz_results.append({
             "id": uuid.uuid4().hex[:8],
             "student_id": actor.id, "student_name": actor.username,
             "study_id": study_id, "study_title": study["title"],
             "answer": str([a if not hasattr(a, 'filename') else a.filename for a in answers]),
             "correct": correct_count == len(pages),
-            "score": total_score, "medal": medal,
+            "score": total_score,
             "correct_count": correct_count,
             "total_questions": len(pages),
             "has_manual": has_manual,
@@ -174,7 +170,6 @@ def register(app):
             "score": total_score,
             "correct_count": correct_count,
             "total": len(pages),
-            "medal": medal,
             "has_manual": has_manual,
             "details": details,
         })
@@ -198,9 +193,6 @@ def register(app):
             return redirect(url_for("teacher_page"))
         result["score"] = new_score
         result["adjusted"] = True
-        max_score = study["score"] if study["score"] > 0 else 1
-        pct = (max(new_score, 0) / max_score) * 100
-        result["medal"] = calc_medal(pct) if result["correct"] else None
         notify(result["student_id"], "Score Adjusted",
                f"Your score for '{study['title']}' was updated to {new_score}.",
                link="/student#history", kind="score")
@@ -261,14 +253,10 @@ def register(app):
         result["graded"] = True
         result["adjusted"] = True
         result["correct_count"] = correct_count
-
-        max_score = int(study.get("score") or 1) * len(details) or 1
-        pct = (max(total, 0) / max_score) * 100
-        result["medal"] = calc_medal(pct) if total > 0 else None
         result["correct"] = (correct_count == len(details))
 
         notify(result["student_id"], "📝 Quiz Graded",
                f"Your submission for '{study['title']}' has been graded. Score: {total}.",
                link="/student#history", kind="score")
 
-        return jsonify({"ok": True, "score": total, "medal": result["medal"]})
+        return jsonify({"ok": True, "score": total})
