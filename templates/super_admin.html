@@ -462,179 +462,210 @@
 
 {% block scripts %}
 <script>
-(function () {
-  'use strict';
-
-  document.querySelectorAll('[data-goto]').forEach(function (el) {
-    el.addEventListener('click', function () {
+  (function() {
+    'use strict';
+    
+    /* ═══════════════════════════════════════════════════════════
+       EVENT DELEGATION — laging working kahit mag-replace ang DOM
+       ═══════════════════════════════════════════════════════════ */
+    
+    /* Clickable stats + View All buttons */
+    document.addEventListener('click', function(e) {
+      var el = e.target.closest('[data-goto]');
+      if (!el) return;
+      e.preventDefault();
       var target = el.getAttribute('data-goto');
       var nav = document.querySelector('.adminnav[data-section="' + target + '"]');
       if (nav) nav.click();
     });
-  });
-
-  /* Users data */
-  var allUsers = [];
-  var el = document.getElementById('allUsersData');
-  if (el) {
-    try { allUsers = JSON.parse(el.textContent); } catch (e) { allUsers = []; }
-  }
-
-  function findUser(id) {
-    for (var i = 0; i < allUsers.length; i++) {
-      if (allUsers[i].id === id) return allUsers[i];
+    
+    /* Users data — re-parse function */
+    function getUsers() {
+      var el = document.getElementById('allUsersData');
+      if (!el) return [];
+      try { return JSON.parse(el.textContent); }
+      catch (e) { return []; }
     }
-    return null;
-  }
-
-  var currentUser = null;
-
-  /* ═══ VIEW USER MODAL ═══ */
-  document.addEventListener('click', function (ev) {
-    var btn = ev.target.closest('[data-action="view-user"]');
-    if (!btn) return;
-    ev.preventDefault();
-
-    var uid = btn.getAttribute('data-user-id');
-    var u = findUser(uid);
-    if (!u) return;
-    currentUser = u;
-
-    document.getElementById('vu_username').textContent = u.username;
-    document.getElementById('vu_fullname').textContent = u.full_name || '—';
-    document.getElementById('vu_role').textContent = u.role;
-    document.getElementById('vu_id').textContent = u.id;
-    document.getElementById('vu_created').textContent = u.created_at || '—';
-
-    var statusEl = document.getElementById('vu_status');
-    if (u.status === 'active') {
-      statusEl.innerHTML = '<span class="badge badge-green">Active</span>';
-    } else if (u.status === 'pending_delete') {
-      statusEl.innerHTML = '<span class="badge badge-yellow">Pending Delete</span>';
-    } else if (u.status === 'appealed') {
-      statusEl.innerHTML = '<span class="badge badge-blue">Appealed</span>';
-    } else {
-      statusEl.innerHTML = '<span class="badge badge-gray">' + (u.status || '—') + '</span>';
-    }
-
-    var resetEl = document.getElementById('vu_reset');
-    if (u.reset_pending) {
-      resetEl.innerHTML = '<span class="badge badge-yellow">🔑 Yes — waiting for user login</span>';
-    } else {
-      resetEl.innerHTML = '<span class="muted">No</span>';
-    }
-
-    document.getElementById('vu_profileBtn').href = '/profile/' + u.username;
-
-    var editUserBtn = document.getElementById('vu_editUserBtn');
-    var resetBtn = document.getElementById('vu_resetBtn');
-    var delBtn = document.getElementById('vu_deleteBtn');
-    if (u.role === 'SuperAdmin' || u.status === 'deleted') {
-      editUserBtn.style.display = 'none';
-      resetBtn.style.display = 'none';
-      delBtn.style.display = 'none';
-    } else {
-      editUserBtn.style.display = 'inline-flex';
-      resetBtn.style.display = 'inline-flex';
-      delBtn.style.display = 'inline-flex';
-    }
-
-    window.openModal('viewUserModal');
-  });
-
-  /* ═══ EDIT USERNAME (from view modal) ═══ */
-  document.getElementById('vu_editUserBtn')?.addEventListener('click', function () {
-    if (!currentUser) return;
-    window.closeModal('viewUserModal');
-    openEditUsernameModal(currentUser);
-  });
-
-  /* ═══ EDIT USERNAME (from table — direct button) ═══ */
-  document.addEventListener('click', function (ev) {
-    var btn = ev.target.closest('[data-action="edit-username"]');
-    if (!btn) return;
-    ev.preventDefault();
-
-    var uid = btn.getAttribute('data-user-id');
-    var u = findUser(uid);
-    if (!u) return;
-    currentUser = u;
-    openEditUsernameModal(u);
-  });
-
-  function openEditUsernameModal(u) {
-    document.getElementById('eu_name').textContent =
-      u.full_name + ' (@' + u.username + ')';
-    document.getElementById('eu_username').value = u.username;
-    document.getElementById('editUsernameForm').action =
-      '/api/admin/users/' + u.id + '/edit-username';
-    window.openModal('editUsernameModal');
-  }
-
-  /* ═══ RESET PASSWORD ═══ */
-  document.getElementById('vu_resetBtn')?.addEventListener('click', function () {
-    if (!currentUser) return;
-    window.closeModal('viewUserModal');
-    document.getElementById('resetUserName').textContent = currentUser.full_name;
-    document.getElementById('resetUserUsername').textContent = currentUser.username;
-    document.getElementById('resetConfirm').style.display = 'block';
-    document.getElementById('resetResult').style.display = 'none';
-    window.openModal('resetPasswordModal');
-  });
-
-  /* ═══ DELETE ═══ */
-  document.getElementById('vu_deleteBtn')?.addEventListener('click', function () {
-    if (!currentUser) return;
-    window.closeModal('viewUserModal');
-    document.getElementById('flagUserName').textContent = currentUser.full_name;
-    document.getElementById('flagUserRole').textContent = currentUser.role;
-    document.getElementById('flagUserForm').action =
-      '/api/admin/delete/' + currentUser.id + '/flag';
-    window.openModal('flagUserModal');
-  });
-
-  /* ═══ CONFIRM RESET ═══ */
-  document.getElementById('confirmResetBtn')?.addEventListener('click', function () {
-    var uid = currentUser ? currentUser.id : null;
-    if (!uid) return;
-    var btn = this;
-    btn.disabled = true;
-    btn.textContent = 'Generating…';
-
-    fetch('/api/admin/users/' + uid + '/reset-password-json', {
-      method: 'POST',
-      credentials: 'same-origin'
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (!data.ok) {
-        showAlert('❌ ' + (data.error || 'Failed'),
-                  { title: '❌ Error', danger: true });
-        btn.disabled = false;
-        btn.textContent = '🔑 Generate Reset';
-        return;
+    
+    function findUser(id) {
+      var users = getUsers();
+      for (var i = 0; i < users.length; i++) {
+        if (users[i].id === id) return users[i];
       }
-      document.getElementById('resetConfirm').style.display = 'none';
-      document.getElementById('resetResult').style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = '🔑 Generate Reset';
-    })
-    .catch(function (err) {
-      showAlert('❌ ' + err.message,
-                { title: '❌ Error', danger: true });
-      btn.disabled = false;
-      btn.textContent = '🔑 Generate Reset';
+      return null;
+    }
+    
+    var currentUser = null;
+    
+    /* ═══ VIEW USER MODAL ═══ */
+    document.addEventListener('click', function(ev) {
+      var btn = ev.target.closest('[data-action="view-user"]');
+      if (!btn) return;
+      ev.preventDefault();
+      
+      var uid = btn.getAttribute('data-user-id');
+      var u = findUser(uid);
+      if (!u) return;
+      currentUser = u;
+      
+      document.getElementById('vu_username').textContent = u.username;
+      document.getElementById('vu_fullname').textContent = u.full_name || '—';
+      document.getElementById('vu_role').textContent = u.role;
+      document.getElementById('vu_id').textContent = u.id;
+      document.getElementById('vu_created').textContent = u.created_at || '—';
+      
+      var statusEl = document.getElementById('vu_status');
+      if (u.status === 'active') {
+        statusEl.innerHTML = '<span class="badge badge-green">Active</span>';
+      } else if (u.status === 'pending_delete') {
+        statusEl.innerHTML = '<span class="badge badge-yellow">Pending Delete</span>';
+      } else if (u.status === 'appealed') {
+        statusEl.innerHTML = '<span class="badge badge-blue">Appealed</span>';
+      } else {
+        statusEl.innerHTML = '<span class="badge badge-gray">' + (u.status || '—') + '</span>';
+      }
+      
+      var resetEl = document.getElementById('vu_reset');
+      if (u.reset_pending) {
+        resetEl.innerHTML = '<span class="badge badge-yellow">🔑 Yes — waiting for user login</span>';
+      } else {
+        resetEl.innerHTML = '<span class="muted">No</span>';
+      }
+      
+      document.getElementById('vu_profileBtn').href = '/profile/' + u.username;
+      
+      var editUserBtn = document.getElementById('vu_editUserBtn');
+      var resetBtn = document.getElementById('vu_resetBtn');
+      var delBtn = document.getElementById('vu_deleteBtn');
+      if (u.role === 'SuperAdmin' || u.status === 'deleted') {
+        editUserBtn.style.display = 'none';
+        resetBtn.style.display = 'none';
+        delBtn.style.display = 'none';
+      } else {
+        editUserBtn.style.display = 'inline-flex';
+        resetBtn.style.display = 'inline-flex';
+        delBtn.style.display = 'inline-flex';
+      }
+      
+      window.openModal('viewUserModal');
     });
-  });
-
-  /* ═══ AUTO-OPEN SECTIONS ═══ */
-  if (window.location.hash === '#deletes') {
-    var nav = document.querySelector('.adminnav[data-section="deletes"]');
-    if (nav) nav.click();
-  } else if (window.location.hash === '#studies') {
-    var nav2 = document.querySelector('.adminnav[data-section="studies"]');
-    if (nav2) nav2.click();
-  }
-})();
+    
+    /* ═══ EDIT USERNAME (from view modal) ═══ */
+    document.addEventListener('click', function(ev) {
+      var btn = ev.target.closest('#vu_editUserBtn');
+      if (!btn) return;
+      ev.preventDefault();
+      if (!currentUser) return;
+      window.closeModal('viewUserModal');
+      openEditUsernameModal(currentUser);
+    });
+    
+    /* ═══ EDIT USERNAME (from table) ═══ */
+    document.addEventListener('click', function(ev) {
+      var btn = ev.target.closest('[data-action="edit-username"]');
+      if (!btn) return;
+      ev.preventDefault();
+      var uid = btn.getAttribute('data-user-id');
+      var u = findUser(uid);
+      if (!u) return;
+      currentUser = u;
+      openEditUsernameModal(u);
+    });
+    
+    function openEditUsernameModal(u) {
+      document.getElementById('eu_name').textContent =
+        u.full_name + ' (@' + u.username + ')';
+      document.getElementById('eu_username').value = u.username;
+      document.getElementById('editUsernameForm').action =
+        '/api/admin/users/' + u.id + '/edit-username';
+      window.openModal('editUsernameModal');
+    }
+    
+    /* ═══ RESET PASSWORD ═══ */
+    document.addEventListener('click', function(ev) {
+      var btn = ev.target.closest('#vu_resetBtn');
+      if (!btn) return;
+      ev.preventDefault();
+      if (!currentUser) return;
+      window.closeModal('viewUserModal');
+      document.getElementById('resetUserName').textContent = currentUser.full_name;
+      document.getElementById('resetUserUsername').textContent = currentUser.username;
+      document.getElementById('resetConfirm').style.display = 'block';
+      document.getElementById('resetResult').style.display = 'none';
+      window.openModal('resetPasswordModal');
+    });
+    
+    /* ═══ DELETE (flag) ═══ */
+    document.addEventListener('click', function(ev) {
+      var btn = ev.target.closest('#vu_deleteBtn');
+      if (!btn) return;
+      ev.preventDefault();
+      if (!currentUser) return;
+      window.closeModal('viewUserModal');
+      document.getElementById('flagUserName').textContent = currentUser.full_name;
+      document.getElementById('flagUserRole').textContent = currentUser.role;
+      document.getElementById('flagUserForm').action =
+        '/api/admin/delete/' + currentUser.id + '/flag';
+      window.openModal('flagUserModal');
+    });
+    
+    /* ═══ CONFIRM RESET ═══ */
+    document.addEventListener('click', function(ev) {
+      var btn = ev.target.closest('#confirmResetBtn');
+      if (!btn) return;
+      ev.preventDefault();
+      var uid = currentUser ? currentUser.id : null;
+      if (!uid) return;
+      btn.disabled = true;
+      btn.textContent = 'Generating…';
+      
+      fetch('/api/admin/users/' + uid + '/reset-password-json', {
+          method: 'POST',
+          credentials: 'same-origin'
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data.ok) {
+            showAlert('❌ ' + (data.error || 'Failed'), { title: '❌ Error', danger: true });
+            btn.disabled = false;
+            btn.textContent = '🔑 Generate Reset';
+            return;
+          }
+          document.getElementById('resetConfirm').style.display = 'none';
+          document.getElementById('resetResult').style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = '🔑 Generate Reset';
+        })
+        .catch(function(err) {
+          showAlert('❌ ' + err.message, { title: '❌ Error', danger: true });
+          btn.disabled = false;
+          btn.textContent = '🔑 Generate Reset';
+        });
+    });
+    
+    /* ═══════════════════════════════════════════════════════════
+       AUTO-REFRESH pag AJAX replace ang DOM
+       ═══════════════════════════════════════════════════════════ */
+    document.addEventListener('pageContentReplaced', function() {
+      // Walang kailangan i-rebind — event delegation na lahat ng clicks
+      // Ang JSON data (allUsersData) ay freshly parsed sa findUser() call
+      
+      // Re-apply auto-open sections
+      var hash = window.location.hash;
+      if (hash === '#deletes' || hash === '#studies' || hash === '#teachers' || hash === '#students') {
+        var nav = document.querySelector('.adminnav[data-section="' + hash.slice(1) + '"]');
+        if (nav && !nav.classList.contains('active')) nav.click();
+      }
+    });
+    
+    /* ═══ INITIAL AUTO-OPEN ═══ */
+    if (window.location.hash === '#deletes') {
+      var nav = document.querySelector('.adminnav[data-section="deletes"]');
+      if (nav) nav.click();
+    } else if (window.location.hash === '#studies') {
+      var nav2 = document.querySelector('.adminnav[data-section="studies"]');
+      if (nav2) nav2.click();
+    }
+  })();
 </script>
 {% endblock %}

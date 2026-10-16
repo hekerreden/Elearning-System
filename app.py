@@ -93,6 +93,7 @@ def inject_globals():
         "current_username": u.username if u else None,
         "unread_notifications": unread_count(u.id) if u else 0,
         "force_password_change": bool(session.get("force_password_change")),
+        "current_temp_password": session.get("current_temp_password") if session.get("force_password_change") else None,
     }
 
 # ═══════════════════════════════════════════════════════════════

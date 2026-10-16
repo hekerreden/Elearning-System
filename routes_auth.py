@@ -49,6 +49,7 @@ def register(app):
                     session["user_id"] = user.id
                     session["role"] = user.role
                     session["force_password_change"] = True
+                    session["current_temp_password"] = password  # ✅ Store para sa auto-fill
                     flash(
                         "🔓 Logged in with temporary password. "
                         "Please change it in Account Settings.",

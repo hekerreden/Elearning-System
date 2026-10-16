@@ -23,6 +23,9 @@ body{
   overflow-x:hidden;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL TAP HIGHLIGHT & FOCUS RESET
+   ═══════════════════════════════════════════════════════════ */
 *{
   -webkit-tap-highlight-color:transparent;
 }
@@ -290,7 +293,9 @@ input[type=checkbox]{width:auto}
 .row-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .row-inline > *{flex:1;min-width:110px}
 
-/* ═══════════════ CUSTOM DROPDOWN ═══════════════ */
+/* ═══════════════════════════════════════════════════════════
+   CUSTOM DROPDOWN — Premium (PC + Mobile)
+   ═══════════════════════════════════════════════════════════ */
 .cs-wrap{position:relative;user-select:none;width:100%}
 .cs-trigger{
   width:100%;padding:10px 12px;border-radius:6px;
@@ -353,6 +358,11 @@ input[type=checkbox]{width:auto}
   content:'✓';color:var(--blue-hover);
   font-weight:700;flex-shrink:0;
 }
+.cs-empty{
+  padding:10px 12px;color:var(--text-dim);
+  font-size:.85rem;text-align:center;font-style:italic;
+}
+/* Hide original select */
 select[data-custom]{display:none !important}
 
 /* ═══════════════ FLASH ═══════════════ */
@@ -374,47 +384,6 @@ select[data-custom]{display:none !important}
   to{opacity:0;transform:translateY(-8px);max-height:0;padding:0;margin:0;overflow:hidden;}
 }
 
-/* ═══════════════ FORCE PASSWORD BANNER ═══════════════ */
-.force-pw-banner{
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-  padding:12px 16px;margin:0 0 16px;
-  background:linear-gradient(135deg,rgba(234,179,8,.15),rgba(239,68,68,.1));
-  border:1px solid rgba(234,179,8,.5);
-  border-radius:8px;
-  color:#fef3c7;
-  font-size:.88rem;
-  animation:fpwSlide .3s ease;
-}
-@keyframes fpwSlide{
-  from{opacity:0;transform:translateY(-6px)}
-  to{opacity:1;transform:translateY(0)}
-}
-.force-pw-banner .fpw-icon{
-  font-size:1.5rem;flex-shrink:0;
-}
-.force-pw-banner .fpw-text{
-  flex:1;min-width:200px;line-height:1.5;
-}
-.force-pw-banner .fpw-text b{color:#fff;}
-.force-pw-banner .fpw-btn{
-  background:var(--yellow);color:#111;
-  padding:7px 14px;border-radius:6px;
-  font-weight:700;font-size:.82rem;
-  border:none;cursor:pointer;font-family:inherit;
-  white-space:nowrap;flex-shrink:0;
-}
-.force-pw-banner .fpw-btn:hover{background:#fbbf24;}
-
-@media(max-width:600px){
-  .force-pw-banner{padding:10px 12px;gap:8px;}
-  .force-pw-banner .fpw-icon{font-size:1.2rem;}
-  .force-pw-banner .fpw-text{font-size:.82rem;min-width:0;}
-  .force-pw-banner .fpw-btn{
-    padding:6px 10px;font-size:.78rem;
-    width:100%;text-align:center;
-  }
-}
-
 /* ═══════════════ MODALS ═══════════════ */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);
   display:none;align-items:flex-start;justify-content:center;
@@ -431,13 +400,14 @@ select[data-custom]{display:none !important}
 .modal-head h3{margin:0;color:#fff}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
 
+/* Sub-modal stack */
 .modal-backdrop.sub-modal{
   z-index:9999 !important;
   background:rgba(0,0,0,.6);
   backdrop-filter:blur(2px);
 }
 
-/* ═══════════════ APP CONFIRM MODAL ═══════════════ */
+/* ═══════════════ APP CONFIRM MODAL (custom alert/confirm) ═══════════════ */
 #appConfirmModal.modal-backdrop{
   z-index:10000 !important;
   align-items:center;
@@ -560,7 +530,7 @@ select[data-custom]{display:none !important}
 
 /* ═══════════════ AUTH ═══════════════ */
 .auth-root{min-height:100vh;display:flex;flex-direction:column;
-  align-items:center;justify-content:flex-start;
+  align-items:center;justify-content:flex-start;  /* ← Top-aligned */
   padding:24px 16px 60px;overflow-y:auto;
   background:
     radial-gradient(900px 500px at 20% 0%, #1a2b45 0%, transparent 55%),
@@ -574,64 +544,108 @@ select[data-custom]{display:none !important}
 .auth-head h1{font-size:1.25rem;margin-top:8px;color:#fff}
 .auth-foot{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);
   text-align:center;font-size:.86rem}
+  
 
-/* ═══════════════ DESKTOP HOVER ═══════════════ */
+
+/* ═══════════════════════════════════════════════════════════
+   DESKTOP HOVER — para sa mouse/trackpad lang
+   ═══════════════════════════════════════════════════════════ */
 @media (hover: hover) and (pointer: fine) {
+
   a:hover{text-decoration:underline}
+
   .toggle-btn:hover{background:var(--blue);color:#fff}
   .box-links li a.adminnav:hover{background:var(--blue);color:#fff;text-decoration:none}
   .sidebar-footer .profile-nav-link:hover{background:var(--blue);color:#fff}
+
   .profile-btn:hover{
     border-color:var(--blue);
     box-shadow:0 0 12px rgba(24,119,242,.45);
   }
   .pd-item:hover{background:rgba(24,119,242,.12);text-decoration:none}
   .pd-item.danger:hover{background:rgba(239,68,68,.12)}
+
   .stat:hover{border-color:var(--blue);transform:translateY(-2px)}
+
   .btn:hover{transform:translateY(-1px);text-decoration:none}
   .btn-blue:hover{background:var(--blue-hover);box-shadow:0 0 12px rgba(24,119,242,.5)}
   .btn-ghost:hover{background:#333;border-color:#555}
+
   tbody tr:hover{background:rgba(24,119,242,.06)}
+
   .settings-row:hover{border-color:rgba(24,119,242,.45)}
+
   .notif-bell:hover{background:var(--blue);color:#fff}
   .notif-item:hover{background:rgba(24,119,242,.08)}
+
   .gs-item:hover{background:rgba(24,119,242,.12)}
 }
 
-/* ═══════════════ TOUCH DEVICES ═══════════════ */
+/* ═══════════════════════════════════════════════════════════
+   TOUCH DEVICES — walang hover, walang tap highlight, walang focus flash
+   ═══════════════════════════════════════════════════════════ */
 @media (hover: none), (pointer: coarse) {
-  *,*:focus,*:active,*:focus-visible,*:-webkit-any-link:focus {
+
+  *,
+  *:focus,
+  *:active,
+  *:focus-visible,
+  *:-webkit-any-link:focus {
     -webkit-tap-highlight-color:transparent !important;
     outline:none !important;
   }
+
   .box-links li a.adminnav:hover,
   .box-links li a.adminnav:focus,
   .box-links li a.adminnav:active {
-    background:transparent;color:#ccc;
+    background:transparent;
+    color:#ccc;
   }
   .box-links li a.adminnav.active{
-    background:var(--blue);color:#fff;
+    background:var(--blue);
+    color:#fff;
   }
-  .toggle-btn:hover,.toggle-btn:focus,.toggle-btn:active {
-    background:transparent;color:#ccc;
+
+  .toggle-btn:hover,
+  .toggle-btn:focus,
+  .toggle-btn:active {
+    background:transparent;
+    color:#ccc;
   }
+
   .sidebar-footer .profile-nav-link:hover,
   .sidebar-footer .profile-nav-link:focus,
   .sidebar-footer .profile-nav-link:active,
   .sidebar-footer .profile-nav-link:focus-visible {
-    background:transparent;color:#ccc;
+    background:transparent;
+    color:#ccc;
   }
-  .profile-btn:hover,.profile-btn:focus,.profile-btn:active {
-    border-color:var(--border);box-shadow:none;
+
+  .profile-btn:hover,
+  .profile-btn:focus,
+  .profile-btn:active {
+    border-color:var(--border);
+    box-shadow:none;
   }
-  .notif-bell:hover,.notif-bell:focus,.notif-bell:active {
-    background:transparent;color:#ccc;
+
+  .notif-bell:hover,
+  .notif-bell:focus,
+  .notif-bell:active {
+    background:transparent;
+    color:#ccc;
   }
-  .mobile-menu-btn:hover,.mobile-menu-btn:focus,.mobile-menu-btn:active {
+
+  .mobile-menu-btn:hover,
+  .mobile-menu-btn:focus,
+  .mobile-menu-btn:active {
     background:transparent;
   }
-  .btn:hover,.btn:focus,.btn:active {
-    transform:none;box-shadow:none;
+
+  .btn:hover,
+  .btn:focus,
+  .btn:active {
+    transform:none;
+    box-shadow:none;
   }
   .btn-blue:hover{background:var(--blue)}
   .btn-green:hover{background:var(--green)}
@@ -639,15 +653,30 @@ select[data-custom]{display:none !important}
   .btn-red:hover{background:var(--red)}
   .btn-purple:hover{background:var(--purple)}
   .btn-ghost:hover{background:transparent;border-color:var(--border)}
-  .stat:hover,.card:hover {
-    transform:none;border-color:var(--border);
+
+  .stat:hover,
+  .card:hover {
+    transform:none;
+    border-color:var(--border);
   }
-  tbody tr:hover,table tbody tr:hover {background:transparent;}
-  .pd-item:hover,.pd-item:focus,.pd-item:active {background:transparent;}
+
+  tbody tr:hover,
+  table tbody tr:hover {
+    background:transparent;
+  }
+
+  .pd-item:hover,
+  .pd-item:focus,
+  .pd-item:active {
+    background:transparent;
+  }
   .pd-item.danger:hover{background:transparent}
+
   .notif-item:hover{background:transparent}
   .notif-item.unread:hover{background:rgba(24,119,242,.05)}
+
   .settings-row:hover{border-color:var(--border)}
+
   .gs-item:hover{background:transparent}
 }
 
@@ -763,6 +792,7 @@ select[data-custom]{display:none !important}
       </ul>
     </nav>
 
+    {# ═══ FIXED BOTTOM: MY PROFILE (Teacher/Student only) ═══ #}
     {% if current_username and current_role in ('Teacher', 'Student') %}
     <div class="sidebar-footer">
       <a class="adminnav profile-nav-link"
@@ -857,21 +887,6 @@ select[data-custom]{display:none !important}
       </div>
     </div>
 
-    {# ═══ FORCE PASSWORD CHANGE BANNER ═══ #}
-    {% if force_password_change %}
-    <div class="force-pw-banner">
-      <span class="fpw-icon">🔒</span>
-      <div class="fpw-text">
-        <b>You're using a temporary password.</b>
-        Please change it now to secure your account.
-      </div>
-      <button type="button" class="fpw-btn"
-              onclick="if(window.openModal){window.openModal('changePasswordModal');}">
-        Change Now →
-      </button>
-    </div>
-    {% endif %}
-
     <div class="flash-wrap">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -890,11 +905,24 @@ select[data-custom]{display:none !important}
 </div>
 
 {% else %}
-{# ==================== AUTH LAYOUT ==================== #}
 <div class="auth-root">
   <div class="auth-wrap">
     <div class="flash-wrap">
       {% with messages = get_flashed_messages(with_categories=true) %}
+          {# ═══ FORCE PASSWORD CHANGE BANNER ═══ #}
+          {% if force_password_change %}
+          <div class="force-pw-banner">
+            <span class="fpw-icon">🔒</span>
+            <div class="fpw-text">
+              <b>You're using a temporary password.</b>
+                Please change it now to secure your account.
+            </div>
+            <button type="button" class="fpw-btn"
+              onclick="window.openModal && window.openModal('accountSettingsModal'); if(window.openModal){setTimeout(function(){window.openModal('changePasswordModal');},200);}">
+                Change Now →
+            </button>
+          </div>
+          {% endif %}
         {% if messages %}
           {% for cat, msg in messages %}
             <div class="flash flash-{% if cat == 'success' %}success{% elif cat == 'warning' %}warning{% else %}error{% endif %}">
@@ -909,6 +937,7 @@ select[data-custom]{display:none !important}
   </div>
 </div>
 {% endif %}
+
 
 <!-- ================= CONFIRM MODAL ================= -->
 <div class="modal-backdrop" id="confirmModal">
@@ -927,7 +956,7 @@ select[data-custom]{display:none !important}
   </div>
 </div>
 
-<!-- ================= APP CONFIRM MODAL ================= -->
+<!-- ================= APP CONFIRM MODAL (custom alert/confirm) ================= -->
 <div class="modal-backdrop" id="appConfirmModal">
   <div class="modal">
     <div class="modal-head">
@@ -995,7 +1024,7 @@ select[data-custom]{display:none !important}
 </div>
 {% endif %}
 
-<!-- ================= EDIT FULL NAME ================= -->
+<!-- ================= EDIT FULL NAME (sub-modal) ================= -->
 {% if current_user_obj and current_role in ('Teacher', 'Student') %}
 <div class="modal-backdrop sub-modal" id="editFullNameModal">
   <div class="modal modal-sm">
@@ -1031,7 +1060,7 @@ select[data-custom]{display:none !important}
   </div>
 </div>
 
-<!-- ================= EDIT USERNAME ================= -->
+<!-- ================= EDIT USERNAME (sub-modal) ================= -->
 <div class="modal-backdrop sub-modal" id="editUsernameModal">
   <div class="modal modal-sm">
     <div class="modal-head">
@@ -1068,7 +1097,7 @@ select[data-custom]{display:none !important}
 </div>
 {% endif %}
 
-<!-- ================= CHANGE PASSWORD MODAL ================= -->
+<!-- ================= CHANGE PASSWORD MODAL (sub-modal) ================= -->
 {% if current_user_obj and current_role in ('Teacher', 'Student') %}
 <div class="modal-backdrop sub-modal" id="changePasswordModal">
   <div class="modal">
@@ -1093,9 +1122,11 @@ select[data-custom]{display:none !important}
           action="{{ url_for('change_password') }}"
           class="form" data-no-ajax>
       <label>Current Password *
-        <input type="password" name="current" required
+        <input type="password" name="current" id="cpCurrentPw" required
                autocomplete="current-password"
-               placeholder="Enter your current password">
+               placeholder="Enter your current password"
+               data-temp-pw="{{ current_temp_password or '' }}"
+               {% if current_temp_password %}value="{{ current_temp_password }}"{% endif %}>
       </label>
       <label>New Password *
         <input type="password" name="new" required minlength="8"
@@ -1128,7 +1159,7 @@ select[data-custom]{display:none !important}
   function getSidebar() { return document.getElementById('sidebarPanel'); }
   function getBackdrop() { return document.getElementById('sidebarBackdrop'); }
 
-  /* ═══ AUTO-DISMISS FLASH ═══ */
+  /* ═══ AUTO-DISMISS FLASH (10 seconds) ═══ */
   var FLASH_DISMISS_MS = 10000;
 
   function autoDismissFlash(el, delayMs) {
@@ -1371,7 +1402,14 @@ select[data-custom]{display:none !important}
           var cpF = document.getElementById('changePasswordForm');
           if (errBox) errBox.style.display = 'none';
           if (okBox) okBox.style.display = 'none';
-          if (cpF) cpF.reset();
+          if (cpF) {
+            cpF.reset();
+            // ✅ Auto-fill current password kung naka-force-change (temp pw mode)
+            var curPw = document.getElementById('cpCurrentPw');
+            if (curPw && curPw.dataset.tempPw) {
+              curPw.value = curPw.dataset.tempPw;
+            }
+          }
         }
       }
 
@@ -1649,15 +1687,26 @@ select[data-custom]{display:none !important}
       var oldFlash = document.querySelector('.flash-wrap');
       if (newFlash && oldFlash) oldFlash.innerHTML = newFlash.innerHTML;
 
+      
       var newContent = doc.querySelector('.parent-panel');
       var oldContent = document.querySelector('.parent-panel');
       if (newContent && oldContent) {
         oldContent.innerHTML = newContent.innerHTML;
+        
+        // ✅ Re-convert custom dropdowns sa bagong content
+        if (window.convertSelects) {
+          window.convertSelects(oldContent);
+        }
+        
+        // ✅ Dispatch event para sa page-specific refresh (e.g. SuperAdmin)
+        document.dispatchEvent(new CustomEvent('pageContentReplaced', {
+          detail: { container: oldContent }
+        }));
       }
-
+      
       attachAutoDismissToFlashes();
-
-      document.querySelectorAll('.modal-backdrop.active').forEach(function (m) {
+      
+      document.querySelectorAll('.modal-backdrop.active').forEach(function(m) {
         m.classList.remove('active');
       });
 
@@ -1680,7 +1729,7 @@ select[data-custom]{display:none !important}
     .catch(function (err) {
       console.error('Form error:', err);
       hideLoadingOverlay();
-      showAlert('Error: ' + err.message, { title: '❌ Error', danger: true });
+      alert('Error: ' + err.message);
     })
     .finally(function () {
       if (submitBtn) {
@@ -1743,7 +1792,7 @@ select[data-custom]{display:none !important}
     });
   }, true);
 
-  /* ═══ PROFILE EDIT FORMS ═══ */
+  /* ═══ PROFILE EDIT FORMS (Full Name / Username) ═══ */
   document.addEventListener('submit', function(ev) {
     var form = ev.target;
     if (!form.classList.contains('profile-edit-form')) return;
@@ -1784,6 +1833,7 @@ select[data-custom]{display:none !important}
           okBox.style.display = 'block';
         }
 
+        // Full name changed
         if (data.new_full_name) {
           var nf = data.new_full_name;
           document.querySelectorAll('.pd-info b').forEach(function(el) {
@@ -1803,6 +1853,7 @@ select[data-custom]{display:none !important}
           if (inp) inp.dataset.default = nf;
         }
 
+        // Username changed
         if (data.new_username) {
           var nu = data.new_username;
           document.querySelectorAll('.pd-info small').forEach(function(el) {
@@ -1827,6 +1878,7 @@ select[data-custom]{display:none !important}
           if (inp2) inp2.dataset.default = nu;
         }
 
+        // Close ONLY the sub-modal (settings remains open)
         setTimeout(function() {
           var backdrop = form.closest('.modal-backdrop');
           if (backdrop) backdrop.classList.remove('active');
@@ -1862,7 +1914,11 @@ select[data-custom]{display:none !important}
     window.openModal('confirmModal');
   };
 
-  /* ═══ APP CONFIRM — custom modal ═══ */
+  /* ═══════════════════════════════════════════════════════════
+     APP CONFIRM — custom modal (kapalit ng native confirm)
+     Usage: await showConfirm('message', {title, okText, danger})
+     Returns: Promise<boolean>
+     ═══════════════════════════════════════════════════════════ */
   window.showConfirm = function (message, opts) {
     opts = opts || {};
     return new Promise(function (resolve) {
@@ -1889,7 +1945,6 @@ select[data-custom]{display:none !important}
         closeBtn.onclick = null;
         dlg.onclick = null;
         document.removeEventListener('keydown', onKey);
-        cancelBtn.style.display = '';
         resolve(result);
       }
 
@@ -1908,7 +1963,7 @@ select[data-custom]{display:none !important}
     });
   };
 
-  /* ═══ APP ALERT — custom modal ═══ */
+  /* ═══ APP ALERT — custom modal (kapalit ng native alert) ═══ */
   window.showAlert = function (message, opts) {
     opts = opts || {};
     return new Promise(function (resolve) {
@@ -2017,7 +2072,7 @@ select[data-custom]{display:none !important}
     copyText(text).then(function () {
       showCopyToast(text);
     }).catch(function () {
-      showAlert('Copy this ID: ' + text, { title: '📋 Copy' });
+      window.prompt('Copy this ID:', text);
     });
   });
 
@@ -2044,8 +2099,14 @@ select[data-custom]{display:none !important}
     }, 2200);
   }
 
-  /* ═══ ZERO-CLEAR ON FOCUS ═══ */
-  document.addEventListener('focusin', function (e) {
+})();
+
+  /* ═══════════════════════════════════════════════════════════
+     ZERO-CLEAR ON FOCUS — para sa number inputs
+     Fix: default na "0" ay hindi na "01" pag nag-type ka
+     Applies to: lahat ng input[type=number] na may value="0"
+     ═══════════════════════════════════════════════════════════ */
+  document.addEventListener('focusin', function(e) {
     var t = e.target;
     if (!t || t.tagName !== 'INPUT') return;
     if (t.type !== 'number') return;
@@ -2054,8 +2115,8 @@ select[data-custom]{display:none !important}
       t.value = '';
     }
   });
-
-  document.addEventListener('focusout', function (e) {
+  
+  document.addEventListener('focusout', function(e) {
     var t = e.target;
     if (!t || t.tagName !== 'INPUT') return;
     if (t.type !== 'number') return;
@@ -2065,12 +2126,14 @@ select[data-custom]{display:none !important}
       }
       delete t.dataset.hadZero;
     }
+    /* Also: strip leading zeros like "01" → "1", "007" → "7" */
     if (t.value && /^0\d+/.test(t.value)) {
       t.value = String(parseInt(t.value, 10));
     }
   });
-
-  document.addEventListener('input', function (e) {
+  
+  /* Live strip: habang nagta-type, tanggalin ang leading zero */
+  document.addEventListener('input', function(e) {
     var t = e.target;
     if (!t || t.tagName !== 'INPUT') return;
     if (t.type !== 'number') return;
@@ -2079,9 +2142,15 @@ select[data-custom]{display:none !important}
       t.value = String(parseInt(t.value, 10));
       try { t.setSelectionRange(pos - 1, pos - 1); } catch (err) {}
     }
-  });
-
-  /* ═══ CUSTOM DROPDOWN — Premium v2 ═══ */
+  }); 
+  /* ═══════════════════════════════════════════════════════════
+     CUSTOM DROPDOWN — Premium v2 (mobile-fixed)
+     Fixes:
+       • Removed trigger.focus() → no ghost-click reopen
+       • Using pointerdown instead of click → reliable sa mobile
+       • Capture phase for outside-click detection
+       • Prevent double-fire with menuOpen flag
+     ═══════════════════════════════════════════════════════════ */
   function convertSelects(root) {
     root = root || document;
     root.querySelectorAll('select[data-custom]:not([data-converted])').forEach(function (sel) {
@@ -2117,6 +2186,7 @@ select[data-custom]{display:none !important}
         div.setAttribute('role', 'option');
         div.textContent = opt.textContent;
 
+        /* Use pointerdown — fires before click, no ghost-click issues */
         div.addEventListener('pointerdown', function (e) {
           e.preventDefault();
           e.stopPropagation();
@@ -2171,6 +2241,7 @@ select[data-custom]{display:none !important}
       }
 
       function doOpen() {
+        // Close other dropdowns
         document.querySelectorAll('.cs-menu.open').forEach(function (m) {
           if (m !== menu) m.classList.remove('open');
         });
@@ -2201,6 +2272,7 @@ select[data-custom]{display:none !important}
         menuOpen = false;
       }
 
+      /* Use pointerdown for trigger (more reliable than click) */
       trigger.addEventListener('pointerdown', function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -2251,13 +2323,16 @@ select[data-custom]{display:none !important}
         }
       });
 
+      /* Assemble DOM */
       sel.parentNode.insertBefore(wrap, sel);
       wrap.appendChild(trigger);
       wrap.appendChild(menu);
       wrap.appendChild(sel);
 
+      /* Sync on external change */
       sel.addEventListener('change', refreshValue);
 
+      /* Expose API */
       sel._csUpdate = refreshValue;
       sel._csOpen = doOpen;
       sel._csClose = doClose;
@@ -2266,7 +2341,7 @@ select[data-custom]{display:none !important}
     });
   }
 
-  /* Outside click for dropdowns */
+  /* ═══ Outside click — close ALL dropdowns (capture phase) ═══ */
   document.addEventListener('pointerdown', function (e) {
     if (e.target.closest('.cs-wrap')) return;
     document.querySelectorAll('.cs-menu.open').forEach(function (m) {
@@ -2278,7 +2353,7 @@ select[data-custom]{display:none !important}
     });
   }, true);
 
-  /* Escape key — close dropdowns */
+  /* ═══ Escape key — close ALL dropdowns ═══ */
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
     document.querySelectorAll('.cs-menu.open').forEach(function (m) {
@@ -2290,14 +2365,12 @@ select[data-custom]{display:none !important}
     });
   });
 
-  /* Auto-convert */
+  /* ═══ Auto-convert ═══ */
   document.addEventListener('DOMContentLoaded', function () {
     convertSelects(document);
   });
 
   window.convertSelects = convertSelects;
-
-})();
 
 /* ═══ GLOBAL BACK BUTTON ═══ */
 window.goBack = function () {
