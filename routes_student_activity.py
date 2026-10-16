@@ -44,6 +44,7 @@ def register(app):
             flash("Already submitted.", "error")
             return redirect(url_for("student_page"))
 
+        # ✅ FIX: Track session + persist changes agad
         if not study.get("has_attempts"):
             if "active_sessions" not in study:
                 study["active_sessions"] = {}
@@ -55,13 +56,22 @@ def register(app):
                 ),
             }
             study["updated_at"] = now_str()
+
             if was_empty:
                 notify(study["teacher_id"], "🔒 Study In Use",
                        f"May student na nagsimula ng '{study['title']}'.",
                        link="/teacher#studies", kind="info")
 
+            # ✅ Force save to MongoDB (kasi GET ito)
+            try:
+                from storage import save_to_mongo
+                save_to_mongo()
+            except Exception as e:
+                print(f"⚠️ student_activity save failed: {e}")
+
         stype = study.get("type", "identification")
 
+        # ✅ FIX: Skip slides na walang laman
         safe_pages = []
         for p in study.get("pages", []):
             sp = {"question": p.get("question", "")}
@@ -74,9 +84,13 @@ def register(app):
         safe_slides = []
         for s in (study.get("slides") or []):
             if isinstance(s, str):
-                safe_slides.append({"text": s})
+                text = s.strip()
+                if text:
+                    safe_slides.append({"text": text})
             elif isinstance(s, dict):
-                safe_slides.append({"text": s.get("text", "")})
+                text = (s.get("text") or "").strip()
+                if text:
+                    safe_slides.append({"text": text})
 
         safe_study = {
             "id": study["id"],
@@ -88,7 +102,7 @@ def register(app):
             "question_timer": int(study.get("question_timer") or 30),
             "max_back": int(study.get("max_back") or 0),
             "mc_options": int(study.get("mc_options") or 0),
-            "total_pages": len(safe_pages),
+            "total_pages": len(safe_pages),  # ✅ Fixed: quiz pages only
             "pages": safe_pages,
             "score": int(study.get("score") or 0),
             "penalty": int(study.get("penalty") or 0),

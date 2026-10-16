@@ -22,8 +22,11 @@ body{
   font-size:14px;line-height:1.55;min-height:100vh;-webkit-font-smoothing:antialiased;
   overflow-x:hidden;
 }
+
+*{
+  -webkit-tap-highlight-color:transparent;
+}
 a{color:var(--blue);text-decoration:none}
-a:hover{text-decoration:underline}
 h1,h2,h3,h4{font-weight:600;letter-spacing:-.01em}
 h1{font-size:1.5rem;color:#fff}
 h2{font-size:1.15rem;margin-bottom:.35rem;color:#fff}
@@ -58,7 +61,6 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
 .toggle-btn{background:transparent;border:none;cursor:pointer;padding:6px;
   border-radius:6px;transition:.15s;display:flex;align-items:center;
   justify-content:center;color:#ccc;flex-shrink:0;}
-.toggle-btn:hover{background:var(--blue);color:#fff}
 .arrow-icon{width:22px;height:22px;transition:transform .3s ease;stroke:currentColor}
 .sidebar.collapsed .arrow-icon{transform:rotate(180deg)}
 
@@ -74,36 +76,11 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
 .box-links li a.adminnav{display:flex;align-items:center;gap:12px;
   padding:10px 13px;color:#ccc;text-decoration:none;border-radius:8px;
   transition:.15s;white-space:nowrap;cursor:pointer;font-size:13.5px;font-weight:500;}
-.box-links li a.adminnav:hover{background:var(--blue);color:#fff;text-decoration:none}
 .box-links li a.adminnav.active{background:var(--blue);color:#fff;font-weight:600}
 
 .icon{width:20px;height:20px;flex-shrink:0;stroke:currentColor;fill:none;
   stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 .sidebar.collapsed .box-links li a.adminnav span{display:none}
-
-/* ═══════════════ MAIN PANEL ═══════════════ */
-.parent-panel{margin-left:var(--sidebar-w);transition:margin-left .3s ease;
-  min-height:100vh;padding:20px 24px 40px;}
-.sidebar.collapsed ~ .parent-panel{margin-left:var(--sidebar-col)}
-
-/* ═══════════════ TOPBAR ═══════════════ */
-.topbar{display:flex;align-items:center;justify-content:space-between;
-  gap:12px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:14px;
-  border-bottom:1px solid var(--border);}
-.topbar-left h1{font-size:1.4rem;color:#fff;margin:0}
-.topbar-left .sub{color:var(--text-dim);font-size:.85rem;margin-top:2px}
-.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative}
-
-.mobile-menu-btn{
-  display:none;
-  background:transparent;border:none;color:#fff;cursor:pointer;
-  padding:8px;border-radius:8px;transition:.15s;flex-shrink:0;
-  align-items:center;justify-content:center;
-}
-.mobile-menu-btn:hover{background:var(--blue)}
-.mobile-menu-btn svg{width:22px;height:22px;stroke:currentColor}
-
-.sidebar-backdrop{display:none}
 
 /* ═══════════════ SIDEBAR FOOTER (My Profile) ═══════════════ */
 .sidebar-footer{
@@ -124,43 +101,43 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
   font-size:13.5px;
   font-weight:500;
   cursor:pointer;
-}
-.sidebar-footer .profile-nav-link:hover{
-  background:var(--blue);
-  color:#fff;
-  text-decoration:none;
+  background:transparent;
 }
 .sidebar-footer .profile-nav-link .icon{
   width:20px;height:20px;flex-shrink:0;
   stroke:currentColor;fill:none;
   stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
 }
-.sidebar-footer .profile-nav-link.active {
-  background: var(--blue);
-  color: #fff;
-  font-weight: 600;
-}
-
-/* Pang PC lang - may mouse lang may hover */
-@media (hover: hover) and (pointer: fine) {
-  .sidebar-footer .profile-nav-link:hover,
-  .sidebar-footer .profile-nav-link.active:hover {
-    background: var(--blue);
-    color: #fff;
-  }
-}
-
-
-/* Collapsed state */
-.sidebar.collapsed .sidebar-footer .profile-nav-link span{
-  display:none;
-}
+.sidebar.collapsed .sidebar-footer .profile-nav-link span{display:none}
 .sidebar.collapsed .sidebar-footer .profile-nav-link{
   justify-content:center;
   padding:10px;
 }
 
-/* ═══════════════ PROFILE DROPDOWN (Edurie-style) ═══════════════ */
+/* ═══════════════ MAIN PANEL ═══════════════ */
+.parent-panel{margin-left:var(--sidebar-w);transition:margin-left .3s ease;
+  min-height:100vh;padding:20px 24px 40px;}
+.sidebar.collapsed ~ .parent-panel{margin-left:var(--sidebar-col)}
+
+/* ═══════════════ TOPBAR ═══════════════ */
+.topbar{display:flex;align-items:center;justify-content:space-between;
+  gap:12px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:14px;
+  border-bottom:1px solid var(--border);}
+.topbar-left h1{font-size:1.4rem;color:#fff;margin:0}
+.topbar-left .sub{color:var(--text-dim);font-size:.85rem;margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:relative}
+
+.mobile-menu-btn{
+  display:none;
+  background:transparent;border:none;color:#fff;cursor:pointer;
+  padding:8px;border-radius:8px;transition:.15s;flex-shrink:0;
+  align-items:center;justify-content:center;
+}
+.mobile-menu-btn svg{width:22px;height:22px;stroke:currentColor}
+
+.sidebar-backdrop{display:none}
+
+/* ═══════════════ PROFILE DROPDOWN ═══════════════ */
 .profile-btn{
   width:38px;height:38px;border-radius:50%;
   background:linear-gradient(135deg,var(--blue),var(--purple));
@@ -168,10 +145,6 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
   font-weight:700;color:#fff;font-size:.95rem;cursor:pointer;
   border:2px solid var(--border);transition:.15s ease;
   text-decoration:none;flex-shrink:0;padding:0;
-}
-.profile-btn:hover{
-  border-color:var(--blue);
-  box-shadow:0 0 12px rgba(24,119,242,.45);
 }
 
 .profile-dropdown{
@@ -232,9 +205,7 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
   border:none;background:transparent;width:100%;text-align:left;
   font-family:inherit;
 }
-.pd-item:hover{background:rgba(24,119,242,.12);text-decoration:none}
 .pd-item.danger{color:#fca5a5}
-.pd-item.danger:hover{background:rgba(239,68,68,.12)}
 .pd-item svg{
   width:18px;height:18px;flex-shrink:0;
   stroke:currentColor;fill:none;
@@ -259,7 +230,6 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
 
 .stat{background:var(--card);border:1px solid var(--border);
   border-radius:var(--radius);padding:14px 16px;transition:.15s;}
-.stat:hover{border-color:var(--blue);transform:translateY(-2px)}
 .stat.clickable{cursor:pointer}
 .stat .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;
   color:var(--text-dim);font-weight:600;}
@@ -270,15 +240,12 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
   border:none;border-radius:6px;padding:9px 16px;font-size:.86rem;
   font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;
   color:#fff;white-space:nowrap;text-decoration:none;}
-.btn:hover{transform:translateY(-1px);text-decoration:none}
 .btn-blue{background:var(--blue)}
-.btn-blue:hover{background:var(--blue-hover);box-shadow:0 0 12px rgba(24,119,242,.5)}
 .btn-green{background:var(--green)}
 .btn-yellow{background:var(--yellow);color:#111}
 .btn-red{background:var(--red)}
 .btn-purple{background:var(--purple)}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
-.btn-ghost:hover{background:#333;border-color:#555}
 .btn-sm{padding:5px 10px;font-size:.76rem;border-radius:5px}
 .btn-block{width:100%}
 .icon-btn{background:transparent;border:none;color:var(--muted);
@@ -306,7 +273,6 @@ thead{background:#232326}
 th{padding:10px 12px;text-align:left;font-size:.7rem;text-transform:uppercase;
   letter-spacing:.06em;color:var(--text-dim);font-weight:700;border-bottom:1px solid var(--border)}
 td{padding:9px 12px;border-bottom:1px solid rgba(58,58,58,.5)}
-tbody tr:hover{background:rgba(24,119,242,.06)}
 tbody tr:last-child td{border-bottom:none}
 .empty{padding:20px;text-align:center;color:var(--text-dim);font-style:italic}
 
@@ -323,6 +289,71 @@ textarea{resize:vertical;min-height:90px}
 input[type=checkbox]{width:auto}
 .row-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .row-inline > *{flex:1;min-width:110px}
+
+/* ═══════════════ CUSTOM DROPDOWN ═══════════════ */
+.cs-wrap{position:relative;user-select:none;width:100%}
+.cs-trigger{
+  width:100%;padding:10px 12px;border-radius:6px;
+  border:1px solid var(--border);background:#151517;color:var(--text);
+  font-size:.9rem;font-family:inherit;text-align:left;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  transition:border-color .15s,box-shadow .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.cs-trigger:hover{border-color:#555}
+.cs-trigger:focus{outline:none;border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(24,119,242,.18)}
+.cs-trigger.open{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(24,119,242,.18);
+}
+.cs-trigger .cs-value{
+  flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.cs-trigger .cs-arrow{
+  width:16px;height:16px;flex-shrink:0;
+  transition:transform .2s ease;
+  stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.cs-trigger.open .cs-arrow{transform:rotate(180deg)}
+.cs-menu{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;box-shadow:0 12px 32px rgba(0,0,0,.65);
+  z-index:1000;max-height:280px;overflow-y:auto;
+  display:none;padding:4px;
+  animation:csSlide .15s ease;
+  scrollbar-width:thin;
+}
+.cs-menu.up{top:auto;bottom:calc(100% + 4px);
+  animation:csSlideUp .15s ease}
+.cs-menu.open{display:block}
+@keyframes csSlide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes csSlideUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.cs-menu::-webkit-scrollbar{width:6px}
+.cs-menu::-webkit-scrollbar-track{background:transparent}
+.cs-menu::-webkit-scrollbar-thumb{
+  background:rgba(24,119,242,.4);border-radius:10px;
+}
+.cs-option{
+  padding:9px 12px;border-radius:6px;cursor:pointer;
+  font-size:.88rem;color:var(--text);transition:background .1s;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.cs-option:hover,
+.cs-option.focused{background:rgba(24,119,242,.14)}
+.cs-option.selected{
+  background:rgba(24,119,242,.18);
+  color:#fff;font-weight:600;
+}
+.cs-option.selected::after{
+  content:'✓';color:var(--blue-hover);
+  font-weight:700;flex-shrink:0;
+}
+select[data-custom]{display:none !important}
 
 /* ═══════════════ FLASH ═══════════════ */
 .flash-wrap{margin-bottom:14px;display:flex;flex-direction:column;gap:8px}
@@ -343,6 +374,47 @@ input[type=checkbox]{width:auto}
   to{opacity:0;transform:translateY(-8px);max-height:0;padding:0;margin:0;overflow:hidden;}
 }
 
+/* ═══════════════ FORCE PASSWORD BANNER ═══════════════ */
+.force-pw-banner{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding:12px 16px;margin:0 0 16px;
+  background:linear-gradient(135deg,rgba(234,179,8,.15),rgba(239,68,68,.1));
+  border:1px solid rgba(234,179,8,.5);
+  border-radius:8px;
+  color:#fef3c7;
+  font-size:.88rem;
+  animation:fpwSlide .3s ease;
+}
+@keyframes fpwSlide{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.force-pw-banner .fpw-icon{
+  font-size:1.5rem;flex-shrink:0;
+}
+.force-pw-banner .fpw-text{
+  flex:1;min-width:200px;line-height:1.5;
+}
+.force-pw-banner .fpw-text b{color:#fff;}
+.force-pw-banner .fpw-btn{
+  background:var(--yellow);color:#111;
+  padding:7px 14px;border-radius:6px;
+  font-weight:700;font-size:.82rem;
+  border:none;cursor:pointer;font-family:inherit;
+  white-space:nowrap;flex-shrink:0;
+}
+.force-pw-banner .fpw-btn:hover{background:#fbbf24;}
+
+@media(max-width:600px){
+  .force-pw-banner{padding:10px 12px;gap:8px;}
+  .force-pw-banner .fpw-icon{font-size:1.2rem;}
+  .force-pw-banner .fpw-text{font-size:.82rem;min-width:0;}
+  .force-pw-banner .fpw-btn{
+    padding:6px 10px;font-size:.78rem;
+    width:100%;text-align:center;
+  }
+}
+
 /* ═══════════════ MODALS ═══════════════ */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);
   display:none;align-items:flex-start;justify-content:center;
@@ -359,15 +431,27 @@ input[type=checkbox]{width:auto}
 .modal-head h3{margin:0;color:#fff}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
 
-/* ═══════════════ SUB-MODAL STACK ═══════════════ */
 .modal-backdrop.sub-modal{
-  z-index: 9999 !important;
+  z-index:9999 !important;
   background:rgba(0,0,0,.6);
   backdrop-filter:blur(2px);
 }
-/* FIX: Force sub-modal on top */
 
-
+/* ═══════════════ APP CONFIRM MODAL ═══════════════ */
+#appConfirmModal.modal-backdrop{
+  z-index:10000 !important;
+  align-items:center;
+}
+#appConfirmModal .modal{
+  max-width:420px;
+}
+#appConfirmModal #appConfirmMessage{
+  margin:0;
+  line-height:1.65;
+  color:var(--text);
+  white-space:pre-wrap;
+  word-break:break-word;
+}
 
 /* ═══════════════ SETTINGS LAYOUT ═══════════════ */
 .settings-profile{
@@ -392,7 +476,6 @@ input[type=checkbox]{width:auto}
   background:var(--bg-2);border:1px solid var(--border);
   transition:.15s;
 }
-.settings-row:hover{border-color:rgba(24,119,242,.45)}
 .settings-row-label{flex:1;min-width:0}
 .settings-row-label > label{
   display:block;font-size:.68rem;text-transform:uppercase;
@@ -408,7 +491,6 @@ input[type=checkbox]{width:auto}
   margin-top:3px;line-height:1.4;
 }
 
-/* Feedback boxes for sub-modals */
 .modal-feedback{
   display:none;padding:10px 14px;border-radius:8px;
   font-size:.86rem;font-weight:500;margin-bottom:12px;
@@ -426,19 +508,6 @@ input[type=checkbox]{width:auto}
 .content-section{display:none;animation:fadeIn .3s ease}
 .content-section.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-
-/* ═══════════════ LEADERBOARD ═══════════════ */
-.lb-row{display:flex;align-items:center;gap:12px;padding:10px 14px;
-  border-radius:8px;border:1px solid var(--border);background:#242428;margin-bottom:6px}
-.lb-row.top1{background:linear-gradient(90deg,rgba(251,191,36,.15),rgba(45,45,48,.4));
-  border-color:rgba(251,191,36,.4)}
-.lb-row.top2{background:linear-gradient(90deg,rgba(226,232,240,.12),rgba(45,45,48,.4));
-  border-color:rgba(226,232,240,.3)}
-.lb-row.top3{background:linear-gradient(90deg,rgba(217,119,6,.15),rgba(45,45,48,.4));
-  border-color:rgba(217,119,6,.4)}
-.lb-rank{font-weight:800;font-size:.95rem;width:2rem;text-align:center;color:var(--text-dim)}
-.lb-name{flex:1;font-weight:600}
-.lb-pts{font-weight:700;color:#86efac;font-variant-numeric:tabular-nums}
 
 /* ═══════════════ TIMER / STUDY ═══════════════ */
 .study-text{white-space:pre-wrap;background:#151517;border:1px solid var(--border);
@@ -466,7 +535,6 @@ input[type=checkbox]{width:auto}
 .notif-bell{background:transparent;border:none;cursor:pointer;position:relative;
   padding:6px;border-radius:8px;color:#ccc;transition:.15s;
   display:inline-flex;align-items:center;justify-content:center;}
-.notif-bell:hover{background:var(--blue);color:#fff}
 .notif-dot{position:absolute;top:4px;right:4px;width:10px;height:10px;
   background:#ef4444;border-radius:50%;border:2px solid var(--sidebar-bg);
   animation:pulse 1.5s infinite;}
@@ -485,7 +553,6 @@ input[type=checkbox]{width:auto}
 .notif-list{overflow-y:auto;flex:1}
 .notif-item{padding:12px 16px;border-bottom:1px solid var(--border);
   cursor:pointer;transition:.15s;}
-.notif-item:hover{background:rgba(24,119,242,.08)}
 .notif-item.unread{background:rgba(24,119,242,.05);border-left:3px solid var(--blue);}
 .notif-item b{color:#fff;display:block;margin-bottom:2px;font-size:.85rem}
 .notif-item p{color:var(--muted);font-size:.78rem;margin:0}
@@ -493,12 +560,13 @@ input[type=checkbox]{width:auto}
 
 /* ═══════════════ AUTH ═══════════════ */
 .auth-root{min-height:100vh;display:flex;flex-direction:column;
-  align-items:center;padding:24px 16px;overflow-y:auto;
+  align-items:center;justify-content:flex-start;
+  padding:24px 16px 60px;overflow-y:auto;
   background:
     radial-gradient(900px 500px at 20% 0%, #1a2b45 0%, transparent 55%),
     radial-gradient(700px 400px at 80% 100%, #2a1c45 0%, transparent 55%),
     var(--bg);}
-.auth-wrap{width:100%;max-width:440px;margin:auto 0}
+.auth-wrap{width:100%;max-width:440px;margin:0;padding-top:20px;}
 .auth-card{width:100%;background:var(--card);border:1px solid var(--border);
   border-radius:12px;padding:32px 28px;box-shadow:0 20px 50px rgba(0,0,0,.5);}
 .auth-head{text-align:center;margin-bottom:22px}
@@ -507,7 +575,83 @@ input[type=checkbox]{width:auto}
 .auth-foot{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);
   text-align:center;font-size:.86rem}
 
-/* ═══════════════ MOBILE ═══════════════ */
+/* ═══════════════ DESKTOP HOVER ═══════════════ */
+@media (hover: hover) and (pointer: fine) {
+  a:hover{text-decoration:underline}
+  .toggle-btn:hover{background:var(--blue);color:#fff}
+  .box-links li a.adminnav:hover{background:var(--blue);color:#fff;text-decoration:none}
+  .sidebar-footer .profile-nav-link:hover{background:var(--blue);color:#fff}
+  .profile-btn:hover{
+    border-color:var(--blue);
+    box-shadow:0 0 12px rgba(24,119,242,.45);
+  }
+  .pd-item:hover{background:rgba(24,119,242,.12);text-decoration:none}
+  .pd-item.danger:hover{background:rgba(239,68,68,.12)}
+  .stat:hover{border-color:var(--blue);transform:translateY(-2px)}
+  .btn:hover{transform:translateY(-1px);text-decoration:none}
+  .btn-blue:hover{background:var(--blue-hover);box-shadow:0 0 12px rgba(24,119,242,.5)}
+  .btn-ghost:hover{background:#333;border-color:#555}
+  tbody tr:hover{background:rgba(24,119,242,.06)}
+  .settings-row:hover{border-color:rgba(24,119,242,.45)}
+  .notif-bell:hover{background:var(--blue);color:#fff}
+  .notif-item:hover{background:rgba(24,119,242,.08)}
+  .gs-item:hover{background:rgba(24,119,242,.12)}
+}
+
+/* ═══════════════ TOUCH DEVICES ═══════════════ */
+@media (hover: none), (pointer: coarse) {
+  *,*:focus,*:active,*:focus-visible,*:-webkit-any-link:focus {
+    -webkit-tap-highlight-color:transparent !important;
+    outline:none !important;
+  }
+  .box-links li a.adminnav:hover,
+  .box-links li a.adminnav:focus,
+  .box-links li a.adminnav:active {
+    background:transparent;color:#ccc;
+  }
+  .box-links li a.adminnav.active{
+    background:var(--blue);color:#fff;
+  }
+  .toggle-btn:hover,.toggle-btn:focus,.toggle-btn:active {
+    background:transparent;color:#ccc;
+  }
+  .sidebar-footer .profile-nav-link:hover,
+  .sidebar-footer .profile-nav-link:focus,
+  .sidebar-footer .profile-nav-link:active,
+  .sidebar-footer .profile-nav-link:focus-visible {
+    background:transparent;color:#ccc;
+  }
+  .profile-btn:hover,.profile-btn:focus,.profile-btn:active {
+    border-color:var(--border);box-shadow:none;
+  }
+  .notif-bell:hover,.notif-bell:focus,.notif-bell:active {
+    background:transparent;color:#ccc;
+  }
+  .mobile-menu-btn:hover,.mobile-menu-btn:focus,.mobile-menu-btn:active {
+    background:transparent;
+  }
+  .btn:hover,.btn:focus,.btn:active {
+    transform:none;box-shadow:none;
+  }
+  .btn-blue:hover{background:var(--blue)}
+  .btn-green:hover{background:var(--green)}
+  .btn-yellow:hover{background:var(--yellow)}
+  .btn-red:hover{background:var(--red)}
+  .btn-purple:hover{background:var(--purple)}
+  .btn-ghost:hover{background:transparent;border-color:var(--border)}
+  .stat:hover,.card:hover {
+    transform:none;border-color:var(--border);
+  }
+  tbody tr:hover,table tbody tr:hover {background:transparent;}
+  .pd-item:hover,.pd-item:focus,.pd-item:active {background:transparent;}
+  .pd-item.danger:hover{background:transparent}
+  .notif-item:hover{background:transparent}
+  .notif-item.unread:hover{background:rgba(24,119,242,.05)}
+  .settings-row:hover{border-color:var(--border)}
+  .gs-item:hover{background:transparent}
+}
+
+/* ═══════════════ MOBILE LAYOUT ═══════════════ */
 @media(max-width:768px){
   .sidebar{
     width:270px;
@@ -556,18 +700,6 @@ input[type=checkbox]{width:auto}
     max-width:340px;
     margin-left:auto;
   }
-  .sidebar-footer .profile-nav-link.active:{
-    background: var(--blue) !important;
-    color: #fff !important;
-    opacity: 0.9;
-  }
-  .box-links li a.adminnav.active{background:var(--blue);color:#fff;font-weight:600}
-  
-  .sidebar-footer .profile-nav-link {
-    -webkit-tap-highlight-color: transparent; /* tanggalin yung gray flash sa Android */
-    transition: background 0.2s ease;
-  }
-
 
   .flash-wrap{margin:14px 14px 0}
   .content-section{padding:0 14px}
@@ -631,8 +763,6 @@ input[type=checkbox]{width:auto}
       </ul>
     </nav>
 
-
-    {# ═══ FIXED BOTTOM: MY PROFILE (Teacher/Student only) ═══ #}
     {% if current_username and current_role in ('Teacher', 'Student') %}
     <div class="sidebar-footer">
       <a class="adminnav profile-nav-link"
@@ -683,7 +813,6 @@ input[type=checkbox]{width:auto}
           {{ current_username[0]|upper if current_username else '?' }}
         </button>
 
-        <!-- ═══ PROFILE DROPDOWN (Edurie-style) ═══ -->
         <div class="profile-dropdown" id="profileDropdown">
           <div class="pd-header">
             <div class="pd-avatar">{{ current_username[0]|upper if current_username else '?' }}</div>
@@ -728,6 +857,21 @@ input[type=checkbox]{width:auto}
       </div>
     </div>
 
+    {# ═══ FORCE PASSWORD CHANGE BANNER ═══ #}
+    {% if force_password_change %}
+    <div class="force-pw-banner">
+      <span class="fpw-icon">🔒</span>
+      <div class="fpw-text">
+        <b>You're using a temporary password.</b>
+        Please change it now to secure your account.
+      </div>
+      <button type="button" class="fpw-btn"
+              onclick="if(window.openModal){window.openModal('changePasswordModal');}">
+        Change Now →
+      </button>
+    </div>
+    {% endif %}
+
     <div class="flash-wrap">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -746,6 +890,7 @@ input[type=checkbox]{width:auto}
 </div>
 
 {% else %}
+{# ==================== AUTH LAYOUT ==================== #}
 <div class="auth-root">
   <div class="auth-wrap">
     <div class="flash-wrap">
@@ -782,7 +927,22 @@ input[type=checkbox]{width:auto}
   </div>
 </div>
 
-<!-- ================= ACCOUNT SETTINGS MODAL (z-1000) ================= -->
+<!-- ================= APP CONFIRM MODAL ================= -->
+<div class="modal-backdrop" id="appConfirmModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="appConfirmTitle">⚠️ Confirm</h3>
+      <button class="icon-btn" type="button" id="appConfirmClose">×</button>
+    </div>
+    <p id="appConfirmMessage"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="appConfirmCancel">Cancel</button>
+      <button type="button" class="btn btn-red" id="appConfirmOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= ACCOUNT SETTINGS MODAL ================= -->
 {% if current_user_obj and current_role in ('Teacher', 'Student') %}
 <div class="modal-backdrop" id="accountSettingsModal">
   <div class="modal modal-sm">
@@ -791,7 +951,6 @@ input[type=checkbox]{width:auto}
       <button class="icon-btn" type="button" data-close>×</button>
     </div>
 
-    <!-- Profile header -->
     <div class="settings-profile">
       <div class="pd-avatar">{{ current_username[0]|upper if current_username else '?' }}</div>
       <div class="settings-profile-info">
@@ -801,10 +960,7 @@ input[type=checkbox]{width:auto}
       </div>
     </div>
 
-    <!-- Rows -->
     <div class="settings-rows">
-
-      <!-- Full Name -->
       <div class="settings-row">
         <div class="settings-row-label">
           <label>Full Name</label>
@@ -815,7 +971,6 @@ input[type=checkbox]{width:auto}
                 data-open="editFullNameModal">Edit</button>
       </div>
 
-      <!-- Username -->
       <div class="settings-row">
         <div class="settings-row-label">
           <label>Username</label>
@@ -826,7 +981,6 @@ input[type=checkbox]{width:auto}
                 data-open="editUsernameModal">Change</button>
       </div>
 
-      <!-- Password -->
       <div class="settings-row">
         <div class="settings-row-label">
           <label>Password</label>
@@ -836,13 +990,12 @@ input[type=checkbox]{width:auto}
         <button type="button" class="btn btn-yellow btn-sm"
                 data-open="changePasswordModal">Change</button>
       </div>
-
     </div>
   </div>
 </div>
 {% endif %}
 
-<!-- ================= EDIT FULL NAME (sub-modal z-1100) ================= -->
+<!-- ================= EDIT FULL NAME ================= -->
 {% if current_user_obj and current_role in ('Teacher', 'Student') %}
 <div class="modal-backdrop sub-modal" id="editFullNameModal">
   <div class="modal modal-sm">
@@ -878,7 +1031,7 @@ input[type=checkbox]{width:auto}
   </div>
 </div>
 
-<!-- ================= EDIT USERNAME (sub-modal z-1100) ================= -->
+<!-- ================= EDIT USERNAME ================= -->
 <div class="modal-backdrop sub-modal" id="editUsernameModal">
   <div class="modal modal-sm">
     <div class="modal-head">
@@ -915,7 +1068,7 @@ input[type=checkbox]{width:auto}
 </div>
 {% endif %}
 
-<!-- ================= CHANGE PASSWORD MODAL (sub-modal z-1100) ================= -->
+<!-- ================= CHANGE PASSWORD MODAL ================= -->
 {% if current_user_obj and current_role in ('Teacher', 'Student') %}
 <div class="modal-backdrop sub-modal" id="changePasswordModal">
   <div class="modal">
@@ -975,7 +1128,7 @@ input[type=checkbox]{width:auto}
   function getSidebar() { return document.getElementById('sidebarPanel'); }
   function getBackdrop() { return document.getElementById('sidebarBackdrop'); }
 
-  /* ═══ AUTO-DISMISS FLASH (10 seconds) ═══ */
+  /* ═══ AUTO-DISMISS FLASH ═══ */
   var FLASH_DISMISS_MS = 10000;
 
   function autoDismissFlash(el, delayMs) {
@@ -1045,7 +1198,6 @@ input[type=checkbox]{width:auto}
   /* ═══ GLOBAL CLICK HANDLER ═══ */
   document.addEventListener('click', function (e) {
 
-    /* ─── 1. Profile button ─── */
     if (e.target.closest('#profileBtn')) {
       e.preventDefault();
       e.stopPropagation();
@@ -1053,7 +1205,6 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 2. Settings button inside dropdown ─── */
     if (e.target.closest('#pdSettingsBtn')) {
       e.preventDefault();
       closeProfileDropdown();
@@ -1061,7 +1212,6 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 3. Click outside dropdown → close ─── */
     var dd = document.getElementById('profileDropdown');
     if (dd && dd.classList.contains('active')) {
       if (!e.target.closest('#profileDropdown') && !e.target.closest('#profileBtn')) {
@@ -1069,7 +1219,6 @@ input[type=checkbox]{width:auto}
       }
     }
 
-    /* ─── 4. Burger button ─── */
     if (e.target.closest('#mobileMenuBtn')) {
       e.preventDefault();
       e.stopPropagation();
@@ -1082,13 +1231,11 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 5. Sidebar backdrop ─── */
     if (e.target.closest('#sidebarBackdrop')) {
       closeMobileSidebar();
       return;
     }
 
-    /* ─── 6. Desktop toggle ─── */
     if (e.target.closest('#toggleBtn')) {
       e.preventDefault();
       var sidebar = getSidebar();
@@ -1101,7 +1248,6 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 7. Notification bell ─── */
     if (e.target.closest('#notifBell')) {
       e.preventDefault();
       var notifPanel = document.getElementById('notifPanel');
@@ -1116,7 +1262,6 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 8. Close notification ─── */
     if (e.target.closest('#closeNotifBtn')) {
       e.preventDefault();
       var np = document.getElementById('notifPanel');
@@ -1124,14 +1269,12 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 9. Mark all read ─── */
     if (e.target.closest('#markAllReadBtn')) {
       e.preventDefault();
       markAllRead();
       return;
     }
 
-    /* ─── 10. Clickable stats ─── */
     var statCard = e.target.closest('.stat.clickable');
     if (statCard) {
       var target = statCard.getAttribute('data-goto');
@@ -1140,7 +1283,6 @@ input[type=checkbox]{width:auto}
       return;
     }
 
-    /* ─── 11. Close notif panel on outside click ─── */
     var notifPanel = document.getElementById('notifPanel');
     if (notifPanel && notifPanel.classList.contains('active')) {
       if (!e.target.closest('#notifPanel') && !e.target.closest('#notifBell')) {
@@ -1217,15 +1359,12 @@ input[type=checkbox]{width:auto}
       var modalEl = document.getElementById(modalId);
 
       if (modalEl) {
-        /* Hide all feedback boxes */
         modalEl.querySelectorAll('.modal-feedback').forEach(function (b) {
           b.style.display = 'none';
         });
-        /* Reset inputs with data-default */
         modalEl.querySelectorAll('input[name="value"][data-default]').forEach(function (inp) {
           inp.value = inp.dataset.default;
         });
-        /* Reset change-password form + boxes */
         if (modalId === 'changePasswordModal') {
           var errBox = document.getElementById('cpErrorBox');
           var okBox = document.getElementById('cpSuccessBox');
@@ -1541,7 +1680,7 @@ input[type=checkbox]{width:auto}
     .catch(function (err) {
       console.error('Form error:', err);
       hideLoadingOverlay();
-      alert('Error: ' + err.message);
+      showAlert('Error: ' + err.message, { title: '❌ Error', danger: true });
     })
     .finally(function () {
       if (submitBtn) {
@@ -1604,141 +1743,114 @@ input[type=checkbox]{width:auto}
     });
   }, true);
 
-  /* ═══ PROFILE EDIT FORMS (Full Name / Username) ═══ */
-
+  /* ═══ PROFILE EDIT FORMS ═══ */
   document.addEventListener('submit', function(ev) {
     var form = ev.target;
     if (!form.classList.contains('profile-edit-form')) return;
     ev.preventDefault();
     ev.stopPropagation();
-    
+
     var modalEl = form.closest('.modal');
     var errBox = modalEl.querySelector('.profile-error');
     var okBox = modalEl.querySelector('.profile-success');
     var submitBtn = form.querySelector('button[type="submit"]');
-    
+
     if (errBox) errBox.style.display = 'none';
     if (okBox) okBox.style.display = 'none';
-    
+
     var origText = submitBtn ? submitBtn.textContent : '';
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Saving…';
     }
-    
+
     var fd = new FormData(form);
     fd.append('_ajax', '1');
-    
+
     fetch(form.action, {
-        method: 'POST',
-        body: fd,
-        credentials: 'same-origin',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-      })
-      .then(function(r) {
-        return r.json().then(function(j) { return { status: r.status, json: j }; });
-      })
-      .then(function(res) {
-        var data = res.json || {};
-        if (res.status >= 200 && res.status < 300 && data.ok) {
-          /* ─── SUCCESS ─── */
-          if (okBox) {
-            okBox.textContent = '✅ ' + (data.message || 'Updated successfully!');
-            okBox.style.display = 'block';
-          }
-          
-          /* ─── UPDATE UI IN-PLACE (walang reload) ─── */
-          
-          // Full name changed
-          if (data.new_full_name) {
-            var nf = data.new_full_name;
-            
-            // Profile dropdown (base.html topbar)
-            document.querySelectorAll('.pd-info b').forEach(function(el) {
-              el.textContent = nf;
-            });
-            
-            // Settings modal header
-            document.querySelectorAll('.settings-profile-info b').forEach(function(el) {
-              el.textContent = nf;
-            });
-            
-            // Settings row value
-            document.querySelectorAll('.settings-row').forEach(function(row) {
-              var lbl = row.querySelector('.settings-row-label > label');
-              if (lbl && lbl.textContent.trim() === 'Full Name') {
-                var p = row.querySelector('.settings-row-label > p');
-                if (p) p.textContent = nf;
-              }
-            });
-            
-            // Update data-default ng input para sa susunod na open
-            var inp = form.querySelector('input[name="value"]');
-            if (inp) inp.dataset.default = nf;
-          }
-          
-          // Username changed
-          if (data.new_username) {
-            var nu = data.new_username;
-            
-            // Profile dropdown small @username
-            document.querySelectorAll('.pd-info small').forEach(function(el) {
-              el.textContent = '@' + nu;
-            });
-            
-            // Settings modal header small @username
-            document.querySelectorAll('.settings-profile-info small').forEach(function(el) {
-              el.textContent = '@' + nu;
-            });
-            
-            // Settings row value
-            document.querySelectorAll('.settings-row').forEach(function(row) {
-              var lbl = row.querySelector('.settings-row-label > label');
-              if (lbl && lbl.textContent.trim() === 'Username') {
-                var p = row.querySelector('.settings-row-label > p');
-                if (p) p.textContent = '@' + nu;
-              }
-            });
-            
-            // Profile button initial (topbar)
-            var pb = document.getElementById('profileBtn');
-            if (pb) pb.textContent = nu.charAt(0).toUpperCase();
-            
-            // Settings avatar initial
-            document.querySelectorAll('.settings-profile .pd-avatar').forEach(function(el) {
-              el.textContent = nu.charAt(0).toUpperCase();
-            });
-            
-            // Update data-default
-            var inp2 = form.querySelector('input[name="value"]');
-            if (inp2) inp2.dataset.default = nu;
-          }
-          
-          // Close ONLY the sub-modal (settings remains open ✅)
-          setTimeout(function() {
-            var backdrop = form.closest('.modal-backdrop');
-            if (backdrop) backdrop.classList.remove('active');
-          }, 1100);
-          
-        } else {
-          if (errBox) {
-            errBox.textContent = '❌ ' + (data.error || 'Something went wrong.');
-            errBox.style.display = 'block';
-          }
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function(r) {
+      return r.json().then(function(j) { return { status: r.status, json: j }; });
+    })
+    .then(function(res) {
+      var data = res.json || {};
+      if (res.status >= 200 && res.status < 300 && data.ok) {
+        if (okBox) {
+          okBox.textContent = '✅ ' + (data.message || 'Updated successfully!');
+          okBox.style.display = 'block';
         }
-      })
-      .catch(function(err) {
+
+        if (data.new_full_name) {
+          var nf = data.new_full_name;
+          document.querySelectorAll('.pd-info b').forEach(function(el) {
+            el.textContent = nf;
+          });
+          document.querySelectorAll('.settings-profile-info b').forEach(function(el) {
+            el.textContent = nf;
+          });
+          document.querySelectorAll('.settings-row').forEach(function(row) {
+            var lbl = row.querySelector('.settings-row-label > label');
+            if (lbl && lbl.textContent.trim() === 'Full Name') {
+              var p = row.querySelector('.settings-row-label > p');
+              if (p) p.textContent = nf;
+            }
+          });
+          var inp = form.querySelector('input[name="value"]');
+          if (inp) inp.dataset.default = nf;
+        }
+
+        if (data.new_username) {
+          var nu = data.new_username;
+          document.querySelectorAll('.pd-info small').forEach(function(el) {
+            el.textContent = '@' + nu;
+          });
+          document.querySelectorAll('.settings-profile-info small').forEach(function(el) {
+            el.textContent = '@' + nu;
+          });
+          document.querySelectorAll('.settings-row').forEach(function(row) {
+            var lbl = row.querySelector('.settings-row-label > label');
+            if (lbl && lbl.textContent.trim() === 'Username') {
+              var p = row.querySelector('.settings-row-label > p');
+              if (p) p.textContent = '@' + nu;
+            }
+          });
+          var pb = document.getElementById('profileBtn');
+          if (pb) pb.textContent = nu.charAt(0).toUpperCase();
+          document.querySelectorAll('.settings-profile .pd-avatar').forEach(function(el) {
+            el.textContent = nu.charAt(0).toUpperCase();
+          });
+          var inp2 = form.querySelector('input[name="value"]');
+          if (inp2) inp2.dataset.default = nu;
+        }
+
+        setTimeout(function() {
+          var backdrop = form.closest('.modal-backdrop');
+          if (backdrop) backdrop.classList.remove('active');
+        }, 1100);
+
+      } else {
         if (errBox) {
-          errBox.textContent = '❌ Network error: ' + err.message;
+          errBox.textContent = '❌ ' + (data.error || 'Something went wrong.');
           errBox.style.display = 'block';
         }
-      })
-      .finally(function() {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.textContent = origText;
-        }
-      });
+      }
+    })
+    .catch(function(err) {
+      if (errBox) {
+        errBox.textContent = '❌ Network error: ' + err.message;
+        errBox.style.display = 'block';
+      }
+    })
+    .finally(function() {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = origText;
+      }
+    });
   }, true);
 
   /* ═══ CONFIRM DIALOG ═══ */
@@ -1748,6 +1860,94 @@ input[type=checkbox]{width:auto}
     if (form) form.action = action;
     if (msg) msg.textContent = message || 'Are you sure you want to continue?';
     window.openModal('confirmModal');
+  };
+
+  /* ═══ APP CONFIRM — custom modal ═══ */
+  window.showConfirm = function (message, opts) {
+    opts = opts || {};
+    return new Promise(function (resolve) {
+      var dlg = document.getElementById('appConfirmModal');
+      if (!dlg) { resolve(window.confirm(message)); return; }
+
+      var title = document.getElementById('appConfirmTitle');
+      var msg = document.getElementById('appConfirmMessage');
+      var okBtn = document.getElementById('appConfirmOk');
+      var cancelBtn = document.getElementById('appConfirmCancel');
+      var closeBtn = document.getElementById('appConfirmClose');
+
+      title.textContent = opts.title || '⚠️ Confirm';
+      msg.textContent = message;
+      okBtn.textContent = opts.okText || 'OK';
+      okBtn.className = 'btn ' + (opts.danger === false ? 'btn-blue' : 'btn-red');
+      cancelBtn.textContent = opts.cancelText || 'Cancel';
+      cancelBtn.style.display = '';
+
+      function close(result) {
+        dlg.classList.remove('active');
+        okBtn.onclick = null;
+        cancelBtn.onclick = null;
+        closeBtn.onclick = null;
+        dlg.onclick = null;
+        document.removeEventListener('keydown', onKey);
+        cancelBtn.style.display = '';
+        resolve(result);
+      }
+
+      function onKey(e) {
+        if (e.key === 'Escape') close(false);
+        else if (e.key === 'Enter') close(true);
+      }
+
+      okBtn.onclick = function () { close(true); };
+      cancelBtn.onclick = function () { close(false); };
+      closeBtn.onclick = function () { close(false); };
+      dlg.onclick = function (e) { if (e.target === dlg) close(false); };
+      document.addEventListener('keydown', onKey);
+
+      dlg.classList.add('active');
+    });
+  };
+
+  /* ═══ APP ALERT — custom modal ═══ */
+  window.showAlert = function (message, opts) {
+    opts = opts || {};
+    return new Promise(function (resolve) {
+      var dlg = document.getElementById('appConfirmModal');
+      if (!dlg) { window.alert(message); resolve(); return; }
+
+      var title = document.getElementById('appConfirmTitle');
+      var msg = document.getElementById('appConfirmMessage');
+      var okBtn = document.getElementById('appConfirmOk');
+      var cancelBtn = document.getElementById('appConfirmCancel');
+      var closeBtn = document.getElementById('appConfirmClose');
+
+      title.textContent = opts.title || 'ℹ️ Notice';
+      msg.textContent = message;
+      okBtn.textContent = opts.okText || 'OK';
+      okBtn.className = 'btn ' + (opts.danger === true ? 'btn-red' : 'btn-blue');
+      cancelBtn.style.display = 'none';
+
+      function close() {
+        dlg.classList.remove('active');
+        okBtn.onclick = null;
+        closeBtn.onclick = null;
+        dlg.onclick = null;
+        cancelBtn.style.display = '';
+        document.removeEventListener('keydown', onKey);
+        resolve();
+      }
+
+      function onKey(e) {
+        if (e.key === 'Escape' || e.key === 'Enter') close();
+      }
+
+      okBtn.onclick = close;
+      closeBtn.onclick = close;
+      dlg.onclick = function (e) { if (e.target === dlg) close(); };
+      document.addEventListener('keydown', onKey);
+
+      dlg.classList.add('active');
+    });
   };
 
   /* ═══ GLOBAL SEARCH ═══ */
@@ -1817,7 +2017,7 @@ input[type=checkbox]{width:auto}
     copyText(text).then(function () {
       showCopyToast(text);
     }).catch(function () {
-      window.prompt('Copy this ID:', text);
+      showAlert('Copy this ID: ' + text, { title: '📋 Copy' });
     });
   });
 
@@ -1843,6 +2043,259 @@ input[type=checkbox]{width:auto}
       toast.style.transform = 'translateX(-50%) translateY(20px)';
     }, 2200);
   }
+
+  /* ═══ ZERO-CLEAR ON FOCUS ═══ */
+  document.addEventListener('focusin', function (e) {
+    var t = e.target;
+    if (!t || t.tagName !== 'INPUT') return;
+    if (t.type !== 'number') return;
+    if (t.value === '0') {
+      t.dataset.hadZero = '1';
+      t.value = '';
+    }
+  });
+
+  document.addEventListener('focusout', function (e) {
+    var t = e.target;
+    if (!t || t.tagName !== 'INPUT') return;
+    if (t.type !== 'number') return;
+    if (t.dataset.hadZero === '1') {
+      if (t.value === '' || t.value === null) {
+        t.value = '0';
+      }
+      delete t.dataset.hadZero;
+    }
+    if (t.value && /^0\d+/.test(t.value)) {
+      t.value = String(parseInt(t.value, 10));
+    }
+  });
+
+  document.addEventListener('input', function (e) {
+    var t = e.target;
+    if (!t || t.tagName !== 'INPUT') return;
+    if (t.type !== 'number') return;
+    if (t.value && /^0\d+/.test(t.value)) {
+      var pos = t.selectionStart;
+      t.value = String(parseInt(t.value, 10));
+      try { t.setSelectionRange(pos - 1, pos - 1); } catch (err) {}
+    }
+  });
+
+  /* ═══ CUSTOM DROPDOWN — Premium v2 ═══ */
+  function convertSelects(root) {
+    root = root || document;
+    root.querySelectorAll('select[data-custom]:not([data-converted])').forEach(function (sel) {
+      sel.setAttribute('data-converted', '1');
+
+      var wrap = document.createElement('div');
+      wrap.className = 'cs-wrap';
+
+      var trigger = document.createElement('button');
+      trigger.type = 'button';
+      trigger.className = 'cs-trigger';
+      trigger.setAttribute('aria-haspopup', 'listbox');
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.innerHTML =
+        '<span class="cs-value"></span>' +
+        '<svg class="cs-arrow" viewBox="0 0 24 24">' +
+        '<polyline points="6 9 12 15 18 9"/></svg>';
+
+      var menu = document.createElement('div');
+      menu.className = 'cs-menu';
+      menu.setAttribute('role', 'listbox');
+
+      var options = [];
+      var focusedIdx = -1;
+      var typeBuffer = '';
+      var typeTimer = null;
+      var menuOpen = false;
+
+      Array.prototype.forEach.call(sel.options, function (opt, i) {
+        var div = document.createElement('div');
+        div.className = 'cs-option';
+        div.setAttribute('data-value', opt.value);
+        div.setAttribute('role', 'option');
+        div.textContent = opt.textContent;
+
+        div.addEventListener('pointerdown', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          doSelect(i);
+          doClose();
+        });
+
+        div.addEventListener('mouseenter', function () {
+          if (menuOpen) setFocus(i, false);
+        });
+
+        menu.appendChild(div);
+        options.push(div);
+      });
+
+      function doSelect(idx) {
+        if (idx < 0 || idx >= sel.options.length) return;
+        sel.value = sel.options[idx].value;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+        refreshValue();
+      }
+
+      function refreshValue() {
+        var selected = sel.options[sel.selectedIndex];
+        trigger.querySelector('.cs-value').textContent =
+          selected ? selected.textContent : '';
+        options.forEach(function (o) {
+          var match = o.getAttribute('data-value') === sel.value;
+          o.classList.toggle('selected', match);
+          o.setAttribute('aria-selected', match ? 'true' : 'false');
+        });
+      }
+
+      function setFocus(idx, scroll) {
+        if (idx < 0 || idx >= options.length) return;
+        options.forEach(function (o) { o.classList.remove('focused'); });
+        options[idx].classList.add('focused');
+        focusedIdx = idx;
+        if (scroll) {
+          options[idx].scrollIntoView({ block: 'nearest' });
+        }
+      }
+
+      function positionMenu() {
+        menu.classList.remove('up');
+        var rect = wrap.getBoundingClientRect();
+        var spaceBelow = window.innerHeight - rect.bottom;
+        var menuHeight = Math.min(menu.scrollHeight, 280);
+        if (spaceBelow < menuHeight + 20 && rect.top > menuHeight + 20) {
+          menu.classList.add('up');
+        }
+      }
+
+      function doOpen() {
+        document.querySelectorAll('.cs-menu.open').forEach(function (m) {
+          if (m !== menu) m.classList.remove('open');
+        });
+        document.querySelectorAll('.cs-trigger.open').forEach(function (t) {
+          if (t !== trigger) {
+            t.classList.remove('open');
+            t.setAttribute('aria-expanded', 'false');
+          }
+        });
+
+        positionMenu();
+        menu.classList.add('open');
+        trigger.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        menuOpen = true;
+
+        var idx = sel.selectedIndex >= 0 ? sel.selectedIndex : 0;
+        focusedIdx = idx;
+        setFocus(idx, true);
+      }
+
+      function doClose() {
+        menu.classList.remove('open', 'up');
+        trigger.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        options.forEach(function (o) { o.classList.remove('focused'); });
+        focusedIdx = -1;
+        menuOpen = false;
+      }
+
+      trigger.addEventListener('pointerdown', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (menuOpen) doClose();
+        else doOpen();
+      });
+
+      trigger.addEventListener('keydown', function (e) {
+        var list = options;
+
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (!menuOpen) { doOpen(); return; }
+          var next = e.key === 'ArrowDown'
+            ? Math.min(focusedIdx + 1, list.length - 1)
+            : Math.max(focusedIdx - 1, 0);
+          setFocus(next, true);
+
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (!menuOpen) doOpen();
+          else if (focusedIdx >= 0) { doSelect(focusedIdx); doClose(); }
+
+        } else if (e.key === 'Escape') {
+          if (menuOpen) { e.preventDefault(); doClose(); }
+
+        } else if (e.key === 'Home') {
+          if (menuOpen) { e.preventDefault(); setFocus(0, true); }
+
+        } else if (e.key === 'End') {
+          if (menuOpen) { e.preventDefault(); setFocus(list.length - 1, true); }
+
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          typeBuffer += e.key.toLowerCase();
+          clearTimeout(typeTimer);
+          typeTimer = setTimeout(function () { typeBuffer = ''; }, 600);
+          var matchIdx = -1;
+          for (var i = 0; i < list.length; i++) {
+            if (list[i].textContent.toLowerCase().indexOf(typeBuffer) === 0) {
+              matchIdx = i;
+              break;
+            }
+          }
+          if (matchIdx >= 0) {
+            if (!menuOpen) doOpen();
+            setFocus(matchIdx, true);
+          }
+        }
+      });
+
+      sel.parentNode.insertBefore(wrap, sel);
+      wrap.appendChild(trigger);
+      wrap.appendChild(menu);
+      wrap.appendChild(sel);
+
+      sel.addEventListener('change', refreshValue);
+
+      sel._csUpdate = refreshValue;
+      sel._csOpen = doOpen;
+      sel._csClose = doClose;
+
+      refreshValue();
+    });
+  }
+
+  /* Outside click for dropdowns */
+  document.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('.cs-wrap')) return;
+    document.querySelectorAll('.cs-menu.open').forEach(function (m) {
+      m.classList.remove('open');
+    });
+    document.querySelectorAll('.cs-trigger.open').forEach(function (t) {
+      t.classList.remove('open');
+      t.setAttribute('aria-expanded', 'false');
+    });
+  }, true);
+
+  /* Escape key — close dropdowns */
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.cs-menu.open').forEach(function (m) {
+      m.classList.remove('open');
+    });
+    document.querySelectorAll('.cs-trigger.open').forEach(function (t) {
+      t.classList.remove('open');
+      t.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  /* Auto-convert */
+  document.addEventListener('DOMContentLoaded', function () {
+    convertSelects(document);
+  });
+
+  window.convertSelects = convertSelects;
 
 })();
 

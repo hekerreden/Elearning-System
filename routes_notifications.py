@@ -14,8 +14,14 @@ def register(app):
         if not u:
             return jsonify([])
         mine = [n for n in notifications if n["user_id"] == u.id]
-        mine.sort(key=lambda n: n["created_at"], reverse=True)
-        return jsonify(mine[:30])
+
+        # Unread muna, tapos latest
+        unread = [n for n in mine if not n.get("read")]
+        read = [n for n in mine if n.get("read")]
+        unread.sort(key=lambda n: n["created_at"], reverse=True)
+        read.sort(key=lambda n: n["created_at"], reverse=True)
+
+        return jsonify((unread + read)[:30])
 
     @app.route("/api/notifications/<nid>/read", methods=["POST"])
     def mark_read(nid):
@@ -44,5 +50,7 @@ def register(app):
         if not u:
             return jsonify([])
         q = request.args.get("q", "").strip()
+        if not q:
+            return jsonify([])
         found = search_users(q, u)
         return jsonify([x.to_dict(viewer=u) for x in found])

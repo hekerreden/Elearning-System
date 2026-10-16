@@ -366,14 +366,16 @@ def register(app):
         if not can_edit_study(actor, study):
             return jsonify({"ok": False, "error": "Not found"}), 404
 
-        has_content = any(
-            (p.get("question", "") or "").strip()
-            for p in study.get("pages", [])
-        )
-        has_slides = bool(study.get("slides"))
-        if has_content or has_slides:
-            return jsonify({"ok": True, "kept": True})
+        # Hindi pwedeng i-discard kapag may attempts na
+        if study.get("has_attempts"):
+            return jsonify({
+                "ok": False,
+                "error": "May attempts na — hindi na pwedeng i-discard."
+            }), 400
+
+        # Force delete — parehong memory at MongoDB
         studies.remove(study)
+        quiz_results[:] = [r for r in quiz_results if r["study_id"] != stid]
         return jsonify({"ok": True, "kept": False})
 
     @app.route("/api/studies/<stid>/delete", methods=["POST"])
@@ -394,3 +396,43 @@ def register(app):
         if actor.role == "SuperAdmin":
             return redirect(url_for("super_admin_page"))
         return redirect(url_for("teacher_page"))
+        
+    # ═══════════════════════════════════════════════════════════  
+    # LIVE LOCK STATUS — para sa teacher dashboard
+    # ═══════════════════════════════════════════════════════════
+    @app.route("/api/studies/statuses")
+    @role_required("Teacher")
+    def api_study_statuses():
+        from helpers import is_study_locked, get_active_session_count
+        u = current_user()
+        out = []
+        for s in studies:
+            if s.get("teacher_id") != u.id:
+                continue
+            if s.get("status") not in ("published", "editing"):
+                continue
+            out.append({
+                "id": s["id"],
+                "is_locked": is_study_locked(s),
+                "active_count": get_active_session_count(s),
+                "has_attempts": s.get("has_attempts", False),
+            })
+        return jsonify(out)
+
+    @app.route("/api/studies/<sid>/lock-status")
+    @role_required("Teacher")
+    def api_study_lock_status(sid):
+        from helpers import is_study_locked, get_active_session_count
+        u = current_user()
+        s = find_study(sid)
+        if not s:
+            return jsonify({"error": "Not found"}), 404
+        if s.get("teacher_id") != u.id:
+            return jsonify({"error": "Not yours"}), 403
+        return jsonify({
+            "id": sid,
+            "is_locked": is_study_locked(s),
+            "active_count": get_active_session_count(s),
+            "has_attempts": s.get("has_attempts", False),
+        })
+        

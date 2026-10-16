@@ -38,8 +38,7 @@
   <div class="card" style="border-left:3px solid #ef4444;">
     <div class="card-title">
       <h2>🗑 Pending Deletion Appeals ({{ pending_deletes|length }})</h2>
-      <button class="btn btn-ghost btn-sm"
-              onclick="document.querySelector('.adminnav[data-section=\'deletes\']').click()">
+      <button class="btn btn-ghost btn-sm" data-goto="deletes">
         View All →
       </button>
     </div>
@@ -355,10 +354,10 @@
     <form method="POST" id="editUsernameForm" class="form" data-no-ajax>
       <label>New Username *
         <input type="text" name="username" id="eu_username" required
-               minlength="3" maxlength="30"
-               placeholder="New username"
-               pattern="[a-zA-Z0-9_.\-]+"
-               title="Letters, numbers, _ . - only">
+          minlength="3" maxlength="30"
+          placeholder="New username"
+          pattern="[a-zA-Z0-9][a-zA-Z0-9_.\-]{2,29}"
+          title="3-30 chars. Start with letter/number. Letters, numbers, _ . - only.">
       </label>
       <p class="muted small">
         ⚠️ User must use the new username on next login.
@@ -392,7 +391,7 @@
           <input type="number" name="duration" value="7" min="1" required>
         </label>
         <label>Unit *
-          <select name="unit" required>
+          <select name="unit" required data-costum>
             <option value="hours">Hours</option>
             <option value="days" selected>Days</option>
             <option value="months">Months</option>
@@ -466,9 +465,9 @@
 (function () {
   'use strict';
 
-  document.querySelectorAll('.stat.clickable').forEach(function (card) {
-    card.addEventListener('click', function () {
-      var target = card.getAttribute('data-goto');
+  document.querySelectorAll('[data-goto]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      var target = el.getAttribute('data-goto');
       var nav = document.querySelector('.adminnav[data-section="' + target + '"]');
       if (nav) nav.click();
     });
@@ -609,7 +608,8 @@
     .then(function (r) { return r.json(); })
     .then(function (data) {
       if (!data.ok) {
-        alert('❌ ' + (data.error || 'Failed'));
+        showAlert('❌ ' + (data.error || 'Failed'),
+                  { title: '❌ Error', danger: true });
         btn.disabled = false;
         btn.textContent = '🔑 Generate Reset';
         return;
@@ -620,7 +620,8 @@
       btn.textContent = '🔑 Generate Reset';
     })
     .catch(function (err) {
-      alert('❌ ' + err.message);
+      showAlert('❌ ' + err.message,
+                { title: '❌ Error', danger: true });
       btn.disabled = false;
       btn.textContent = '🔑 Generate Reset';
     });

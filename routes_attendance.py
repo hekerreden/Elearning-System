@@ -1,10 +1,27 @@
 # -*- coding: utf-8 -*-
 """Attendance routes."""
+import re
 import uuid
+from datetime import datetime
 from flask import request, redirect, url_for, flash
 from storage import attendance, connections
 from helpers import (current_user, find_user_by_id, today_str, now_str)
 from decorators import role_required
+
+
+DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+VALID_STATUS = ("Present", "Absent", "Late")
+
+
+def _valid_date(date_str):
+    """Returns (ok, error_msg)"""
+    if not DATE_RE.match(date_str):
+        return False, "Invalid date format (use YYYY-MM-DD)."
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        return False, "Invalid date."
+    return True, ""
 
 
 def register(app):
@@ -16,16 +33,25 @@ def register(app):
         student_id = request.form.get("student_id", "")
         status = request.form.get("status", "Present")
         date = request.form.get("date") or today_str()
+
         student = find_user_by_id(student_id)
         if not student or student.role != "Student":
             flash("Invalid student.", "error")
             return redirect(url_for("teacher_page"))
+
         if not any(c["student_id"] == student_id and c["teacher_id"] == actor.id
                    and c["status"] == "active" for c in connections):
             flash("Not connected to this student.", "error")
             return redirect(url_for("teacher_page"))
-        if status not in ("Present", "Absent", "Late"):
+
+        if status not in VALID_STATUS:
             flash("Invalid status.", "error")
+            return redirect(url_for("teacher_page"))
+
+        # ✅ FIX: Validate date format
+        ok, err = _valid_date(date)
+        if not ok:
+            flash(err, "error")
             return redirect(url_for("teacher_page"))
 
         existing = next((a for a in attendance
@@ -53,10 +79,12 @@ def register(app):
         if not rec or rec["teacher_id"] != actor.id:
             flash("Not found.", "error")
             return redirect(url_for("teacher_page"))
+
         status = request.form.get("status", "")
-        if status not in ("Present", "Absent", "Late"):
+        if status not in VALID_STATUS:
             flash("Invalid status.", "error")
             return redirect(url_for("teacher_page"))
+
         rec["status"] = status
         rec["timestamp"] = now_str()
         flash("Attendance updated.", "success")
@@ -70,6 +98,7 @@ def register(app):
         if not rec or rec["teacher_id"] != actor.id:
             flash("Not found.", "error")
             return redirect(url_for("teacher_page"))
+
         attendance.remove(rec)
         flash("Attendance deleted.", "success")
         return redirect(url_for("teacher_page"))

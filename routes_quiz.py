@@ -143,6 +143,7 @@ def register(app):
                 "file": file_info,
             })
 
+        # ✅ Tinanggal ang medal at pct
         quiz_results.append({
             "id": uuid.uuid4().hex[:8],
             "student_id": actor.id, "student_name": actor.username,

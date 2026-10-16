@@ -202,16 +202,23 @@ def register(app):
             flash("Cannot reset deleted account.", "error")
             return redirect(url_for("super_admin_page"))
 
-        temp = target.reset_with_temp()
+        target.reset_with_temp()
         target.reset_by = admin.id
+
+        # ✅ Walang password leak sa admin notification
         notify(admin.id, "🔑 Password Reset Successful",
-               f"Temporary password for @{target.username} ({target.full_name}): {temp}",
+               f"Password reset for @{target.username} ({target.full_name}). "
+               f"The user will see their temp password on the login page.",
                link="/super-admin#users", kind="reset")
+
         notify(target.id, "🔑 Password Reset by Admin",
                "Your password was reset. To view your new temporary password, "
                "log in using your OLD password and username.",
                link=f"/{target.role.lower()}#account", kind="reset")
-        flash(f"✅ Password reset for {target.full_name}. Temp: {temp}", "success")
+
+        flash(f"✅ Password reset for {target.full_name}. "
+              f"User must log in with old password to view temp password.",
+              "success")
         return redirect(url_for("super_admin_page"))
 
     @app.route("/api/admin/users/<uid>/reset-password-json", methods=["POST"])

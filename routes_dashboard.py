@@ -24,6 +24,9 @@ def register(app):
         def user_with_reset_info(x):
             d = x.to_dict(viewer=u)
             d["reset_pending"] = x.reset_pending
+            d["reason"] = x.delete_reason or ""
+            d["grace_until"] = x.delete_grace_until or ""
+            d["requested_at"] = x.delete_requested_at or ""
             return d
 
         return render_template(
@@ -41,13 +44,22 @@ def register(app):
             pending_deletes=[user_with_reset_info(x) for x in pending_deletes],
             total_notifications=0,
         )
-
+        
     @app.route("/teacher")
     @role_required("Teacher")
     def teacher_page():
         u = current_user()
-        cleanup_empty_drafts(u.id)
-        cleanup_stale_editing(u.id)
+        removed = cleanup_empty_drafts(u.id)
+        restored = cleanup_stale_editing(u.id)
+
+        # Persist cleanup changes sa MongoDB (kasi GET ito, hindi auto-save)
+        if removed or restored:
+            try:
+                from storage import save_to_mongo
+                save_to_mongo()
+                print(f"Cleanup saved: {removed} drafts removed, {restored} restored")
+            except Exception as e:
+                print(f"⚠️ Cleanup save failed: {e}")
 
         my_students = active_students_for_teacher(u.id)
         pending_in = [c for c in connections

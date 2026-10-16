@@ -92,8 +92,8 @@ def inject_globals():
         "current_role": u.role if u else None,
         "current_username": u.username if u else None,
         "unread_notifications": unread_count(u.id) if u else 0,
+        "force_password_change": bool(session.get("force_password_change")),
     }
-
 
 # ═══════════════════════════════════════════════════════════════
 # BEFORE REQUEST — Force password change

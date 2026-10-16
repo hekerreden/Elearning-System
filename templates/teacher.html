@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Teacher{% endblock %}
 {% block page_title %}Teacher{% endblock %}
-{% block page_sub %}{{ user.full_name }}</code>{% endblock %}
+{% block page_sub %}{{ user.full_name }}{% endblock %}
 
 {% block nav_items %}
 <li><a class="adminnav active" data-section="overview"><span>🏠 Overview</span></a></li>
@@ -297,7 +297,7 @@
               <form method="POST" action="{{ url_for('mark_attendance') }}" class="row-inline">
                 <input type="hidden" name="student_id" value="{{ s.id }}">
                 <input type="date" name="date" value="{{ today }}" style="max-width:170px">
-                <select name="status" style="max-width:140px">
+                <select name="status" data-custom>
                   <option>Present</option><option>Late</option><option>Absent</option>
                 </select>
                 <button class="btn btn-green btn-sm" type="submit" style="max-width:100px">Save</button>
@@ -330,7 +330,7 @@
             <td>
               <div class="row-inline">
                 <form method="POST" action="{{ url_for('update_attendance', aid=a.id) }}" class="row-inline" style="flex:1">
-                  <select name="status" style="max-width:130px">
+                  <select name="status" style="max-width:130px" data-custom>
                     <option {% if a.status=='Present' %}selected{% endif %}>Present</option>
                     <option {% if a.status=='Late' %}selected{% endif %}>Late</option>
                     <option {% if a.status=='Absent' %}selected{% endif %}>Absent</option>
@@ -435,7 +435,7 @@
     <form id="settingForm" class="form">
 
       <label>Quiz Type *
-        <select name="type" id="setting_type" required>
+        <select name="type" id="setting_type" required data-custom>
           <option value="identification">Identification</option>
           <option value="multiple_choice">Multiple Choice</option>
           <option value="true_false">True or False</option>
@@ -445,7 +445,7 @@
       </label>
 
       <label>Mode *
-        <select name="mode" id="setting_mode" required>
+        <select name="mode" id="setting_mode" required data-custom>
           <option value="direct_quiz">Direct Quiz</option>
           <option value="study_and_quiz">Study muna, then Quiz</option>
         </select>
@@ -463,7 +463,7 @@
 
       <div id="mcOptionsRow" style="display:none;">
         <label>Choices per question *
-          <select name="mc_options" id="setting_mc_options">
+          <select name="mc_options" id="setting_mc_options" data-custom>
             <option value="3">A, B, C (3 choices)</option>
             <option value="4">A, B, C, D (4 choices)</option>
           </select>
@@ -558,14 +558,20 @@
   </div>
 </div>
 
-
-
 {% endblock %}
 
 {% block scripts %}
 <script>
 (function () {
   'use strict';
+
+  /* ═══════════════════════════════════════════════════════
+     CUSTOM DROPDOWN — helper function
+     ═══════════════════════════════════════════════════════ */
+  function csSync(id) {
+    var el = document.getElementById(id);
+    if (el && el._csUpdate) el._csUpdate();
+  }
 
   /* ---------- Clickable overview cards ---------- */
   document.querySelectorAll('.stat.clickable').forEach(function (card) {
@@ -590,6 +596,122 @@
     }
     return null;
   }
+
+  /* ═══════════════════════════════════════════════════════
+     LIVE LOCK STATUS — i-refresh para hindi kailangan mag-restart
+     ═══════════════════════════════════════════════════════ */
+  function refreshStudyStatuses() {
+    fetch('/api/studies/statuses', { credentials: 'same-origin' })
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(statuses) {
+        if (!Array.isArray(statuses)) return;
+        statuses.forEach(function(st) {
+          var s = findStudy(st.id);
+          if (s) {
+            s.is_locked = st.is_locked;
+            s.active_count = st.active_count;
+            s.has_attempts = st.has_attempts;
+            s.locked = st.is_locked;
+          }
+          updateBadgeInTable(st);
+        });
+      })
+      .catch(function() {});
+  }
+
+  function updateBadgeInTable(st) {
+    document.querySelectorAll('[data-action="view-study"][data-id="' + st.id + '"]')
+      .forEach(function(btn) {
+        var tr = btn.closest('tr');
+        if (!tr) return;
+        var cell = tr.querySelector('td:first-child');
+        if (!cell) return;
+        var existing = cell.querySelector('.badge.badge-red');
+        var shouldShow = st.is_locked;
+
+        if (shouldShow) {
+          var txt = '🔒' + (st.active_count > 0 ? ' (' + st.active_count + ')' : '');
+          var title = st.active_count > 0 ?
+            st.active_count + ' student(s) active' :
+            (st.has_attempts ? 'May attempts na' : 'Locked');
+          if (existing) {
+            existing.textContent = txt;
+            existing.title = title;
+          } else {
+            var badge = document.createElement('span');
+            badge.className = 'badge badge-red';
+            badge.textContent = txt;
+            badge.title = title;
+            cell.appendChild(document.createTextNode(' '));
+            cell.appendChild(badge);
+          }
+        } else if (existing) {
+          existing.remove();
+        }
+      });
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     OPEN VIEW MODAL
+     ═══════════════════════════════════════════════════════ */
+  function openViewModal(s, btn) {
+    document.getElementById('v_title').innerText = s.title || '';
+    document.getElementById('v_last').innerText = s.updated_at || '';
+    document.getElementById('v_type').innerText = (s.type || '').replace(/_/g, ' ');
+    document.getElementById('v_direction').innerText = s.direction || '—';
+    document.getElementById('v_study').innerText = (s.study_timer || 0) + 's';
+    document.getElementById('v_question').innerText = (s.question_timer || 0) + 's';
+    document.getElementById('v_back').innerText = s.max_back || 0;
+    document.getElementById('v_score').innerText = s.score || 0;
+    document.getElementById('v_penalty').innerText = s.penalty || 0;
+    document.getElementById('v_pages').innerText = s.total_pages || 0;
+
+    var editBtn = document.querySelector('#viewModal [data-action="edit-study"]');
+    var delBtn = document.querySelector('#viewModal [data-action="confirm-delete"]');
+    var lockNote = document.getElementById('v_lockNote');
+
+    if (s.is_locked || s.locked) {
+      if (editBtn) editBtn.style.display = 'none';
+      if (delBtn) {
+        delBtn.disabled = true;
+        delBtn.style.opacity = '.4';
+      }
+      var msg = s.has_attempts
+        ? '🔒 Locked — may submitted attempts na'
+        : '🔒 May ' + (s.active_count || 1) + ' student(s) active';
+      if (!lockNote) {
+        lockNote = document.createElement('p');
+        lockNote.id = 'v_lockNote';
+        lockNote.className = 'badge badge-red';
+        lockNote.style.marginTop = '10px';
+        lockNote.style.display = 'inline-block';
+        document.getElementById('v_title').parentNode.appendChild(lockNote);
+      }
+      lockNote.textContent = msg;
+      lockNote.style.display = 'inline-block';
+    } else {
+      if (editBtn) {
+        editBtn.style.display = 'inline-flex';
+        editBtn.setAttribute('data-study-id', s.id);
+      }
+      if (delBtn) {
+        delBtn.disabled = false;
+        delBtn.style.opacity = '1';
+      }
+      if (lockNote) lockNote.style.display = 'none';
+    }
+
+    if (delBtn) delBtn.setAttribute('data-delete-url', btn.getAttribute('data-delurl'));
+    window.openModal('viewModal');
+  }
+
+  setInterval(refreshStudyStatuses, 20000);
+
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) refreshStudyStatuses();
+  });
+
+  setTimeout(refreshStudyStatuses, 2000);
 
   /* ---------- Timer helper ---------- */
   function upd() {
@@ -625,7 +747,7 @@
   upd();
 
   /* ---------- Modal actions ---------- */
-  document.addEventListener('click', function (ev) {
+  document.addEventListener('click', async function (ev) {
     var btn = ev.target.closest('[data-action]');
     if (!btn) return;
     var a = btn.getAttribute('data-action');
@@ -648,6 +770,12 @@
       document.getElementById('setting_max_back').value = 0;
       document.getElementById('setting_score').value = 1;
       document.getElementById('setting_penalty').value = 0;
+
+      /* Sync custom dropdowns */
+      csSync('setting_type');
+      csSync('setting_mode');
+      csSync('setting_mc_options');
+
       upd();
       updateModalFields();
       window.openModal('settingModal');
@@ -661,11 +789,13 @@
       if (!s) return;
 
       if (s.is_locked || s.locked) {
-        alert('🔒 Cannot edit — may student na nagsimula ng quiz.');
+        await showAlert('🔒 Cannot edit — may student na nagsimula ng quiz.', {
+          title: '🔒 Locked',
+          danger: true
+        });
         return;
       }
 
-      // Hide agad sa student
       fetch('/api/studies/' + s.id + '/start_edit', {
         method: 'POST', credentials: 'same-origin'
       }).catch(function(){});
@@ -689,6 +819,12 @@
       if (s.mc_options && document.getElementById('setting_mc_options')) {
         document.getElementById('setting_mc_options').value = s.mc_options;
       }
+
+      /* Sync custom dropdowns */
+      csSync('setting_type');
+      csSync('setting_mode');
+      csSync('setting_mc_options');
+
       upd();
       updateModalFields();
       document.getElementById('settingSubmitBtn').textContent = 'Next to Edit Questions →';
@@ -697,60 +833,26 @@
         window.openModal('settingModal');
       }, 100);
 
-    /* VIEW STUDY */
+    /* VIEW STUDY — fresh fetch */
     } else if (a === 'view-study') {
       ev.preventDefault();
-      var s = findStudy(btn.getAttribute('data-id'));
-      if (!s) return;
+      var sid = btn.getAttribute('data-id');
+      var sv = findStudy(sid);
+      if (!sv) return;
 
-      document.getElementById('v_title').innerText = s.title || '';
-      document.getElementById('v_last').innerText = s.updated_at || '';
-      document.getElementById('v_type').innerText = (s.type || '').replace(/_/g, ' ');
-      document.getElementById('v_direction').innerText = s.direction || '—';
-      document.getElementById('v_study').innerText = (s.study_timer || 0) + 's';
-      document.getElementById('v_question').innerText = (s.question_timer || 0) + 's';
-      document.getElementById('v_back').innerText = s.max_back || 0;
-      document.getElementById('v_score').innerText = s.score || 0;
-      document.getElementById('v_penalty').innerText = s.penalty || 0;
-      document.getElementById('v_pages').innerText = s.total_pages || 0;
-
-      var editBtn = document.querySelector('#viewModal [data-action="edit-study"]');
-      var delBtn = document.querySelector('#viewModal [data-action="confirm-delete"]');
-      var lockNote = document.getElementById('v_lockNote');
-
-      if (s.is_locked || s.locked) {
-        if (editBtn) editBtn.style.display = 'none';
-        if (delBtn) {
-          delBtn.disabled = true;
-          delBtn.style.opacity = '.4';
-        }
-        var msg = s.has_attempts
-          ? '🔒 Locked — may submitted attempts na'
-          : '🔒 May ' + (s.active_count || 1) + ' student(s) active';
-        if (!lockNote) {
-          lockNote = document.createElement('p');
-          lockNote.id = 'v_lockNote';
-          lockNote.className = 'badge badge-red';
-          lockNote.style.marginTop = '10px';
-          lockNote.style.display = 'inline-block';
-          document.getElementById('v_title').parentNode.appendChild(lockNote);
-        }
-        lockNote.textContent = msg;
-        lockNote.style.display = 'inline-block';
-      } else {
-        if (editBtn) {
-          editBtn.style.display = 'inline-flex';
-          editBtn.setAttribute('data-study-id', s.id);
-        }
-        if (delBtn) {
-          delBtn.disabled = false;
-          delBtn.style.opacity = '1';
-        }
-        if (lockNote) lockNote.style.display = 'none';
-      }
-
-      if (delBtn) delBtn.setAttribute('data-delete-url', btn.getAttribute('data-delurl'));
-      window.openModal('viewModal');
+      fetch('/api/studies/' + sid + '/lock-status', { credentials: 'same-origin' })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(st) {
+          if (st && !st.error) {
+            sv.is_locked = st.is_locked;
+            sv.active_count = st.active_count;
+            sv.has_attempts = st.has_attempts;
+            sv.locked = st.is_locked;
+            updateBadgeInTable(st);
+          }
+          openViewModal(sv, btn);
+        })
+        .catch(function() { openViewModal(sv, btn); });
 
     /* CLOSE */
     } else if (a === 'close-view') {
@@ -760,15 +862,15 @@
     } else if (a === 'close-setting') {
       ev.preventDefault();
       window.closeModal('settingModal');
-      var form = document.getElementById('settingForm');
-      var editId = form.dataset.editId;
-      if (editId && form.dataset.fromEdit === '1') {
+      var form2 = document.getElementById('settingForm');
+      var editId = form2.dataset.editId;
+      if (editId && form2.dataset.fromEdit === '1') {
         fetch('/api/studies/' + editId + '/cancel_edit', {
           method: 'POST', credentials: 'same-origin'
         }).catch(function(){});
       }
-      form.removeAttribute('data-edit-id');
-      form.removeAttribute('data-from-edit');
+      form2.removeAttribute('data-edit-id');
+      form2.removeAttribute('data-from-edit');
       document.getElementById('settingSubmitBtn').textContent = 'Next →';
 
     /* EDIT SCORE */
@@ -780,10 +882,25 @@
       document.getElementById('scoreValue').value = btn.getAttribute('data-current-score');
       window.openModal('scoreModal');
 
-    /* DELETE */
+    /* DELETE — custom confirm */
     } else if (a === 'confirm-delete') {
       ev.preventDefault();
-      confirmAction(btn.getAttribute('data-delete-url'), btn.getAttribute('data-delete-msg'));
+      var url = btn.getAttribute('data-delete-url');
+      var msg = btn.getAttribute('data-delete-msg') || 'Are you sure?';
+      var ok = await showConfirm(msg, {
+        title: '🗑 Confirm Delete',
+        okText: 'Delete',
+        danger: true
+      });
+      if (ok) {
+        var f = document.getElementById('confirmForm');
+        if (f) {
+          f.action = url;
+          f.submit();
+        } else {
+          window.location.href = url;
+        }
+      }
     }
   });
 
@@ -801,7 +918,10 @@
     } else {
       var res = await fetch('/api/studies/create_draft', { method: 'POST', body: formData });
       var data = await res.json();
-      if (data.error) { alert('❌ ' + data.error); return; }
+      if (data.error) {
+        await showAlert('❌ ' + data.error, { title: '❌ Error', danger: true });
+        return;
+      }
       window.location.href = '/teacher/activity/' + data.id + '/0';
     }
   });
@@ -820,7 +940,10 @@ document.addEventListener('click', function(ev){
   fetch('/api/results/' + rid + '/grade-info')
     .then(r => r.json())
     .then(data => {
-      if (data.error) { alert('❌ ' + data.error); return; }
+      if (data.error) {
+        showAlert('❌ ' + data.error, { title: '❌ Error', danger: true });
+        return;
+      }
       gradeResultId = rid;
       document.getElementById('gradeStudent').textContent = data.student_name;
       document.getElementById('gradeStudy').textContent = data.study_title;
@@ -858,7 +981,9 @@ document.addEventListener('click', function(ev){
       }).join('');
       window.openModal('gradeModal');
     })
-    .catch(err => alert('Load failed: ' + err.message));
+    .catch(function(err) {
+      showAlert('Load failed: ' + err.message, { title: '❌ Error', danger: true });
+    });
 });
 
 document.getElementById('gradeSaveBtn')?.addEventListener('click', function(){
@@ -883,13 +1008,13 @@ document.getElementById('gradeSaveBtn')?.addEventListener('click', function(){
       window.closeModal('gradeModal');
       window.location.reload();
     } else {
-      alert('❌ ' + (d.error || 'Failed'));
+      showAlert('❌ ' + (d.error || 'Failed'), { title: '❌ Error', danger: true });
     }
   })
-  .catch(err => alert('Save failed: ' + err.message));
+  .catch(function(err) {
+    showAlert('Save failed: ' + err.message, { title: '❌ Error', danger: true });
+  });
 });
-
-
 
 function escapeHtml(s){
   return String(s == null ? '' : s)

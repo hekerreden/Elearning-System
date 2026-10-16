@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 """Extra admin features: edit username."""
+import re
 from flask import request, redirect, url_for, flash
 from storage import users
 from helpers import find_user_by_id, notify
 from decorators import role_required
 
 
+USERNAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.\-]{2,29}$")
+
+
 def register(app):
 
     # ═══════════════════════════════════════════════════════════
-    # EDIT USERNAME
+    # EDIT USERNAME (by admin)
     # ═══════════════════════════════════════════════════════════
     @app.route("/api/admin/users/<uid>/edit-username", methods=["POST"])
     @role_required("SuperAdmin")
@@ -29,11 +33,12 @@ def register(app):
 
         new_username = request.form.get("username", "").strip()
 
-        # ── Validation ──
+        # ── Presence ──
         if not new_username:
             flash("Username required.", "error")
             return redirect(url_for("super_admin_page"))
 
+        # ── Length ──
         if len(new_username) < 3:
             flash("Username must be at least 3 characters.", "error")
             return redirect(url_for("super_admin_page"))
@@ -42,7 +47,18 @@ def register(app):
             flash("Username must be at most 30 characters.", "error")
             return redirect(url_for("super_admin_page"))
 
-        # ── Uniqueness check (case-insensitive) ──
+        # ── Format ──
+        if not USERNAME_RE.match(new_username):
+            flash("Username must start with a letter/number, and contain "
+                  "only letters, numbers, underscore, dot, hyphen.", "error")
+            return redirect(url_for("super_admin_page"))
+
+        # ── Same as current ──
+        if new_username.lower() == target.username.lower():
+            flash("New username is the same as current.", "error")
+            return redirect(url_for("super_admin_page"))
+
+        # ── Uniqueness (case-insensitive) ──
         for u in users:
             if u.id == target.id:
                 continue
@@ -55,6 +71,10 @@ def register(app):
         # ── Save ──
         old_username = target.username
         target.username = new_username
+
+        # ── Audit log ──
+        print(f"✏️ [AUDIT] Admin edit-username: "
+              f"@{old_username} → @{new_username} (uid={target.id})")
 
         # ── Notify user ──
         notify(target.id, "✏️ Username Changed",

@@ -20,7 +20,7 @@
 
   <form method="POST" action="{{ url_for('signup') }}" class="form" data-no-ajax>
     <label>Role *
-      <select name="role" required>
+      <select name="role" required data-custom>
         <option value="">-- Select Role --</option>
         <option value="Teacher" {% if form_data.role == 'Teacher' %}selected{% endif %}>👨‍🏫 Teacher</option>
         <option value="Student" {% if form_data.role == 'Student' %}selected{% endif %}>🎒 Student</option>
@@ -42,8 +42,8 @@
 
     <label>Password *
       <input type="password" name="password" required minlength="8"
-             autocomplete="new-password"
-             placeholder="At least 8 characters">
+         autocomplete="new-password"
+         placeholder="At least 8 chars, may letter at number">
     </label>
 
     <label>Confirm Password *

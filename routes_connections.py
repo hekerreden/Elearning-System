@@ -14,12 +14,18 @@ def register(app):
     @role_required("Teacher", "Student")
     def request_connection():
         actor = current_user()
-        target_id = request.form.get("target_id", "").strip().upper()
-        if not target_id:
-            flash("Please enter an ID.", "error")
+        target = find_user_by_id(target_id)
+        if not target:
+            flash(f"No user found with ID {target_id}.", "error")
             return redirect(url_for(role_home(actor.role)))
-        if target_id == actor.id:
-            flash("You cannot connect to yourself.", "error")
+        if target.status == "deleted":
+            flash("This user is no longer available.", "error")
+            return redirect(url_for(role_home(actor.role)))
+        if target.status in ("pending_delete", "appealed"):
+            flash("This user's account is under review.", "error")
+            return redirect(url_for(role_home(actor.role)))
+        if {actor.role, target.role} != {"Teacher", "Student"}:
+            flash("Invalid connection request.", "error")
             return redirect(url_for(role_home(actor.role)))
         target = find_user_by_id(target_id)
         if not target:
@@ -76,7 +82,7 @@ def register(app):
         conn["status"] = "active"
         other_id = conn["teacher_id"] if actor.id == conn["student_id"] else conn["student_id"]
         other = find_user_by_id(other_id)
-        if other:
+        if other and other.status == "active":
             target_section = "teachers" if other.role == "Student" else "students"
             notify(other_id, "Connection Approved",
                    f"{actor.full_name} accepted your connection request.",
@@ -106,4 +112,4 @@ def register(app):
                    link=f"/{other.role.lower()}#connect",
                    kind="connection_rejected")
         flash("Request rejected.", "success")
-        return redirect(url_for(role_home(actor.role)))
+        return redirect(url_for(role_home(actor.role))) 
