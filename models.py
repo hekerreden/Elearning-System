@@ -10,6 +10,7 @@ class User:
                  full_name=None, status="active", password_hash=None):
         self.id = generate_user_id()
         self.username = username
+        self.username_history = []
         if password_hash:
             self.__password_hash = password_hash
         else:

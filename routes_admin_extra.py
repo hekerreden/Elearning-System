@@ -71,6 +71,13 @@ def register(app):
         # ── Save ──
         old_username = target.username
         target.username = new_username
+        
+        # ✅ IDAGDAG ITO
+        if not hasattr(target, 'username_history'):
+            target.username_history = []
+        if old_username not in target.username_history:
+            target.username_history.append(old_username)
+            target.username_history = target.username_history[-5:]
 
         # ── Audit log ──
         print(f"✏️ [AUDIT] Admin edit-username: "

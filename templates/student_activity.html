@@ -17,7 +17,7 @@ body{background:var(--bg);color:var(--text);
   -webkit-font-smoothing:antialiased;}
 h1{font-size:1.4rem;color:#fff;font-weight:600}
 h2{font-size:1.1rem;color:#fff;font-weight:600;margin-bottom:.35rem}
-.wrap{max-width:720px;margin:0 auto}
+.wrap{max-width:900px;margin:0 auto;}
 .card{background:var(--card);border:1px solid var(--border);
   border-radius:8px;padding:16px 18px;margin-bottom:16px}
 .card-title{display:flex;justify-content:space-between;align-items:center;
@@ -25,22 +25,19 @@ h2{font-size:1.1rem;color:#fff;font-weight:600;margin-bottom:.35rem}
 label{display:flex;flex-direction:column;gap:4px;
   font-size:.78rem;font-weight:600;color:var(--muted);
   text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
-input[type=text],input[type=number],input[type=file],textarea{
+input[type=text],input[type=number],input[type=file],textarea,select{
   width:100%;padding:10px 12px;border-radius:6px;
   border:1px solid var(--border);background:#151517;color:var(--text);
   font-size:.9rem;font-family:inherit;outline:none;transition:.15s}
-input:focus,textarea:focus{border-color:var(--blue);
+input:focus,textarea:focus,select:focus{border-color:var(--blue);
   box-shadow:0 0 0 3px rgba(24,119,242,.18)}
 textarea{resize:vertical;min-height:70px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
   border:none;border-radius:6px;padding:9px 16px;font-size:.86rem;
   font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;
   color:#fff;text-decoration:none}
-.btn:hover{transform:translateY(-1px);text-decoration:none}
-.btn-blue{background:var(--blue)}.btn-blue:hover{background:var(--blue-hover)}
-.btn-green{background:var(--green)}.btn-red{background:var(--red)}
+.btn-blue{background:var(--blue)}.btn-green{background:var(--green)}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
-.btn-ghost:hover{background:#333}
 .btn-sm{padding:6px 12px;font-size:.8rem}
 .btn-block{width:100%}
 .tag{display:inline-block;background:#151517;border:1px solid var(--border);
@@ -48,8 +45,7 @@ textarea{resize:vertical;min-height:70px}
 .pill-row{display:flex;gap:6px;flex-wrap:wrap}
 .muted{color:var(--muted)}.small{font-size:.8rem}
 .row-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.row-between{display:flex;gap:10px;justify-content:space-between;
-  align-items:center;flex-wrap:wrap;margin-top:16px}
+.row-between{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:16px}
 .timer-box{text-align:center;margin:16px 0;padding:16px;
   border-radius:10px;background:rgba(24,119,242,.08);
   border:1px solid rgba(24,119,242,.3)}
@@ -67,19 +63,55 @@ textarea{resize:vertical;min-height:70px}
 .badge{display:inline-block;padding:2px 9px;border-radius:999px;
   font-size:.68rem;font-weight:700;letter-spacing:.03em;
   text-transform:uppercase}
-.badge-green{background:rgba(34,197,94,.15);color:#86efac;
-  border:1px solid rgba(34,197,94,.35)}
-.badge-yellow{background:rgba(234,179,8,.15);color:#fde68a;
-  border:1px solid rgba(234,179,8,.35)}
-.badge-red{background:rgba(239,68,68,.15);color:#fca5a5;
-  border:1px solid rgba(239,68,68,.35)}
-.medal{display:inline-block;padding:2px 8px;border-radius:6px;
-  font-size:.7rem;font-weight:700}
+.badge-green{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.35)}
+.badge-yellow{background:rgba(234,179,8,.15);color:#fde68a;border:1px solid rgba(234,179,8,.35)}
+.badge-red{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.35)}
+.medal{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.7rem;font-weight:700}
 .medal-Gold{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#422006}
 .medal-Silver{background:linear-gradient(135deg,#e2e8f0,#94a3b8);color:#1e293b}
 .medal-Bronze{background:linear-gradient(135deg,#d97706,#92400e);color:#fff7ed}
 
-/* ═══════════ CONFIRM/ALERT MODAL (self-contained) ═══════════ */
+/* ✖ CANCEL BUTTON */
+.cancel-btn{
+  background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.4);
+  color:#fca5a5; width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem; cursor:pointer; transition:.2s; flex-shrink:0;
+}
+.cancel-btn:hover{background:var(--red); color:#fff;}
+
+/* 🖥️ DESKTOP NAVIGATION */
+.nav-container { display: flex; align-items: flex-start; gap: 20px; }
+.nav-side-btn {
+  background: var(--card); border: 1px solid var(--border);
+  width: 54px; height: 54px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; color: var(--text); cursor: pointer;
+  transition: .2s; flex-shrink: 0; text-decoration: none;
+  margin-top: 40px;
+}
+.nav-side-btn:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+.nav-side-btn:disabled { opacity: 0.2; cursor: not-allowed; background: var(--card); }
+.form-content { flex: 1; min-width: 0; }
+
+/* 📱 MOBILE NAVIGATION */
+.mobile-nav { display: none; gap: 10px; margin-top: 16px; }
+.mobile-nav .btn { flex: 1; justify-content: center; }
+
+@media(max-width: 768px) {
+  .nav-container { display: block; }
+  .nav-side-btn { display: none; }
+  .mobile-nav { display: flex; }
+  .wrap { max-width: 720px; }
+}
+@media(max-width:560px){
+  body{padding:12px 8px}
+  .card{padding:12px}
+  h1{font-size:1.15rem}
+  .timer{font-size:1.8rem}
+}
+
+/* ═══════════ CUSTOM MODAL (Self-contained) ═══════════ */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);
   display:none;align-items:center;justify-content:center;
   z-index:99999;padding:24px 16px;backdrop-filter:blur(4px);}
@@ -97,13 +129,6 @@ textarea{resize:vertical;min-height:70px}
   font-size:1.4rem;cursor:pointer;line-height:1;padding:0 4px}
 #appConfirmMessage{margin:0;line-height:1.65;color:var(--text);
   white-space:pre-wrap;word-break:break-word;}
-
-@media(max-width:560px){
-  body{padding:12px 8px}
-  .card{padding:12px}
-  h1{font-size:1.15rem}
-  .timer{font-size:1.8rem}
-}
 </style>
 </head>
 <body>
@@ -114,12 +139,15 @@ textarea{resize:vertical;min-height:70px}
   <div class="card">
     <div class="card-title">
       <h1>📖 Study Material</h1>
-      <span class="tag">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></span>
+      <div class="row-inline">
+        <span class="tag">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></span>
+        <button class="cancel-btn" onclick="exitQuiz()" title="Exit Study">✖</button>
+      </div>
     </div>
     <div id="slideContent" class="study-text" style="min-height:200px;font-size:1rem;"></div>
-    <div class="row-inline" style="margin-top:12px;">
-      <button type="button" class="btn btn-ghost" id="slidePrev">← Prev</button>
-      <button type="button" class="btn btn-ghost" id="slideNext">Next →</button>
+    <div class="row-inline" style="margin-top:12px; justify-content:space-between;">
+      <button type="button" class="btn btn-ghost" id="slidePrev">← Prev Slide</button>
+      <button type="button" class="btn btn-ghost" id="slideNext">Next Slide →</button>
     </div>
   </div>
   <div class="card">
@@ -144,34 +172,48 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div>
 
-<!-- ═══════════════ QUIZ PHASE ═══════════════ -->
+<!-- ═══════════════ QUIZ PHASE (With Side Buttons) ═══════════════ -->
 <div id="quizPhase" style="display:none">
+  
   <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-      <h2 style="margin:0;">Question <span id="qCounter">1</span> / <span id="qTotal">1</span></h2>
-      <div class="timer-box" style="margin:0;padding:8px 16px;">
-        <div class="timer-label">Time left</div>
-        <div class="timer" id="questionTimer" style="font-size:1.8rem;">--:--</div>
+    <div class="card-title" style="margin-bottom:0;">
+      <div>
+        <h2 style="margin:0;">Question <span id="qCounter">1</span> / <span id="qTotal">1</span></h2>
+        <p class="muted small mb1" id="qDirection" style="margin-top:6px;"></p>
+      </div>
+      <div class="row-inline">
+        <div class="timer-box" style="margin:0;padding:8px 16px;border-radius:8px;">
+          <div class="timer-label">Time left</div>
+          <div class="timer" id="questionTimer" style="font-size:1.4rem;">--:--</div>
+        </div>
+        <button class="cancel-btn" onclick="exitQuiz()" title="Exit Quiz">✖</button>
       </div>
     </div>
-    <div style="margin-top:10px;height:6px;background:var(--border);
-         border-radius:3px;overflow:hidden;">
-      <div id="progressBar" style="height:100%;width:0%;
-           background:linear-gradient(90deg,#1877f2,#a855f7);
-           transition:width .3s;"></div>
+    <div style="margin-top:12px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+      <div id="progressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1877f2,#a855f7);transition:width .3s;"></div>
     </div>
   </div>
 
-  <div class="card">
-    <p class="muted small mb1" id="qDirection"></p>
-    <p id="qText" style="font-size:1.15rem;min-height:3rem;margin:1rem 0;"></p>
+  <div class="nav-container">
+    <!-- Desktop Prev (Left) -->
+    <button type="button" class="nav-side-btn" id="sidePrevBtn" title="Previous Question">&lt;</button>
 
-    <div id="answerArea"></div>
+    <!-- Main Content -->
+    <div class="form-content">
+      <div class="card">
+        <p id="qText" style="font-size:1.15rem;min-height:3rem;margin-bottom:1rem;"></p>
+        <div id="answerArea"></div>
+      </div>
 
-    <div class="row-between">
-      <button type="button" class="btn btn-ghost" id="prevBtn">← Back</button>
-      <button type="button" class="btn btn-blue" id="nextBtn">Next →</button>
+      <!-- Mobile Nav (Bottom) -->
+      <div class="mobile-nav">
+        <button type="button" class="btn btn-ghost" id="mobilePrevBtn">← Previous</button>
+        <button type="button" class="btn btn-blue" id="mobileNextBtn">Next →</button>
+      </div>
     </div>
+
+    <!-- Desktop Next (Right) -->
+    <button type="button" class="nav-side-btn" id="sideNextBtn" title="Next Question">&gt;</button>
   </div>
 </div>
 
@@ -205,9 +247,7 @@ textarea{resize:vertical;min-height:70px}
   </div>
 
   <div style="text-align:center;margin-top:1.5rem;">
-    <a class="btn btn-blue" href="{{ url_for('student_page') }}">
-      ← Back to Dashboard
-    </a>
+    <a class="btn btn-blue" href="/student">← Back to Dashboard</a>
   </div>
 </div>
 
@@ -225,12 +265,24 @@ textarea{resize:vertical;min-height:70px}
   var qSecs     = data.question_timer || 30;
   var maxBack   = data.max_back || 0;
 
+  var state = {
+    phase:'idle', slides:data.slides||[], slideIdx:0, qIdx:0,
+    answers:new Array(pages.length).fill(null),
+    studyEndAt:0, qEndAt:0,
+    studyInterval:null, qInterval:null, countdownInterval:null,
+    startedAt:Date.now(), submitting:false
+  };
+
+  var pingInterval = null;
+  var leftPage = false;
+
   function fmt(v){
     v = Math.max(0, v|0);
     var h=(v/3600)|0, m=((v%3600)/60)|0, s=v%60;
     function p(n){ return String(n).padStart(2,'0'); }
     return h>0 ? (h+':'+p(m)+':'+p(s)) : (p(m)+':'+p(s));
   }
+
   function show(id){
     var secs = document.querySelectorAll('.content-section, #studyPhase, #countdownPhase, #quizPhase, #resultPhase');
     for(var i=0;i<secs.length;i++) secs[i].style.display='none';
@@ -240,20 +292,11 @@ textarea{resize:vertical;min-height:70px}
   }
 
   if(!pages.length){
-    document.body.innerHTML =
-      '<div class="card" style="margin:2rem;max-width:720px;margin-left:auto;margin-right:auto;">' +
-      '<h2>⚠️ No questions.</h2></div>';
+    document.body.innerHTML = '<div class="card" style="margin:2rem;max-width:720px;margin-left:auto;margin-right:auto;"><h2>⚠️ No questions.</h2></div>';
     return;
   }
 
-  var state = {
-    phase:'idle', slides:data.slides||[], slideIdx:0, qIdx:0,
-    answers:new Array(pages.length).fill(null),
-    studyEndAt:0, qEndAt:0,
-    studyInterval:null, qInterval:null, countdownInterval:null,
-    startedAt:Date.now(), submitting:false
-  };
-
+  /* ═══ START PHASE LOGIC ═══ */
   if(hasPPT && studySecs > 0) startStudyPhase();
   else startCountdownPhase();
 
@@ -266,6 +309,7 @@ textarea{resize:vertical;min-height:70px}
     tickStudy();
     state.studyInterval = setInterval(tickStudy, 250);
   }
+
   function tickStudy(){
     var left = Math.ceil((state.studyEndAt - Date.now())/1000);
     var t = document.getElementById('studyTimer');
@@ -280,6 +324,7 @@ textarea{resize:vertical;min-height:70px}
     }
     t.textContent = fmt(left);
   }
+
   function renderSlide(idx){
     state.slideIdx = idx;
     var slide = state.slides[idx] || {};
@@ -289,6 +334,7 @@ textarea{resize:vertical;min-height:70px}
     else if(slide.text) box.textContent = slide.text;
     else box.textContent = JSON.stringify(slide);
   }
+
   var sp = document.getElementById('slidePrev');
   var sn = document.getElementById('slideNext');
   if(sp) sp.onclick = function(){ if(state.slideIdx > 0) renderSlide(state.slideIdx - 1); };
@@ -323,6 +369,7 @@ textarea{resize:vertical;min-height:70px}
     showQuestion(0);
   }
 
+  /* ═══ QUIZ LOGIC ═══ */
   function renderAnswerArea(p, saved){
     var area = document.getElementById('answerArea');
     area.innerHTML = '';
@@ -397,8 +444,7 @@ textarea{resize:vertical;min-height:70px}
       var fileInp = document.createElement('input');
       fileInp.type = 'file'; fileInp.id = 'answerFile';
       fileInp.accept = '.pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png,.zip';
-      fileInp.style.cssText = 'padding:10px;border:1px dashed var(--border);' +
-        'border-radius:8px;width:100%;';
+      fileInp.style.cssText = 'padding:10px;border:1px dashed var(--border);border-radius:8px;width:100%;';
       area.appendChild(fileInp);
 
       var preview = document.createElement('p');
@@ -406,11 +452,8 @@ textarea{resize:vertical;min-height:70px}
       preview.className = 'muted small';
       preview.style.marginTop = '10px';
 
-      /* ✅ FIX: Ipakita ang stored file (kahit hindi ma-restore sa input) */
       if (saved instanceof File) {
-        preview.innerHTML = '📄 ' + saved.name
-          + ' (' + Math.round(saved.size/1024) + ' KB) '
-          + '<span style="color:var(--green);">— already attached</span>';
+        preview.innerHTML = '📄 ' + saved.name + ' (' + Math.round(saved.size/1024) + ' KB) <span style="color:var(--green);">— already attached</span>';
       } else {
         preview.textContent = '';
       }
@@ -418,8 +461,7 @@ textarea{resize:vertical;min-height:70px}
 
       fileInp.addEventListener('change', function(){
         if(fileInp.files[0]){
-          preview.textContent = '📄 ' + fileInp.files[0].name
-            + ' (' + Math.round(fileInp.files[0].size/1024) + ' KB)';
+          preview.textContent = '📄 ' + fileInp.files[0].name + ' (' + Math.round(fileInp.files[0].size/1024) + ' KB)';
         }
       });
     }
@@ -440,14 +482,12 @@ textarea{resize:vertical;min-height:70px}
       var el2 = document.getElementById('answerInput');
       state.answers[idx] = el2 ? el2.value.trim() : '';
     } else if(qType === 'file_upload'){
-      /* ✅ FIX: Huwag i-overwrite kung walang bagong file selected */
       var f = document.getElementById('answerFile');
       if (f && f.files && f.files[0]) {
         state.answers[idx] = f.files[0];
       } else if (state.answers[idx] === null || state.answers[idx] === undefined) {
         state.answers[idx] = null;
       }
-      /* else: panatilihin ang dating value (File object) */
     }
   }
 
@@ -456,15 +496,17 @@ textarea{resize:vertical;min-height:70px}
     var p = pages[idx] || {};
     document.getElementById('qCounter').textContent = idx + 1;
     document.getElementById('qText').textContent = p.question || '(no question)';
-    document.getElementById('progressBar').style.width =
-      ((idx + 1) / pages.length * 100) + '%';
+    document.getElementById('progressBar').style.width = ((idx + 1) / pages.length * 100) + '%';
 
-    var prevBtn = document.getElementById('prevBtn');
-    prevBtn.disabled = (idx === 0) || ((idx - maxBack) < 0);
-    prevBtn.style.opacity = prevBtn.disabled ? '.4' : '1';
+    // Side buttons logic
+    var isFirst = (idx === 0) || ((idx - maxBack) < 0);
+    var isLast = (idx === pages.length - 1);
 
-    document.getElementById('nextBtn').textContent =
-      (idx === pages.length - 1) ? 'Submit ✓' : 'Next →';
+    document.getElementById('sidePrevBtn').disabled = isFirst;
+    document.getElementById('mobilePrevBtn').disabled = isFirst;
+    
+    document.getElementById('sideNextBtn').innerHTML = isLast ? '✓' : '&gt;';
+    document.getElementById('mobileNextBtn').textContent = isLast ? 'Submit ✓' : 'Next →';
 
     renderAnswerArea(p, state.answers[idx]);
 
@@ -499,70 +541,52 @@ textarea{resize:vertical;min-height:70px}
     if(state.qIdx >= pages.length - 1) submitAll();
     else showQuestion(state.qIdx + 1);
   }
+  
   function goNext(){
     captureAnswer();
     if(state.qIdx >= pages.length - 1) submitAll();
     else showQuestion(state.qIdx + 1);
   }
+  
   function goPrev(){
     captureAnswer();
     if(state.qIdx > 0) showQuestion(state.qIdx - 1);
   }
 
-  document.getElementById('nextBtn').onclick = goNext;
-  document.getElementById('prevBtn').onclick = goPrev;
+  // Bind Event Listeners for Desktop & Mobile
+  document.getElementById('sideNextBtn').onclick = goNext;
+  document.getElementById('mobileNextBtn').onclick = goNext;
+  document.getElementById('sidePrevBtn').onclick = goPrev;
+  document.getElementById('mobilePrevBtn').onclick = goPrev;
 
   document.addEventListener('keydown', function(e){
     if(e.key === 'Enter' && qType !== 'essay'){
       var ae = document.activeElement;
       if(ae && ae.tagName !== 'TEXTAREA'){
-        /* ✅ FIX: Huwag auto-submit sa last question via Enter */
-        if (state.qIdx >= pages.length - 1) {
-          /* Sa last question, Enter = walang action (kailangan pindutin button) */
-          return;
-        }
+        if (state.qIdx >= pages.length - 1) return;
         e.preventDefault();
         goNext();
       }
     }
   });
 
-  /* ✅ Helper: default confirm dialog fallback (walang base.html dito) */
-  function fallbackAlert(msg) {
-    return new Promise(function(resolve) {
-      var dlg = document.getElementById('appConfirmModal');
-      if (!dlg) { window.alert(msg); resolve(); return; }
-
-      var title = document.getElementById('appConfirmTitle');
-      var msgEl = document.getElementById('appConfirmMessage');
-      var okBtn = document.getElementById('appConfirmOk');
-      var cancelBtn = document.getElementById('appConfirmCancel');
-      var closeBtn = document.getElementById('appConfirmClose');
-
-      title.textContent = '❌ Error';
-      msgEl.textContent = msg;
-      okBtn.textContent = 'OK';
-      okBtn.className = 'btn btn-red';
-      cancelBtn.style.display = 'none';
-
-      function close() {
-        dlg.classList.remove('active');
-        okBtn.onclick = null;
-        closeBtn.onclick = null;
-        dlg.onclick = null;
-        cancelBtn.style.display = '';
-        document.removeEventListener('keydown', onKey);
-        resolve();
-      }
-      function onKey(e) { if (e.key === 'Escape' || e.key === 'Enter') close(); }
-      okBtn.onclick = close;
-      closeBtn.onclick = close;
-      dlg.onclick = function(e) { if (e.target === dlg) close(); };
-      document.addEventListener('keydown', onKey);
-      dlg.classList.add('active');
+  /* ═══ EXIT QUIZ LOGIC ═══ */
+  window.exitQuiz = async function() {
+    var ok = await showConfirm('Are you sure you want to leave? Your progress will be lost.', {
+      title: '⚠️ Exit Quiz', okText: 'Leave', danger: true
     });
-  }
+    if (!ok) return;
 
+    leftPage = true;
+    if (pingInterval) clearInterval(pingInterval);
+    clearInterval(state.studyInterval);
+    clearInterval(state.qInterval);
+    clearInterval(state.countdownInterval);
+    
+    window.location.href = '/student';
+  };
+
+  /* ═══ SUBMIT LOGIC ═══ */
   function submitAll(){
     if(state.submitting) return;
     state.submitting = true;
@@ -595,8 +619,7 @@ textarea{resize:vertical;min-height:70px}
     .then(function(r){return r.json();})
     .then(function(res){
       if(res.error){
-        /* ✅ FIX: custom modal */
-        fallbackAlert('❌ ' + res.error).then(function() {
+        showAlert('❌ ' + res.error, { title: 'Error', danger: true }).then(function() {
           state.submitting = false;
         });
         return;
@@ -604,15 +627,15 @@ textarea{resize:vertical;min-height:70px}
       showResult(res);
     })
     .catch(function(err){
-      fallbackAlert('Submit failed: ' + err.message).then(function() {
+      showAlert('Submit failed: ' + err.message, { title: 'Error', danger: true }).then(function() {
         state.submitting = false;
       });
     });
   }
 
+  /* ═══ RESULT LOGIC ═══ */
   function esc(s){
-    return String(s == null ? '' : s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   function showResult(res){
@@ -650,9 +673,6 @@ textarea{resize:vertical;min-height:70px}
   }
 
   /* ═══ HEARTBEAT ═══ */
-  var pingInterval = null;
-  var leftPage = false;
-
   function startHeartbeat() {
     sendPing();
     pingInterval = setInterval(sendPing, 10000);
@@ -665,7 +685,10 @@ textarea{resize:vertical;min-height:70px}
       keepalive: true
     }).catch(function(){});
   }
-  startHeartbeat();
+  
+  if(state.phase !== 'result') {
+      startHeartbeat();
+  }
 
   window.addEventListener('pagehide', function() {
     leftPage = true;
@@ -678,14 +701,90 @@ textarea{resize:vertical;min-height:70px}
     clearInterval(state.qInterval);
     clearInterval(state.countdownInterval);
   });
+
+  /* ═══ LOCAL CONFIRM / ALERT MODALS ═══ */
+  window.showConfirm = function (message, opts) {
+    opts = opts || {};
+    return new Promise(function (resolve) {
+      var dlg = document.getElementById('appConfirmModal');
+      if (!dlg) { resolve(window.confirm(message)); return; }
+
+      var title = document.getElementById('appConfirmTitle');
+      var msg = document.getElementById('appConfirmMessage');
+      var okBtn = document.getElementById('appConfirmOk');
+      var cancelBtn = document.getElementById('appConfirmCancel');
+      var closeBtn = document.getElementById('appConfirmClose');
+
+      title.textContent = opts.title || '⚠️ Confirm';
+      msg.textContent = message;
+      okBtn.textContent = opts.okText || 'OK';
+      okBtn.className = 'btn ' + (opts.danger === false ? 'btn-blue' : 'btn-red');
+      cancelBtn.textContent = opts.cancelText || 'Cancel';
+      cancelBtn.style.display = '';
+
+      function close(result) {
+        dlg.classList.remove('active');
+        okBtn.onclick = null; cancelBtn.onclick = null; closeBtn.onclick = null; dlg.onclick = null;
+        document.removeEventListener('keydown', onKey);
+        resolve(result);
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') close(false);
+        else if (e.key === 'Enter') close(true);
+      }
+      okBtn.onclick = function () { close(true); };
+      cancelBtn.onclick = function () { close(false); };
+      closeBtn.onclick = function () { close(false); };
+      dlg.onclick = function (e) { if (e.target === dlg) close(false); };
+      document.addEventListener('keydown', onKey);
+      dlg.classList.add('active');
+    });
+  };
+
+  window.showAlert = function (message, opts) {
+    opts = opts || {};
+    return new Promise(function (resolve) {
+      var dlg = document.getElementById('appConfirmModal');
+      if (!dlg) { window.alert(message); resolve(); return; }
+
+      var title = document.getElementById('appConfirmTitle');
+      var msg = document.getElementById('appConfirmMessage');
+      var okBtn = document.getElementById('appConfirmOk');
+      var cancelBtn = document.getElementById('appConfirmCancel');
+      var closeBtn = document.getElementById('appConfirmClose');
+
+      title.textContent = opts.title || 'ℹ️ Notice';
+      msg.textContent = message;
+      okBtn.textContent = opts.okText || 'OK';
+      okBtn.className = 'btn ' + (opts.danger === true ? 'btn-red' : 'btn-blue');
+      cancelBtn.style.display = 'none';
+
+      function close() {
+        dlg.classList.remove('active');
+        okBtn.onclick = null; closeBtn.onclick = null; dlg.onclick = null;
+        cancelBtn.style.display = '';
+        document.removeEventListener('keydown', onKey);
+        resolve();
+      }
+      function onKey(e) {
+        if (e.key === 'Escape' || e.key === 'Enter') close();
+      }
+      okBtn.onclick = close;
+      closeBtn.onclick = close;
+      dlg.onclick = function (e) { if (e.target === dlg) close(); };
+      document.addEventListener('keydown', onKey);
+      dlg.classList.add('active');
+    });
+  };
+
 })();
 </script>
 
-<!-- ═══════════ CUSTOM ALERT MODAL ═══════════ -->
+<!-- ═══════════ CUSTOM MODAL ═══════════ -->
 <div class="modal-backdrop" id="appConfirmModal">
   <div class="modal">
     <div class="modal-head">
-      <h3 id="appConfirmTitle">❌ Error</h3>
+      <h3 id="appConfirmTitle">Confirm</h3>
       <button class="icon-btn" type="button" id="appConfirmClose">×</button>
     </div>
     <p id="appConfirmMessage"></p>

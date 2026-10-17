@@ -48,6 +48,7 @@ def user_to_doc(user):
     return {
         "id": user.id,
         "username": user.username,
+        "username_history": getattr(user, 'username_history', []),  # ✅ IDAGDAG
         "role": user.role,
         "full_name": user.full_name,
         "status": user.status,
@@ -104,6 +105,7 @@ def doc_to_user(doc):
 
     # Overwrite generated fields
     user.id = doc.get("id", user.id)
+    user.username_history = doc.get("username_history") or []
     user.created_at = doc.get("created_at", user.created_at)
     user.delete_requested_at = doc.get("delete_requested_at")
     user.delete_grace_until = doc.get("delete_grace_until")

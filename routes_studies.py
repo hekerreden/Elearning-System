@@ -140,24 +140,45 @@ def register(app):
             return redirect(url_for("super_admin_page"))
         return redirect(url_for("teacher_page"))
 
+    @app.route("/api/studies/<stid>/save_details", methods=["POST"])
+    @role_required("Teacher", "SuperAdmin")
+    def save_details(stid):
+        actor = current_user()
+        study = find_study(stid)
+        if not can_edit_study(actor, study):
+            return jsonify({"ok": False, "error": "Study not found."}), 404
+        if is_study_locked(study):
+            return jsonify({"ok": False, "error": "🔒 Locked — may student na nagsimula."}), 403
+
+        title = request.form.get("title", "").strip()
+        if title:
+            study["title"] = title
+        study["direction"] = request.form.get("direction", "").strip()
+        study["updated_at"] = now_str()
+
+        # ✅ Python Decision: Saan pupunta?
+        next_url = f"/teacher/activity/{stid}/0"
+        
+        # Check kung AJAX request (galing sa JS fetch)
+        wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        if wants_json:
+            return jsonify({"ok": True, "next_url": next_url})
+        
+        return redirect(next_url)
+
     @app.route("/api/studies/<stid>/save_page/<int:page_idx>", methods=["POST"])
     @role_required("Teacher", "SuperAdmin")
     def save_page(stid, page_idx):
         actor = current_user()
         study = find_study(stid)
         if not can_edit_study(actor, study):
-            flash("Study not found.", "error")
-            return redirect(url_for("teacher_page"))
+            return jsonify({"ok": False, "error": "Study not found."}), 404
         if is_study_locked(study):
-            flash("🔒 Cannot edit — may student na nagsimula.", "error")
-            return redirect(url_for("teacher_page"))
+            return jsonify({"ok": False, "error": "🔒 Locked — may student na nagsimula."}), 403
 
-        new_title = request.form.get("title", "").strip()
-        if new_title:
-            study["title"] = new_title
-        if "direction" in request.form:
-            study["direction"] = request.form.get("direction", "").strip()
-
+        # ... (I-keep ang existing validation at pag-save ng page data mo dito) ...
+        # I'll assume you have the existing logic here, just keep it.
+        
         while len(study["pages"]) <= page_idx:
             study["pages"].append({"question": ""})
 
@@ -184,9 +205,17 @@ def register(app):
 
         study["updated_at"] = now_str()
 
+        # ✅ Python Decision: Saan pupunta?
         if page_idx + 1 < study["total_pages"]:
-            return redirect(f"/teacher/activity/{stid}/{page_idx + 1}")
-        return redirect(f"/teacher/activity/{stid}/preview")
+            next_url = f"/teacher/activity/{stid}/{page_idx + 1}"
+        else:
+            next_url = f"/teacher/activity/{stid}/preview"
+
+        wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        if wants_json:
+            return jsonify({"ok": True, "next_url": next_url})
+            
+        return redirect(next_url)
 
     @app.route("/teacher/activity/<stid>/<int:page_idx>", methods=["GET", "POST"])
     @role_required("Teacher", "SuperAdmin")

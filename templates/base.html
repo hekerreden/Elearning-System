@@ -154,13 +154,22 @@ code{background:#151517;border:1px solid var(--border);padding:.1rem .4rem;
   width:280px;
   background:var(--card);
   border:1px solid var(--border);
-  border-radius:12px;
+  border-radius:12px; 
   box-shadow:0 20px 50px rgba(0,0,0,.75);
   z-index:250;
   overflow:hidden;
   display:none;
   animation:pdFadeIn .18s ease;
 }
+.profile-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  z-index:249;
+  display:none;
+  backdrop-filter:blur(1px);
+}
+.profile-backdrop.active{display:block;}
 .profile-dropdown.active{display:block}
 @keyframes pdFadeIn{
   from{opacity:0;transform:translateY(-8px) scale(.97)}
@@ -812,7 +821,10 @@ select[data-custom]{display:none !important}
         <button id="profileBtn" class="profile-btn" type="button" title="Account">
           {{ current_username[0]|upper if current_username else '?' }}
         </button>
-
+        <!-- ILABAS ANG BACKDROP DITO -->
+        <div class="profile-backdrop" id="profileBackdrop"></div>
+        
+        <!-- DROPDOWN CARD -->
         <div class="profile-dropdown" id="profileDropdown">
           <div class="pd-header">
             <div class="pd-avatar">{{ current_username[0]|upper if current_username else '?' }}</div>
@@ -825,22 +837,23 @@ select[data-custom]{display:none !important}
           <div class="pd-body">
             <button type="button" class="pd-item" id="pdSettingsBtn">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
               <span>Settings</span>
             </button>
             <hr class="pd-sep">
             <a href="{{ url_for('logout') }}" class="pd-item danger">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
               <span>Log out</span>
             </a>
           </div>
         </div>
+        
       </div>
     </div>
 
@@ -1182,28 +1195,38 @@ select[data-custom]{display:none !important}
   /* ═══ PROFILE DROPDOWN ═══ */
   function toggleProfileDropdown() {
     var dd = document.getElementById('profileDropdown');
+    var bd = document.getElementById('profileBackdrop');
     if (!dd) return;
     if (dd.classList.contains('active')) {
       dd.classList.remove('active');
+      if (bd) bd.classList.remove('active');
     } else {
       dd.classList.add('active');
+      if (bd) bd.classList.add('active');
       var np = document.getElementById('notifPanel');
       if (np) np.classList.remove('active');
     }
   }
-
+  
   function closeProfileDropdown() {
     var dd = document.getElementById('profileDropdown');
+    var bd = document.getElementById('profileBackdrop');
     if (dd) dd.classList.remove('active');
+    if (bd) bd.classList.remove('active');
   }
 
   /* ═══ GLOBAL CLICK HANDLER ═══ */
   document.addEventListener('click', function (e) {
+    
+    if (e.target.closest('#profileBackdrop')) {
+      closeProfileDropdown();
+      return;
+    }
 
     if (e.target.closest('#profileBtn')) {
       e.preventDefault();
       e.stopPropagation();
-      toggleProfileDropdown();
+      toggleProfileDropdown();  
       return;
     }
 

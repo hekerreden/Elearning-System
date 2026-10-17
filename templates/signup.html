@@ -19,13 +19,7 @@
   </div>
 
   <form method="POST" action="{{ url_for('signup') }}" class="form" data-no-ajax>
-    <label>Role *
-      <select name="role" required data-custom>
-        <option value="">-- Select Role --</option>
-        <option value="Teacher" {% if form_data.role == 'Teacher' %}selected{% endif %}>👨‍🏫 Teacher</option>
-        <option value="Student" {% if form_data.role == 'Student' %}selected{% endif %}>🎒 Student</option>
-      </select>
-    </label>
+    
 
     <label>Full Name *
       <input type="text" name="full_name" required
@@ -51,6 +45,13 @@
              autocomplete="new-password"
              placeholder="Re-type your password">
     </label>
+    <label>Role *
+      <select name="role" required data-custom>
+        <option value="">-- Select Role --</option>
+        <option value="Teacher" {% if form_data.role == 'Teacher' %}selected{% endif %}>👨‍🏫 Teacher</option>
+        <option value="Student" {% if form_data.role == 'Student' %}selected{% endif %}>🎒 Student</option>
+      </select>
+      </label>
 
     <button class="btn btn-green btn-block" type="submit">
       ✨ Create Account

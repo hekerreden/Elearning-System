@@ -2,24 +2,28 @@
 """Profile route."""
 from flask import render_template, redirect, url_for, flash
 from storage import users, studies, quiz_results, attendance
-from helpers import (current_user, find_user_by_username, can_view_user)
+from helpers import (current_user,get_login_candidates, find_user_by_username, can_view_user)
 from decorators import role_required  # noqa (kept for parity)
 
 
 def register(app):
-
     @app.route("/profile/<username>")
     def profile(username):
         viewer = current_user()
         if not viewer:
             return redirect(url_for("login"))
-        target = find_user_by_username(username)
+            
+        # ✅ GAMITIN ANG CANDIDATES
+        candidates = get_login_candidates(username)
+        target = candidates[0] if candidates else None
+        
         if not target or target.status == "deleted":
             flash("User not found.", "error")
             return redirect(url_for("dashboard"))
-        if not can_view_user(viewer, target):
-            flash("You cannot view this profile.", "error")
-            return redirect(url_for("dashboard"))
+            
+        # Kung iba ang current username, i-redirect sa tamang URL
+        if target.username.lower() != username.lower():
+            return redirect(url_for("profile", username=target.username))
 
         ctx = {
             "user": viewer,

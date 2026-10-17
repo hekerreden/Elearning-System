@@ -148,6 +148,30 @@ def search_users(query, viewer, limit=20):
         if len(out) >= limit:
             break
     return out
+    
+def get_login_candidates(username_input):
+    """
+    Returns a list of users who match the username 
+    (either currently, or in their history).
+    """
+    if not username_input:
+        return []
+    
+    u_lower = username_input.lower()
+    candidates = []
+    
+    for x in users:
+        # 1. Check current username
+        if x.username.lower() == u_lower:
+            candidates.append(x)
+        # 2. Check history
+        elif hasattr(x, 'username_history') and x.username_history:
+            for old_u in x.username_history:
+                if old_u and old_u.lower() == u_lower:
+                    candidates.append(x)
+                    break  # Break inner loop, go to next user
+                    
+    return candidates
 
 
 def get_int(name, default=0):
