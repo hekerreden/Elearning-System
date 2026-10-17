@@ -54,3 +54,27 @@ def register(app):
             return jsonify([])
         found = search_users(q, u)
         return jsonify([x.to_dict(viewer=u) for x in found])
+        
+    @app.route("/api/notifications/<nid>/delete", methods=["POST"])
+    def delete_notification(nid):
+        u = current_user()
+        if not u:
+            return jsonify({"ok": False}), 401
+            
+        # Hanapin ang notification
+        target = None
+        for n in notifications:
+            if n["id"] == nid and n["user_id"] == u.id:
+                target = n
+                break
+                
+        if target:
+            notifications.remove(target)
+            # ✅ Explicit save para mawala agad sa MongoDB
+            try:
+                from storage import save_to_mongo
+                save_to_mongo()
+            except Exception as e:
+                print(f"⚠️ Delete notif save failed: {e}")
+                
+        return jsonify({"ok": True})

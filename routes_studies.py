@@ -4,7 +4,7 @@ import uuid
 from datetime import timedelta
 from flask import (request, redirect, url_for, flash, jsonify,
                    render_template)
-from storage import studies, quiz_results
+from storage import studies, quiz_results, save_to_mongo
 from helpers import (current_user, find_study, is_study_locked,
                      now_str, now_dt, get_int,
                      active_students_for_teacher, notify)
@@ -405,6 +405,11 @@ def register(app):
         # Force delete — parehong memory at MongoDB
         studies.remove(study)
         quiz_results[:] = [r for r in quiz_results if r["study_id"] != stid]
+        
+        # ✅ IDINAGDAG ITO
+        try: save_to_mongo()
+        except Exception as e: print(f"⚠️ Save failed: {e}")
+        
         return jsonify({"ok": True, "kept": False})
 
     @app.route("/api/studies/<stid>/delete", methods=["POST"])

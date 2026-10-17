@@ -2,7 +2,7 @@
 """Connection request/approve/reject."""
 import uuid
 from flask import request, redirect, url_for, flash
-from storage import connections
+from storage import connections, save_to_mongo  # ✅ IDINAGDAG
 from helpers import (current_user, find_user_by_id, role_home,
                      notify, now_str)
 from decorators import role_required
@@ -14,23 +14,31 @@ def register(app):
     @role_required("Teacher", "Student")
     def request_connection():
         actor = current_user()
+        
+        # ✅ FIX: Ibalik ang nawawalang target_id
+        target_id = request.form.get("target_id", "").strip().upper()
+        
+        if not target_id:
+            flash("Please enter an ID.", "error")
+            return redirect(url_for(role_home(actor.role)))
+            
+        if target_id == actor.id:
+            flash("You cannot connect to yourself.", "error")
+            return redirect(url_for(role_home(actor.role)))
+            
         target = find_user_by_id(target_id)
         if not target:
             flash(f"No user found with ID {target_id}.", "error")
             return redirect(url_for(role_home(actor.role)))
+            
         if target.status == "deleted":
             flash("This user is no longer available.", "error")
             return redirect(url_for(role_home(actor.role)))
+            
         if target.status in ("pending_delete", "appealed"):
             flash("This user's account is under review.", "error")
             return redirect(url_for(role_home(actor.role)))
-        if {actor.role, target.role} != {"Teacher", "Student"}:
-            flash("Invalid connection request.", "error")
-            return redirect(url_for(role_home(actor.role)))
-        target = find_user_by_id(target_id)
-        if not target:
-            flash(f"No user found with ID {target_id}.", "error")
-            return redirect(url_for(role_home(actor.role)))
+            
         if {actor.role, target.role} != {"Teacher", "Student"}:
             flash("Invalid connection request.", "error")
             return redirect(url_for(role_home(actor.role)))
@@ -57,10 +65,16 @@ def register(app):
             "created_at": now_str(),
         }
         connections.append(conn)
+        
+        # ✅ Explicit Save sa MongoDB
+        try: save_to_mongo()
+        except Exception as e: print(f"⚠️ Save failed: {e}")
+
         notify(target.id, "New Connection Request",
                f"{actor.full_name} (@{actor.username}) wants to connect with you.",
                link=f"/{target.role.lower()}#connect",
                kind="connection_request")
+               
         flash(f"Request sent to {target.full_name}!", "success")
         return redirect(url_for(role_home(actor.role)))
 
@@ -80,6 +94,11 @@ def register(app):
             return redirect(url_for(role_home(actor.role)))
 
         conn["status"] = "active"
+        
+        # ✅ Explicit Save
+        try: save_to_mongo()
+        except Exception as e: print(f"⚠️ Save failed: {e}")
+        
         other_id = conn["teacher_id"] if actor.id == conn["student_id"] else conn["student_id"]
         other = find_user_by_id(other_id)
         if other and other.status == "active":
@@ -105,6 +124,11 @@ def register(app):
 
         other_id = conn["teacher_id"] if actor.id == conn["student_id"] else conn["student_id"]
         connections.remove(conn)
+        
+        # ✅ Explicit Save
+        try: save_to_mongo()
+        except Exception as e: print(f"⚠️ Save failed: {e}")
+        
         other = find_user_by_id(other_id)
         if other:
             notify(other_id, "Connection Rejected",
@@ -112,4 +136,4 @@ def register(app):
                    link=f"/{other.role.lower()}#connect",
                    kind="connection_rejected")
         flash("Request rejected.", "success")
-        return redirect(url_for(role_home(actor.role))) 
+        return redirect(url_for(role_home(actor.role)))

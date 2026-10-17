@@ -2,7 +2,7 @@
 """Extra admin features: edit username."""
 import re
 from flask import request, redirect, url_for, flash
-from storage import users
+from storage import users, save_to_mongo  # ✅ IDINAGDAG
 from helpers import find_user_by_id, notify
 from decorators import role_required
 
@@ -71,6 +71,10 @@ def register(app):
         # ── Save ──
         old_username = target.username
         target.username = new_username
+        
+        # ✅ IDINAGDAG ITO
+        try: save_to_mongo()
+        except Exception as e: print(f"⚠️ Save failed: {e}")
         
         # ✅ IDAGDAG ITO
         if not hasattr(target, 'username_history'):

@@ -567,6 +567,58 @@ select[data-custom]{display:none !important}
 .notif-item p{color:var(--muted);font-size:.78rem;margin:0}
 .notif-item small{color:var(--text-dim);font-size:.7rem}
 
+/* ═══════════ NEW NOTIFICATION ITEM LAYOUT ═══════════ */
+.notif-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: .15s;
+  position: relative;
+}
+.notif-item:hover { background: rgba(24,119,242,.08); }
+.notif-item.unread {
+  background: rgba(24,119,242,.05);
+  border-left: 3px solid var(--blue);
+}
+.notif-body {
+  flex: 1;
+  min-width: 0;
+  padding-right: 10px;
+}
+.notif-body b { color: #fff; display: block; margin-bottom: 2px; font-size: .85rem; }
+.notif-body p { color: var(--muted); font-size: .78rem; margin: 0; line-height: 1.4; }
+.notif-body small { color: var(--text-dim); font-size: .7rem; display: block; margin-top: 4px; }
+
+/* 3-DOT MENU */
+.notif-actions { position: relative; flex-shrink: 0; }
+.notif-dot-btn {
+  background: transparent; border: none; color: var(--text-dim);
+  font-size: 1.2rem; cursor: pointer; padding: 4px 8px; border-radius: 4px;
+  transition: .15s; line-height: 1;
+}
+.notif-dot-btn:hover { background: var(--border); color: #fff; }
+
+.notif-menu {
+  position: absolute; top: 100%; right: 0;
+  background: var(--card-2); border: 1px solid var(--border);
+  border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,.6);
+  width: 140px; z-index: 100; display: none; padding: 4px;
+  animation: pdFadeIn .15s ease;
+}
+.notif-menu.active { display: block; }
+.notif-menu button {
+  width: 100%; text-align: left; padding: 8px 12px;
+  background: transparent; border: none; border-radius: 6px;
+  color: var(--text); font-size: .8rem; font-weight: 500;
+  cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 8px;
+}
+.notif-menu button:hover { background: rgba(24,119,242,.15); }
+.notif-menu button.delete { color: #fca5a5; }
+.notif-menu button.delete:hover { background: rgba(239,68,68,.15); }
+
 /* ═══════════════ AUTH ═══════════════ */
 .auth-root{min-height:100vh;display:flex;flex-direction:column;
   align-items:center;justify-content:flex-start;
@@ -1448,64 +1500,158 @@ select[data-custom]{display:none !important}
   function loadNotifications() {
     var notifList = document.getElementById('notifList');
     if (!notifList) return;
-    fetch('/api/notifications').then(function (r) { return r.json(); }).then(function (rows) {
+    
+    fetch('/api/notifications').then(function(r) { return r.json(); }).then(function(rows) {
       if (!Array.isArray(rows) || rows.length === 0) {
         notifList.innerHTML = '<p class="empty" style="padding:1.5rem;text-align:center;">No notifications yet.</p>';
         return;
       }
-      notifList.innerHTML = rows.map(function (n) {
+      
+      notifList.innerHTML = rows.map(function(n) {
         var title = (n.title || '').replace(/[<>]/g, '');
         var msg = (n.message || '').replace(/[<>]/g, '');
-        var msgWithIds = msg.replace(/\b([A-F0-9]{12})\b/g,
-          '<code data-copy="$1" onclick="event.stopPropagation()" ' +
-          'style="cursor:pointer;background:rgba(124,179,255,.15);' +
-          'padding:1px 6px;border-radius:4px;display:inline-block;">$1 📋</code>');
-        return '<div class="notif-item ' + (n.read ? '' : 'unread') + '" data-nid="' + n.id + '"' +
-               (n.link ? ' data-link="' + n.link + '"' : '') + '>' +
-               '<b>' + title + '</b>' +
-               '<p>' + msgWithIds + '</p>' +
-               '<small>' + n.created_at + '</small>' +
-               '</div>';
+        
+        // 3-dot menu (Mark as read only if unread)
+        var markReadHtml = n.read ? '' :
+          '<button onclick="markSingleRead(\'' + n.id + '\', event)">' +
+          '👁 Mark as read' +
+          '</button>';
+        
+        var deleteHtml =
+          '<button class="delete" onclick="deleteNotification(\'' + n.id + '\', event)">' +
+          '🗑 Delete' +
+          '</button>';
+        
+        return '<div class="notif-item ' + (n.read ? '' : 'unread') + '" data-nid="' + n.id + '" data-link="' + (n.link || '') + '">' +
+          '<div class="notif-body">' +
+          '<b>' + title + '</b>' +
+          '<p>' + msg + '</p>' +
+          '<small>' + n.created_at + '</small>' +
+          '</div>' +
+          '<div class="notif-actions">' +
+          '<button class="notif-dot-btn" onclick="toggleNotifMenu(this, event)">⋮</button>' +
+          '<div class="notif-menu">' +
+          markReadHtml +
+          deleteHtml +
+          '</div>' +
+          '</div>' +
+          '</div>';
       }).join('');
-      notifList.querySelectorAll('.notif-item').forEach(function (el) {
-        el.addEventListener('click', function (ev) {
-          if (ev.target.closest('[data-copy]')) return;
+      
+      // Bind Click Event sa Bawat Notification Item (Navigation)
+      notifList.querySelectorAll('.notif-item').forEach(function(el) {
+        el.addEventListener('click', function(ev) {
+          // Huwag i-trigger kung pumindot sa 3-dot menu o sa loob ng menu
+          if (ev.target.closest('.notif-actions')) return;
+          
           var nid = el.getAttribute('data-nid');
           var link = el.getAttribute('data-link');
-          el.classList.remove('unread');
-          var stillUnread = notifList.querySelectorAll('.notif-item.unread').length;
-          var notifDot = document.getElementById('notifDot');
-          if (notifDot) {
-            if (stillUnread > 0) notifDot.classList.remove('hidden');
-            else notifDot.classList.add('hidden');
+          
+          // Auto mark as read
+          if (el.classList.contains('unread')) {
+            el.classList.remove('unread');
+            fetch('/api/notifications/' + nid + '/read', { method: 'POST' });
+            
+            // Check kung may natitirang unread para sa pulang dot
+            var stillUnread = notifList.querySelectorAll('.notif-item.unread').length;
+            var notifDot = document.getElementById('notifDot');
+            if (notifDot) {
+              if (stillUnread > 0) notifDot.classList.remove('hidden');
+              else notifDot.classList.add('hidden');
+            }
           }
-          var np = document.getElementById('notifPanel');
-          if (np) np.classList.remove('active');
-          fetch('/api/notifications/' + nid + '/read', { method: 'POST' })
-            .then(function () {
-              if (!link) { loadNotifications(); return; }
-              var parts = link.split('#');
-              var linkPath = parts[0] || '';
-              var linkHash = parts[1] || '';
-              var currentPath = window.location.pathname;
-              if (linkPath === currentPath && linkHash) {
-                if (window.location.hash === '#' + linkHash) {
-                  var targetNav = document.querySelector('.adminnav[data-section="' + linkHash + '"]');
-                  if (targetNav) targetNav.click();
-                } else {
-                  window.location.hash = linkHash;
-                }
+          
+          // Close panel
+          document.getElementById('notifPanel').classList.remove('active');
+          
+          // Navigate
+          if (link) {
+            var parts = link.split('#');
+            var linkPath = parts[0] || '';
+            var linkHash = parts[1] || '';
+            var currentPath = window.location.pathname;
+            
+            if (linkPath === currentPath && linkHash) {
+              // Kung parehong page, smooth scroll or tab switch
+              if (window.location.hash === '#' + linkHash) {
+                var targetNav = document.querySelector('.adminnav[data-section="' + linkHash + '"]');
+                if (targetNav) targetNav.click();
               } else {
-                window.location.href = link;
+                window.location.hash = linkHash;
               }
-            })
-            .catch(function () { if (link) window.location.href = link; });
+            } else {
+              // Kung ibang page, redirect
+              window.location.href = link;
+            }
+          }
         });
       });
+      
     });
   }
   window.loadNotifications = loadNotifications;
+  /* ═══ 3-DOT MENU LOGIC ═══ */
+  window.toggleNotifMenu = function(btn, event) {
+    event.stopPropagation();
+    // Isara lahat ng ibang bukas na menu
+    document.querySelectorAll('.notif-menu.active').forEach(function(m) {
+      if (m !== btn.nextElementSibling) m.classList.remove('active');
+    });
+    // I-toggle ang sarili
+    var menu = btn.nextElementSibling;
+    if (menu) menu.classList.toggle('active');
+  };
 
+  // Isara ang menu pag pumindot sa labas
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.notif-actions')) {
+      document.querySelectorAll('.notif-menu.active').forEach(function(m) {
+        m.classList.remove('active');
+      });
+    }
+  });
+
+  /* ═══ MARK SINGLE AS READ ═══ */
+  window.markSingleRead = function(nid, event) {
+    event.stopPropagation();
+    fetch('/api/notifications/' + nid + '/read', { method: 'POST' }).then(function() {
+      loadNotifications(); // Re-render para mawala ang "Mark as read" at mawala ang unread background
+      
+      // Check dot
+      var notifList = document.getElementById('notifList');
+      var stillUnread = notifList.querySelectorAll('.notif-item.unread').length;
+      var notifDot = document.getElementById('notifDot');
+      if (notifDot) {
+        if (stillUnread > 0) notifDot.classList.remove('hidden');
+        else notifDot.classList.add('hidden');
+      }
+    });
+  };
+
+  /* ═══ DELETE NOTIFICATION ═══ */
+  window.deleteNotification = function(nid, event) {
+    event.stopPropagation();
+    
+    // Optional: Confirm dialog bago i-delete
+    showConfirm('Delete this notification?', {
+      title: '🗑 Delete', okText: 'Delete', danger: true
+    }).then(function(ok) {
+      if (!ok) return;
+      
+      fetch('/api/notifications/' + nid + '/delete', { method: 'POST' }).then(function() {
+        loadNotifications(); // Re-render
+        
+        // Check dot
+        var notifList = document.getElementById('notifList');
+        var stillUnread = notifList.querySelectorAll('.notif-item.unread').length;
+        var notifDot = document.getElementById('notifDot');
+        if (notifDot) {
+          if (stillUnread > 0) notifDot.classList.remove('hidden');
+          else notifDot.classList.add('hidden');
+        }
+      });
+    });
+  };
   function markAllRead() {
     var notifDot = document.getElementById('notifDot');
     if (notifDot) notifDot.classList.add('hidden');
