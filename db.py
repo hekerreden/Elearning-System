@@ -179,47 +179,54 @@ def _clean_doc(doc):
 
 
 def save_all(users, studies, quiz_results, attendance, notifications, connections):
-    """Save all in-memory data back to MongoDB. Replaces everything."""
+    """Save all in-memory data back to MongoDB. Safe Upsert (No Overwrite)."""
     if not _is_connected:
         return
 
     try:
-        # Users
+        # ─── USERS ───
         coll = _db["users"]
-        coll.delete_many({})
-        docs = [user_to_doc(u) for u in users]
-        if docs:
-            coll.insert_many(docs)
+        current_ids = [u.id for u in users]
+        # Buburahin lang kung wala na sa RAM (meaning, dinelete sa system)
+        coll.delete_many({"id": {"$nin": current_ids}})
+        # I-update kung existing, i-insert kung bago
+        for u in users:
+            coll.replace_one({"id": u.id}, user_to_doc(u), upsert=True)
 
-        # Studies
+        # ─── STUDIES ───
         coll = _db["studies"]
-        coll.delete_many({})
-        if studies:
-            coll.insert_many([_clean_doc(s) for s in studies])
+        current_ids = [s["id"] for s in studies]
+        coll.delete_many({"id": {"$nin": current_ids}})
+        for s in studies:
+            coll.replace_one({"id": s["id"]}, _clean_doc(s), upsert=True)
 
-        # Quiz results
+        # ─── QUIZ RESULTS ───
         coll = _db["quiz_results"]
-        coll.delete_many({})
-        if quiz_results:
-            coll.insert_many([_clean_doc(r) for r in quiz_results])
+        current_ids = [r["id"] for r in quiz_results]
+        coll.delete_many({"id": {"$nin": current_ids}})
+        for r in quiz_results:
+            coll.replace_one({"id": r["id"]}, _clean_doc(r), upsert=True)
 
-        # Attendance
+        # ─── ATTENDANCE ───
         coll = _db["attendance"]
-        coll.delete_many({})
-        if attendance:
-            coll.insert_many([_clean_doc(a) for a in attendance])
+        current_ids = [a["id"] for a in attendance]
+        coll.delete_many({"id": {"$nin": current_ids}})
+        for a in attendance:
+            coll.replace_one({"id": a["id"]}, _clean_doc(a), upsert=True)
 
-        # Notifications
+        # ─── NOTIFICATIONS ───
         coll = _db["notifications"]
-        coll.delete_many({})
-        if notifications:
-            coll.insert_many([_clean_doc(n) for n in notifications])
+        current_ids = [n["id"] for n in notifications]
+        coll.delete_many({"id": {"$nin": current_ids}})
+        for n in notifications:
+            coll.replace_one({"id": n["id"]}, _clean_doc(n), upsert=True)
 
-        # Connections
+        # ─── CONNECTIONS ───
         coll = _db["connections"]
-        coll.delete_many({})
-        if connections:
-            coll.insert_many([_clean_doc(c) for c in connections])
+        current_ids = [c["id"] for c in connections]
+        coll.delete_many({"id": {"$nin": current_ids}})
+        for c in connections:
+            coll.replace_one({"id": c["id"]}, _clean_doc(c), upsert=True)
 
     except Exception as e:
         print(f"❌ Save to MongoDB failed: {e}")

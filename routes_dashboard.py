@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Dashboard pages: super admin, teacher, student."""
 from flask import render_template
-from storage import (users, studies, quiz_results, attendance, connections)
+from storage import (users, studies, quiz_results, attendance, connections, load_from_mongo)
 from helpers import (current_user, now_dt, today_str, classmates_of,
                      active_teachers_for_student, active_students_for_teacher,
                      cleanup_empty_drafts,
@@ -9,7 +9,7 @@ from helpers import (current_user, now_dt, today_str, classmates_of,
                      get_active_session_count, find_user_by_id)
 from decorators import role_required
 from datetime import datetime
-
+from db import is_connected
 
 def register(app):
 
@@ -17,6 +17,9 @@ def register(app):
     @role_required("SuperAdmin")
     def super_admin_page():
         u = current_user()
+        # ✅ SYNC: Kunin ang pinakabagong data mula MongoDB
+        if is_connected():
+            load_from_mongo()
 
         pending_deletes = [x for x in users
                            if x.status in ("pending_delete", "appealed")]
@@ -49,6 +52,9 @@ def register(app):
     @role_required("Teacher")
     def teacher_page():
         u = current_user()
+        # ✅ SYNC: Kunin ang pinakabagong data mula MongoDB
+        if is_connected():
+            load_from_mongo()
         removed = cleanup_empty_drafts(u.id)
         restored = cleanup_stale_editing(u.id)
 
@@ -116,6 +122,9 @@ def register(app):
     @role_required("Student")
     def student_page():
         u = current_user()
+        # ✅ SYNC: Kunin ang pinakabagong data mula MongoDB
+        if is_connected():
+            load_from_mongo()
         my_teachers = active_teachers_for_student(u.id)
         classmates = classmates_of(u)
         pending_in = [c for c in connections
