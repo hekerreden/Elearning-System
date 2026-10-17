@@ -135,6 +135,12 @@ def register(app):
             "mc_options": mc_options if study_type == "multiple_choice" else 0,
             "updated_at": now_str(),
         })
+        
+        # ✅ FIX: Check kung AJAX, ibalik ang JSON para maka-proceed sa Page 1
+        wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        if wants_json:
+            return jsonify({"ok": True, "next_url": f"/teacher/activity/{stid}/0"})
+            
         flash("Settings updated. Now edit questions.", "success")
         if actor.role == "SuperAdmin":
             return redirect(url_for("super_admin_page"))
@@ -156,15 +162,36 @@ def register(app):
         study["direction"] = request.form.get("direction", "").strip()
         study["updated_at"] = now_str()
 
-        # ✅ Python Decision: Saan pupunta?
-        next_url = f"/teacher/activity/{stid}/0"
+        # ✅ Redirect sa Settings Page (Step 2)
+        next_url = f"/teacher/activity/{stid}/settings"
         
-        # Check kung AJAX request (galing sa JS fetch)
         wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         if wants_json:
             return jsonify({"ok": True, "next_url": next_url})
         
         return redirect(next_url)
+
+    # ✅ BAGO: Settings Page Route
+    @app.route("/teacher/activity/<stid>/settings", methods=["GET"])
+    @role_required("Teacher", "SuperAdmin")
+    def activity_settings(stid):
+        actor = current_user()
+        study = find_study(stid)
+        if not can_edit_study(actor, study):
+            flash("Study not found.", "error")
+            return redirect(url_for("teacher_page"))
+        if is_study_locked(study):
+            flash("🔒 Cannot edit — may student na nagsimula.", "error")
+            return redirect(url_for("teacher_page"))
+
+        return render_template(
+            "activity.html",
+            study=study,
+            is_settings=True,
+            page_idx=0,
+            is_admin=(actor.role == "SuperAdmin"),
+        )
+
 
     @app.route("/api/studies/<stid>/save_page/<int:page_idx>", methods=["POST"])
     @role_required("Teacher", "SuperAdmin")
@@ -426,6 +453,13 @@ def register(app):
 
         studies.remove(study)
         quiz_results[:] = [r for r in quiz_results if r["study_id"] != stid]
+        
+        # ✅ FIX: Explicit Save sa MongoDB
+        try: 
+            save_to_mongo()
+        except Exception as e: 
+            print(f"⚠️ Save failed: {e}")
+            
         flash("Study deleted.", "success")
         if actor.role == "SuperAdmin":
             return redirect(url_for("super_admin_page"))

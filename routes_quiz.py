@@ -160,6 +160,13 @@ def register(app):
         })
 
         study["has_attempts"] = True
+        
+        # ✅ IDAGDAG ITO: Pilitin i-save sa MongoDB
+        try: 
+            from storage import save_to_mongo
+            save_to_mongo()
+        except Exception as e: 
+            print(f"⚠️ Quiz submit save failed: {e}")
         notify(study["teacher_id"], "Quiz Submitted",
                f"{actor.full_name} submitted '{study['title']}'"
                + (f" — needs grading." if has_manual

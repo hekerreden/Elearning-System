@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% if is_details %}Details{% elif is_preview %}Preview{% else %}Build Activity{% endif %}</title>
+<title>{% if is_details %}Details{% elif is_settings %}Settings{% elif is_preview %}Preview{% else %}Build Activity{% endif %}</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -66,13 +66,14 @@ textarea{resize:vertical;min-height:70px}
   margin-top: 40px;
 }
 .nav-side-btn:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
+.nav-side-btn:disabled { opacity: 0.2; cursor: not-allowed; background: var(--card); }
 .form-content { flex: 1; min-width: 0; }
 
 /* 📱 MOBILE NAVIGATION */
 .mobile-nav { display: none; gap: 10px; margin-top: 16px; }
 .mobile-nav .btn { flex: 1; justify-content: center; }
 
-/* MODAL ENGINE (Local to activity.html) */
+/* MODAL ENGINE */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);
   display:none;align-items:center;justify-content:center;
   z-index:9999;padding:24px 16px;backdrop-filter:blur(4px);}
@@ -124,43 +125,122 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 {# ═══════════════════════════════════════════════════════════ #}
 {# STEP 1: DETAILS (Title & Direction)                         #}
 {# ═══════════════════════════════════════════════════════════ #}
-<div class="card">
-  <div class="card-title">
+<div class="card" style="margin-bottom:16px;">
+  <div class="card-title" style="margin-bottom:0;">
     <div>
       <h1>📝 Activity Details</h1>
-      <span class="tag" style="margin-top:6px;display:inline-block;">Step 1 of 2</span>
+      <span class="tag" style="margin-top:6px;display:inline-block;">Step 1 of 3</span>
     </div>
     <button class="cancel-btn" onclick="handleCancel()" title="Cancel">✖</button>
   </div>
-  <p class="muted small mb1">Ilagay ang title at direction bago gumawa ng mga tanong.</p>
-  
-  <div class="pill-row" style="margin-top:10px;">
-    <span class="tag">{{ study.type|replace('_',' ')|capitalize }}</span>
-    <span class="tag">⏱ {{ study.question_timer }}s per Q</span>
+</div>
+
+<div class="nav-container">
+  <button type="button" class="nav-side-btn" disabled title="Previous">&lt;</button>
+
+  <div class="form-content">
+    <form method="POST" action="/api/studies/{{ study.id }}/save_details" id="detailsForm">
+      <div class="card">
+        <label>Title *
+          <input type="text" name="title"
+                 value="{{ study.title if study.title != 'Untitled Study' else '' }}"
+                 placeholder="e.g. Quiz 1: Multiplication" required autofocus>
+        </label>
+        <label>Direction (Optional)
+          <textarea name="direction" placeholder="Instructions for students…">{{ study.direction or '' }}</textarea>
+        </label>
+      </div>
+      <div class="mobile-nav">
+        <button type="button" class="btn btn-ghost" disabled>← Previous</button>
+        <button type="submit" class="btn btn-blue">Next: Settings →</button>
+      </div>
+    </form>
+  </div>
+
+  <button type="submit" form="detailsForm" class="nav-side-btn" title="Next">&gt;</button>
+</div>
+
+{% elif is_settings %}
+{# ═══════════════════════════════════════════════════════════ #}
+{# STEP 2: SETTINGS                                            #}
+{# ═══════════════════════════════════════════════════════════ #}
+<div class="card" style="margin-bottom:16px;">
+  <div class="card-title" style="margin-bottom:0;">
+    <div>
+      <h1>⚙️ Activity Settings</h1>
+      <span class="tag" style="margin-top:6px;display:inline-block;">Step 2 of 3</span>
+    </div>
+    <button class="cancel-btn" onclick="handleCancel()" title="Cancel">✖</button>
   </div>
 </div>
 
-<form method="POST" action="/api/studies/{{ study.id }}/save_details">
-  <div class="card">
-    <label>Title *
-      <input type="text" name="title"
-             value="{{ study.title if study.title != 'Untitled Study' else '' }}"
-             placeholder="e.g. Quiz 1: Multiplication" required autofocus>
-    </label>
-    <label>Direction (Optional)
-      <textarea name="direction" placeholder="Instructions for students…">{{ study.direction or '' }}</textarea>
-    </label>
+<div class="nav-container">
+  <a href="/teacher/activity/{{ study.id }}/details" class="nav-side-btn" title="Back to Details">&lt;</a>
+
+  <div class="form-content">
+    <form method="POST" action="/api/studies/{{ study.id }}/update" id="settingsForm">
+      <div class="card">
+        <label>Quiz Type *
+          <select name="type" id="setting_type" required>
+            <option value="identification">Identification</option>
+            <option value="multiple_choice">Multiple Choice</option>
+            <option value="true_false">True or False</option>
+            <option value="essay">Essay (teacher grades)</option>
+            <option value="file_upload">File Upload (teacher grades)</option>
+          </select>
+        </label>
+
+        <label>Mode *
+          <select name="mode" id="setting_mode" required>
+            <option value="direct_quiz">Direct Quiz</option>
+            <option value="study_and_quiz">Study muna, then Quiz</option>
+          </select>
+        </label>
+
+        <div id="studyTimerRow" style="display:none;">
+          <label>Study Timer (seconds bago mag-quiz)</label>
+          <input type="number" name="study_timer" id="setting_study_timer" min="0" value="{{ study.study_timer or 0 }}">
+        </div>
+
+        <div id="mcOptionsRow" style="display:none;">
+          <label>Choices per question *
+            <select name="mc_options" id="setting_mc_options">
+              <option value="3">A, B, C (3 choices)</option>
+              <option value="4">A, B, C, D (4 choices)</option>
+            </select>
+          </label>
+        </div>
+
+        <label>Number of Pages *
+          <input type="number" name="total_pages" id="setting_pages" min="1" value="{{ study.total_pages }}" required>
+        </label>
+
+        <label>Question Timer per Page (seconds)</label>
+        <input type="number" name="question_timer" id="setting_question_timer" min="1" value="{{ study.question_timer }}" required>
+
+        <label>Max Back (how many pages can go back)</label>
+        <input type="number" name="max_back" id="setting_max_back" min="0" value="{{ study.max_back }}">
+
+        <label>Score per correct page</label>
+        <input type="number" name="score" id="setting_score" min="0" value="{{ study.score }}">
+
+        <label>Penalty per wrong page</label>
+        <input type="number" name="penalty" id="setting_penalty" min="0" value="{{ study.penalty }}">
+      </div>
+
+      <div class="mobile-nav">
+        <a href="/teacher/activity/{{ study.id }}/details" class="btn btn-ghost">← Previous</a>
+        <button type="submit" class="btn btn-blue">Next: Page 1 →</button>
+      </div>
+    </form>
   </div>
 
-  <div class="row-between">
-    <div></div>
-    <button type="submit" class="btn btn-blue">Save & Next Page →</button>
-  </div>
-</form>
+  <button type="submit" form="settingsForm" class="nav-side-btn" title="Next">&gt;</button>
+</div>
 
 {% elif is_preview %}
 {# ═══════════════════════════════════════════════════════════ #}
-{# STEP 3: PREVIEW                                             #}
+{# STEP 4: PREVIEW                                             #}
 {# ═══════════════════════════════════════════════════════════ #}
 <div class="card">
   <div class="card-title">
@@ -217,14 +297,14 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 
 {% else %}
 {# ═══════════════════════════════════════════════════════════ #}
-{# STEP 2: PAGE EDITING (Side Buttons)                         #}
+{# STEP 3: PAGE EDITING (Side Buttons)                         #}
 {# ═══════════════════════════════════════════════════════════ #}
 <div class="card" style="margin-bottom:16px;">
   <div class="card-title" style="margin-bottom:0;">
     <div>
       <h1>✏️ {{ study.title }}</h1>
       <div class="pill-row" style="margin-top:8px;">
-        <span class="tag">Step 2 of 2</span>
+        <span class="tag">Step 3 of 3</span>
         <span class="tag">Page {{ page_idx + 1 }} / {{ study.total_pages }}</span>
       </div>
     </div>
@@ -233,14 +313,12 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 </div>
 
 <div class="nav-container">
-  <!-- Left Button (Desktop) -->
   {% if page_idx > 0 %}
     <a href="/teacher/activity/{{ study.id }}/{{ page_idx - 1 }}" class="nav-side-btn" title="Previous Page">&lt;</a>
   {% else %}
-    <a href="/teacher/activity/{{ study.id }}/details" class="nav-side-btn" title="Back to Details">&lt;</a>
+    <a href="/teacher/activity/{{ study.id }}/settings" class="nav-side-btn" title="Back to Settings">&lt;</a>
   {% endif %}
 
-  <!-- Main Form -->
   <div class="form-content">
     <form method="POST" action="/api/studies/{{ study.id }}/save_page/{{ page_idx }}" id="pageForm">
       {% if page_idx < study.pages|length %}
@@ -291,12 +369,11 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
         {% endif %}
       </div>
 
-      <!-- Mobile Buttons -->
       <div class="mobile-nav">
         {% if page_idx > 0 %}
           <a href="/teacher/activity/{{ study.id }}/{{ page_idx - 1 }}" class="btn btn-ghost">← Previous</a>
         {% else %}
-          <a href="/teacher/activity/{{ study.id }}/details" class="btn btn-ghost">← Details</a>
+          <a href="/teacher/activity/{{ study.id }}/settings" class="btn btn-ghost">← Settings</a>
         {% endif %}
         
         {% if page_idx + 1 < study.total_pages %}
@@ -308,7 +385,6 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
     </form>
   </div>
 
-  <!-- Right Button (Desktop) -->
   <button type="submit" form="pageForm" class="nav-side-btn" title="Save & Next">
     {% if page_idx + 1 < study.total_pages %}&gt;{% else %}✓{% endif %}
   </button>
@@ -317,7 +393,7 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 {% endif %}
 </div>
 
-<!-- LOCAL CONFIRM MODAL (Dahil standalone page tayo) -->
+<!-- LOCAL CONFIRM MODAL -->
 <div class="modal-backdrop" id="appConfirmModal">
   <div class="modal">
     <div class="modal-head">
@@ -334,7 +410,7 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 
 <script>
 /* ═══════════════════════════════════════════════════════════
-   1. SMART CANCEL LOGIC (Gumagana sa lahat ng pages)
+   1. SMART CANCEL LOGIC
    ═══════════════════════════════════════════════════════════ */
 async function handleCancel() {
   var status = "{{ study.status }}";
@@ -369,20 +445,52 @@ async function handleCancel() {
    2. AJAX FORM HANDLER (Seamless Save & Redirect)
    ═══════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
-  const forms = document.querySelectorAll('form[action*="/save_"]');
+  
+  // --- INIT SETTINGS PAGE (Kung nasa settings view tayo) ---
+  var settingType = document.getElementById('setting_type');
+  var settingMode = document.getElementById('setting_mode');
+  
+  if (settingType && settingMode) {
+    // Set default values galing sa DB
+    settingType.value = "{{ study.type }}";
+    settingMode.value = "{{ study.mode }}";
+    if (document.getElementById('setting_mc_options') && "{{ study.mc_options }}") {
+      document.getElementById('setting_mc_options').value = "{{ study.mc_options }}";
+    }
+
+    // Toggle visibility ng Timer/MC options
+    function toggleSettingsFields() {
+      var stRow = document.getElementById('studyTimerRow');
+      var mcRow = document.getElementById('mcOptionsRow');
+      if (stRow) stRow.style.display = (settingMode.value === 'study_and_quiz') ? 'block' : 'none';
+      if (mcRow) mcRow.style.display = (settingType.value === 'multiple_choice') ? 'block' : 'none';
+    }
+    
+    settingType.addEventListener('change', toggleSettingsFields);
+    settingMode.addEventListener('change', toggleSettingsFields);
+    toggleSettingsFields();
+    
+    // Init custom dropdowns kung meron man
+    if (window.convertSelects) window.convertSelects(document);
+  }
+
+  // --- AJAX SUBMIT LOGIC PARA SA LAHAT NG FORMS ---
+  const forms = document.querySelectorAll('form[action*="/save_"], form[action*="/update"]');
   
   forms.forEach(form => {
     form.addEventListener('submit', async function(e) {
       e.preventDefault(); 
       
-      const submitBtns = form.querySelectorAll('button[type="submit"]');
+      // Hanapin lahat ng buttons na naka-link sa form na ito (kasama side buttons)
+      const submitBtns = document.querySelectorAll('[form="' + form.id + '"], button[type="submit"]');
       const originalTexts = [];
       
-      // Loading State
       submitBtns.forEach((btn, idx) => {
         originalTexts[idx] = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;"></span>Saving…</span>';
+        if (btn.classList.contains('btn') || btn.classList.contains('nav-side-btn')) {
+          btn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;"></span></span>';
+        }
       });
 
       const formData = new FormData(form);

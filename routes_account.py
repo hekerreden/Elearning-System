@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Account self-service routes: edit own username."""
 from flask import request, redirect, url_for, flash, jsonify
-from storage import users
+from storage import users, save_to_mongo
 from helpers import current_user, notify, role_home
 from decorators import role_required
 
@@ -113,6 +113,10 @@ def register(app):
                    f"to \"{value}\".",
                    link=f"/{u.role.lower()}#account",
                    kind="info")
+            
+            try: save_to_mongo()
+            except Exception as e: print(f"⚠️ Save failed: {e}")
+
 
             if wants_json:
                 return jsonify({
@@ -153,6 +157,10 @@ def register(app):
                    f"to @{value}.",
                    link=f"/{u.role.lower()}#account",
                    kind="info")
+            
+            try: save_to_mongo()
+            except Exception as e: print(f"⚠️ Save failed: {e}")
+
 
             if wants_json:
                 return jsonify({

@@ -424,80 +424,7 @@
 
 <script type="application/json" id="studiesData">{{ studies|tojson }}</script>
 
-{# ═══════════════ SETTING MODAL ═══════════════ #}
-<div id="settingModal" class="modal-backdrop">
-  <div class="modal" style="max-width:540px;">
-    <div class="modal-head">
-      <h2 style="margin:0;">Activity Settings</h2>
-      <button class="icon-btn" type="button" data-action="close-setting">×</button>
-    </div>
 
-    <form id="settingForm" class="form">
-
-      <label>Quiz Type *
-        <select name="type" id="setting_type" required data-custom>
-          <option value="identification">Identification</option>
-          <option value="multiple_choice">Multiple Choice</option>
-          <option value="true_false">True or False</option>
-          <option value="essay">Essay (teacher grades)</option>
-          <option value="file_upload">File Upload (teacher grades)</option>
-        </select>
-      </label>
-
-      <label>Mode *
-        <select name="mode" id="setting_mode" required data-custom>
-          <option value="direct_quiz">Direct Quiz</option>
-          <option value="study_and_quiz">Study muna, then Quiz</option>
-        </select>
-      </label>
-
-      <div id="studyTimerRow" style="display:none;">
-        <label>Study Timer (bago mag-quiz)</label>
-        <div style="display:flex;gap:6px;">
-          <input type="number" id="study_h" placeholder="hh" min="0" value="0" style="width:70px;">
-          <input type="number" id="study_m" placeholder="mm" min="0" value="0" style="width:70px;">
-          <input type="number" id="study_s" placeholder="ss" min="0" value="0" style="width:70px;">
-        </div>
-        <input type="hidden" name="study_timer" id="setting_study_timer" value="0">
-      </div>
-
-      <div id="mcOptionsRow" style="display:none;">
-        <label>Choices per question *
-          <select name="mc_options" id="setting_mc_options" data-custom>
-            <option value="3">A, B, C (3 choices)</option>
-            <option value="4">A, B, C, D (4 choices)</option>
-          </select>
-        </label>
-      </div>
-
-      <label>Number of Pages *
-        <input type="number" name="total_pages" id="setting_pages" min="1" value="1" required>
-      </label>
-
-      <label>Question Timer per Page</label>
-      <div style="display:flex;gap:6px;">
-        <input type="number" id="q_h" placeholder="hh" min="0" value="0" style="width:70px;">
-        <input type="number" id="q_m" placeholder="mm" min="0" value="0" style="width:70px;">
-        <input type="number" id="q_s" placeholder="ss" min="0" value="10" style="width:70px;">
-      </div>
-      <input type="hidden" name="question_timer" id="setting_question_timer" value="10">
-
-      <label>Max Back (how many pages can go back)</label>
-      <input type="number" name="max_back" id="setting_max_back" min="0" value="0">
-
-      <label>Score per correct page</label>
-      <input type="number" name="score" id="setting_score" min="0" value="1">
-
-      <label>Penalty per wrong page</label>
-      <input type="number" name="penalty" id="setting_penalty" min="0" value="0">
-
-      <div class="modal-actions" style="justify-content:flex-end;">
-        <button type="button" class="btn btn-ghost" data-action="close-setting">Cancel</button>
-        <button type="submit" id="settingSubmitBtn" class="btn btn-blue">Next →</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 {# ═══════════════ VIEW MODAL ═══════════════ #}
 <div id="viewModal" class="modal-backdrop">
@@ -565,14 +492,6 @@
 (function () {
   'use strict';
 
-  /* ═══════════════════════════════════════════════════════
-     CUSTOM DROPDOWN — helper function
-     ═══════════════════════════════════════════════════════ */
-  function csSync(id) {
-    var el = document.getElementById(id);
-    if (el && el._csUpdate) el._csUpdate();
-  }
-
   /* ---------- Clickable overview cards ---------- */
   document.querySelectorAll('.stat.clickable').forEach(function (card) {
     card.addEventListener('click', function () {
@@ -598,7 +517,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════
-     LIVE LOCK STATUS — i-refresh para hindi kailangan mag-restart
+     LIVE LOCK STATUS
      ═══════════════════════════════════════════════════════ */
   function refreshStudyStatuses() {
     fetch('/api/studies/statuses', { credentials: 'same-origin' })
@@ -713,39 +632,6 @@
 
   setTimeout(refreshStudyStatuses, 2000);
 
-  /* ---------- Timer helper ---------- */
-  function upd() {
-    var sh = +(document.getElementById('study_h')?.value || 0);
-    var sm = +(document.getElementById('study_m')?.value || 0);
-    var ss = +(document.getElementById('study_s')?.value || 0);
-    var st = document.getElementById('setting_study_timer');
-    if (st) st.value = sh * 3600 + sm * 60 + ss;
-
-    var qh = +(document.getElementById('q_h')?.value || 0);
-    var qm = +(document.getElementById('q_m')?.value || 0);
-    var qs = +(document.getElementById('q_s')?.value || 0);
-    var qt = document.getElementById('setting_question_timer');
-    if (qt) qt.value = qh * 3600 + qm * 60 + qs;
-  }
-
-  function updateModalFields() {
-    var type = document.getElementById('setting_type')?.value;
-    var mode = document.getElementById('setting_mode')?.value;
-    var stRow = document.getElementById('studyTimerRow');
-    var mcRow = document.getElementById('mcOptionsRow');
-    if (stRow) stRow.style.display = (mode === 'study_and_quiz') ? 'block' : 'none';
-    if (mcRow) mcRow.style.display = (type === 'multiple_choice') ? 'block' : 'none';
-  }
-
-  ['study_h','study_m','study_s','q_h','q_m','q_s'].forEach(function(id){
-    var e = document.getElementById(id);
-    if (e) e.addEventListener('input', upd);
-  });
-  document.getElementById('setting_type')?.addEventListener('change', updateModalFields);
-  document.getElementById('setting_mode')?.addEventListener('change', updateModalFields);
-  updateModalFields();
-  upd();
-
   /* ---------- Modal actions ---------- */
   document.addEventListener('click', async function (ev) {
     var btn = ev.target.closest('[data-action]');
@@ -755,30 +641,23 @@
     /* ADD STUDY */
     if (a === 'add-study') {
       ev.preventDefault();
-      var form = document.getElementById('settingForm');
-      form.dataset.editId = '';
-      form.reset();
-      document.getElementById('setting_type').value = 'identification';
-      document.getElementById('setting_mode').value = 'direct_quiz';
-      document.getElementById('setting_pages').value = 1;
-      document.getElementById('study_h').value = 0;
-      document.getElementById('study_m').value = 0;
-      document.getElementById('study_s').value = 0;
-      document.getElementById('q_h').value = 0;
-      document.getElementById('q_m').value = 0;
-      document.getElementById('q_s').value = 10;
-      document.getElementById('setting_max_back').value = 0;
-      document.getElementById('setting_score').value = 1;
-      document.getElementById('setting_penalty').value = 0;
-
-      /* Sync custom dropdowns */
-      csSync('setting_type');
-      csSync('setting_mode');
-      csSync('setting_mc_options');
-
-      upd();
-      updateModalFields();
-      window.openModal('settingModal');
+      
+      var fd = new FormData();
+      fd.append('title', 'Untitled Study');
+      fd.append('type', 'identification');
+      fd.append('mode', 'direct_quiz');
+      fd.append('total_pages', '1');
+      
+      fetch('/api/studies/create_draft', { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.id) {
+            window.location.href = '/teacher/activity/' + data.id + '/details';
+          } else {
+            showAlert('Error creating draft.', { title: '❌ Error', danger: true });
+          }
+        });
+    }
 
     /* EDIT STUDY */
     } else if (a === 'edit-study') {
@@ -798,42 +677,12 @@
 
       fetch('/api/studies/' + s.id + '/start_edit', {
         method: 'POST', credentials: 'same-origin'
-      }).catch(function(){});
+      }).then(function() {
+        window.location.href = '/teacher/activity/' + s.id + '/details';
+      });
+    }
 
-      var form = document.getElementById('settingForm');
-      form.dataset.editId = s.id;
-      form.dataset.fromEdit = '1';
-
-      document.getElementById('setting_type').value = s.type || 'identification';
-      document.getElementById('setting_mode').value = s.mode || 'direct_quiz';
-      document.getElementById('setting_pages').value = s.total_pages || 1;
-      document.getElementById('study_h').value = (s.study_timer / 3600) | 0;
-      document.getElementById('study_m').value = ((s.study_timer % 3600) / 60) | 0;
-      document.getElementById('study_s').value = s.study_timer % 60;
-      document.getElementById('q_h').value = (s.question_timer / 3600) | 0;
-      document.getElementById('q_m').value = ((s.question_timer % 3600) / 60) | 0;
-      document.getElementById('q_s').value = s.question_timer % 60;
-      document.getElementById('setting_max_back').value = s.max_back || 0;
-      document.getElementById('setting_score').value = s.score || 0;
-      document.getElementById('setting_penalty').value = s.penalty || 0;
-      if (s.mc_options && document.getElementById('setting_mc_options')) {
-        document.getElementById('setting_mc_options').value = s.mc_options;
-      }
-
-      /* Sync custom dropdowns */
-      csSync('setting_type');
-      csSync('setting_mode');
-      csSync('setting_mc_options');
-
-      upd();
-      updateModalFields();
-      document.getElementById('settingSubmitBtn').textContent = 'Next to Edit Questions →';
-
-      setTimeout(function () {
-        window.openModal('settingModal');
-      }, 100);
-
-    /* VIEW STUDY — fresh fetch */
+    /* VIEW STUDY */
     } else if (a === 'view-study') {
       ev.preventDefault();
       var sid = btn.getAttribute('data-id');
@@ -859,20 +708,6 @@
       ev.preventDefault();
       window.closeModal('viewModal');
 
-    } else if (a === 'close-setting') {
-      ev.preventDefault();
-      window.closeModal('settingModal');
-      var form2 = document.getElementById('settingForm');
-      var editId = form2.dataset.editId;
-      if (editId && form2.dataset.fromEdit === '1') {
-        fetch('/api/studies/' + editId + '/cancel_edit', {
-          method: 'POST', credentials: 'same-origin'
-        }).catch(function(){});
-      }
-      form2.removeAttribute('data-edit-id');
-      form2.removeAttribute('data-from-edit');
-      document.getElementById('settingSubmitBtn').textContent = 'Next →';
-
     /* EDIT SCORE */
     } else if (a === 'edit-score') {
       ev.preventDefault();
@@ -882,7 +717,7 @@
       document.getElementById('scoreValue').value = btn.getAttribute('data-current-score');
       window.openModal('scoreModal');
 
-    /* DELETE — custom confirm */
+    /* DELETE */
     } else if (a === 'confirm-delete') {
       ev.preventDefault();
       var url = btn.getAttribute('data-delete-url');
@@ -901,28 +736,6 @@
           window.location.href = url;
         }
       }
-    }
-  });
-
-  /* ---------- Setting form submit ---------- */
-  document.getElementById('settingForm')?.addEventListener('submit', async function(e){
-    e.preventDefault();
-    var editId = e.target.dataset.editId;
-    var formData = new FormData(e.target);
-    e.target.removeAttribute('data-from-edit');
-    upd();
-
-    if (editId) {
-      await fetch('/api/studies/' + editId + '/update', { method: 'POST', body: formData });
-      window.location.href = '/teacher/activity/' + editId + '/0';
-    } else {
-      var res = await fetch('/api/studies/create_draft', { method: 'POST', body: formData });
-      var data = await res.json();
-      if (data.error) {
-        await showAlert('❌ ' + data.error, { title: '❌ Error', danger: true });
-        return;
-      }
-      window.location.href = '/teacher/activity/' + data.id + '/0';
     }
   });
 
