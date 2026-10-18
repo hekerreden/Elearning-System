@@ -4,7 +4,7 @@ import json as _json
 import uuid
 import os as _os
 import time
-from flask import request, redirect, url_for, flash, jsonify
+from flask import request, redirect, url_for, flash, jsonify, render_template # ✅ IDINAGDAG ANG render_template
 from werkzeug.utils import secure_filename
 from storage import quiz_results, UPLOAD_DIR, active_violations, save_to_mongo
 
@@ -97,16 +97,10 @@ def register(app):
             display_your = ans
             display_correct = ""
             file_info = files_map.get(i)
+            
+            # ✅ Kunin ang score at penalty ng SPECIFIC page
             p_score = p.get("score", score_per)
             p_penalty = p.get("penalty", penalty_per)
-
-            if pending:
-                pass
-            elif is_correct:
-                total_score += p_score
-                correct_count += 1
-            else:
-                total_score -= p_penalty
             
             # ✅ Kunin ang type ng PAGE, hindi ng study
             p_type = p.get("type", study.get("type", "identification"))
@@ -140,17 +134,17 @@ def register(app):
                 display_your = ans if ans else "(blank)"
                 display_correct = "(teacher will grade)"
 
-            if pending:
-                pass
-            elif is_correct:
-                total_score += score_per
-                correct_count += 1
-            else:
-                total_score -= penalty_per
+            # ✅ ISANG CALCULATION LANG DAPAT PARA SA SCORE (Inayos ko na)
+            if not pending:
+                if is_correct:
+                    total_score += p_score
+                    correct_count += 1
+                else:
+                    total_score -= p_penalty
 
             details.append({
                 "idx": i,
-                "type": p_type, # ✅ Isama para sa review
+                "type": p_type,
                 "question": p.get("question", ""),
                 "your_answer": display_your,
                 "correct_answer": display_correct,
@@ -226,7 +220,6 @@ def register(app):
         result["score"] = new_score
         result["adjusted"] = True
         
-        # ✅ EXPLICIT SAVE
         try: save_to_mongo()
         except: pass
         
@@ -252,7 +245,7 @@ def register(app):
             "study_title": result.get("study_title", ""),
             "study_type": study.get("type", ""),
             "details": result.get("details", []),
-            "violations": result.get("violations", []), # ✅ ISAMA ANG VIOLATIONS
+            "violations": result.get("violations", []),
             "graded": result.get("graded", True),
             "score": result.get("score", 0),
         })
@@ -294,7 +287,6 @@ def register(app):
         result["correct_count"] = correct_count
         result["correct"] = (correct_count == len(details))
         
-        # ✅ EXPLICIT SAVE
         try: save_to_mongo()
         except: pass
 
@@ -313,7 +305,6 @@ def register(app):
         v_type = data.get("type")
         source = data.get("source", "browser")
 
-        # ✅ KULANG NA TYPES IDINAGDAG
         valid_types = ["LOOKED_LEFT", "LOOKED_RIGHT", "LOOKED_UP", "LOOKED_DOWN", 
                        "CELLPHONE_DETECTED", "MULTIPLE_PERSONS", "NO_FACE", 
                        "TAB_SWITCHED", "WINDOW_BLURRED", "FULLSCREEN_EXIT", 
@@ -325,9 +316,9 @@ def register(app):
         now = time.time()
         for v in active_violations:
             if v["student_id"] == actor.id and v["study_id"] == study_id and v["type"] == v_type:
-                if now - v["last_seen"] < 5:  # Throttle
+                if now - v["last_seen"] < 5:
                     v["duration"] += (now - v["last_seen"])
-                    v["last_seen"] = now # ✅ I-update pagkatapos mag-calculate
+                    v["last_seen"] = now
                     return jsonify({"ok": True, "status": "extended"})
 
         v_id = uuid.uuid4().hex[:8]
@@ -347,3 +338,87 @@ def register(app):
         except: pass
 
         return jsonify({"ok": True, "id": v_id})
+        
+    # ═══════════════════════════════════════════════════════════
+    # TEACHER REVIEW DASHBOARD & MODALS API
+    # ═══════════════════════════════════════════════════════════
+    
+    @app.route("/teacher/review/<stid>")
+    @role_required("Teacher", "SuperAdmin")
+    def teacher_review(stid):
+        actor = current_user()
+        study = find_study(stid)
+        if not study or (study["teacher_id"] != actor.id and actor.role != "SuperAdmin"):
+            flash("Study not found or not yours.", "error")
+            return redirect("/teacher")
+
+        # Kunin lahat ng attempts (quiz_results) para sa study na ito
+        study_results = [r for r in quiz_results if r["study_id"] == stid]
+
+        students_data = []
+        for r in study_results:
+            # ✅ I-FIX: Kunin ang violations sa mismong result document, hindi sa active_violations
+            s_violations = r.get("violations", [])
+            
+            # I-convert ang status ng violations kung wala pa
+            for v in s_violations:
+                if "status" not in v:
+                    v["status"] = "dismissed"
+
+            students_data.append({
+                "result_id": r["id"],
+                "student_id": r["student_id"],
+                "student_name": r.get("student_name", "Unknown"),
+                "score": r.get("score", 0),
+                "correct_count": r.get("correct_count", 0),
+                "total_questions": r.get("total_questions", 0),
+                "timestamp": r.get("timestamp", ""),
+                "details": r.get("details", []),
+                "violations": s_violations
+            })
+
+        # Sort by latest submission
+        students_data.sort(key=lambda x: x["timestamp"], reverse=True)
+
+        return render_template("review_violations.html", 
+                               study=study, 
+                               students_data=students_data,
+                               user=actor)
+
+    @app.route("/api/violation/save_review", methods=["POST"])
+    @role_required("Teacher", "SuperAdmin")
+    def api_save_review():
+        actor = current_user()
+        data = request.get_json() or {}
+        
+        result_id = data.get("result_id")
+        new_score = data.get("new_score")
+        violations_data = data.get("violations", [])
+
+        # 1. I-save ang bagong score sa quiz_results
+        result = next((r for r in quiz_results if r["id"] == result_id), None)
+        if not result:
+            return jsonify({"ok": False, "error": "Result not found"}), 404
+            
+        result["score"] = new_score
+        result["adjusted"] = True
+
+        # ✅ I-FIX: I-update ang status ng violations sa LOOB ng result document
+        result_violations = result.get("violations", [])
+        for v_data in violations_data:
+            v_id = v_data.get("id")
+            is_checked = v_data.get("checked")
+            
+            for v in result_violations:
+                if v.get("id") == v_id:
+                    v["status"] = "confirmed" if is_checked else "dismissed"
+                    v["reviewed_by"] = actor.username
+                    v["reviewed_at"] = now_str()
+                    break
+                    
+        result["violations"] = result_violations
+
+        try: save_to_mongo()
+        except: pass
+
+        return jsonify({"ok": True})

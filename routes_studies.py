@@ -574,5 +574,91 @@ def register(app):
             "active_count": get_active_session_count(s),
             "has_attempts": s.get("has_attempts", False),
         })
+        
+    # ═══════════════════════════════════════════════════════════
+    # ADD PAGE & DELETE PAGE (UPDATED WITH FLOW COUNTER)
+    # ═══════════════════════════════════════════════════════════
+    @app.route("/api/studies/<stid>/add_page", methods=["POST"])
+    @role_required("Teacher", "SuperAdmin")
+    def add_page(stid):
+        actor = current_user()
+        study = find_study(stid)
+        if not can_edit_study(actor, study):
+            return jsonify({"ok": False, "error": "Study not found."}), 404
+        if is_study_locked(study):
+            return jsonify({"ok": False, "error": "🔒 Locked."}), 403
 
-    
+        data = request.get_json() or {}
+        current_idx = int(data.get("page_idx", 0)) # Matched with JS
+        p_type = data.get("type", "identification")
+
+        new_page = {"question": "", "type": p_type, "timer": 30, "score": 1, "penalty": 0}
+        if p_type == 'multiple_choice':
+            new_page["choices"] = ["", "", "", ""]
+            new_page["correct_index"] = 0
+        elif p_type == 'true_false':
+            new_page["correct_bool"] = True
+        elif p_type == 'identification':
+            new_page["correct_answer"] = ""
+        elif p_type == 'essay':
+            new_page["reference"] = ""
+        elif p_type == 'file_upload':
+            new_page["instruction"] = ""
+
+        # I-insert PAGKATAPOS ng current page
+        study["pages"].insert(current_idx + 1, new_page)
+        study["total_pages"] = len(study["pages"])
+        
+        # ✅ UPDATE FLOW COUNTER
+        cumulative = 0
+        for block in study.get("flow", []):
+            if cumulative <= current_idx < cumulative + block["count"]:
+                block["count"] += 1
+                break
+            cumulative += block["count"]
+
+        study["updated_at"] = now_str()
+        try: save_to_mongo()
+        except: pass
+
+        return jsonify({
+            "ok": True, 
+            "next_url": f"/teacher/activity/{stid}/{current_idx + 1}"
+        })
+
+    @app.route("/api/studies/<stid>/delete_page", methods=["POST"])
+    @role_required("Teacher", "SuperAdmin")
+    def delete_page(stid):
+        actor = current_user()
+        study = find_study(stid)
+        if not can_edit_study(actor, study):
+            return jsonify({"ok": False, "error": "Study not found."}), 404
+        if is_study_locked(study):
+            return jsonify({"ok": False, "error": "🔒 Locked."}), 403
+
+        data = request.get_json() or {}
+        page_idx = int(data.get("page_idx", 0))
+
+        if len(study["pages"]) <= 1:
+            return jsonify({"ok": False, "error": "Cannot delete the only page."}), 400
+
+        # I-delete ang page
+        study["pages"].pop(page_idx)
+        study["total_pages"] = len(study["pages"])
+
+        # ✅ UPDATE FLOW COUNTER
+        cumulative = 0
+        for i, block in enumerate(study.get("flow", [])):
+            if cumulative <= page_idx < cumulative + block["count"]:
+                block["count"] -= 1
+                if block["count"] <= 0:
+                    study["flow"].pop(i) # Remove block kung 0 na lang
+                break
+            cumulative += block["count"]
+
+        study["updated_at"] = now_str()
+        try: save_to_mongo()
+        except: pass
+
+        next_url = f"/teacher/activity/{stid}/{max(0, page_idx - 1)}"
+        return jsonify({"ok": True, "next_url": next_url})

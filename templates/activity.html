@@ -38,6 +38,7 @@ textarea{resize:vertical;min-height:70px}
   color:#fff;text-decoration:none}
 .btn-blue{background:var(--blue)}.btn-green{background:var(--green)}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-red{background:var(--red)}
 .btn-sm{padding:6px 12px;font-size:.8rem}
 .tag{display:inline-block;background:#151517;border:1px solid var(--border);
   border-radius:999px;padding:2px 10px;font-size:.72rem;color:var(--text-dim)}
@@ -214,6 +215,31 @@ select[data-custom]{display:none !important}
 .flow-config label {
   margin-bottom: 0;
   font-size: 0.7rem;
+}
+
+/* TRANSITION CARD */
+.transition-card {
+  text-align: center;
+  padding: 40px 20px;
+  background: linear-gradient(145deg, var(--card), #1a1a1c);
+  border: 2px solid var(--blue);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(24,119,242,0.15);
+  animation: pop .3s ease;
+}
+.transition-card h2 {
+  font-size: 1.8rem;
+  color: var(--blue-hover);
+  margin-bottom: 10px;
+}
+.transition-card p {
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+}
+.transition-card .btn {
+  padding: 12px 30px;
+  font-size: 1rem;
 }
 </style>
 </head>
@@ -452,19 +478,68 @@ select[data-custom]{display:none !important}
 
 {% else %}
 <!-- STEP 3: PAGE EDITING -->
+
+{% set ns = namespace(cum=0, found=false, start=0, end=0, type='', count=0, is_transition=false, next_type='') %}
+{% if study.flow %}
+    {% for block in study.flow %}
+        {% if ns.cum == page_idx %}
+            {% set ns.found = true %}
+            {% set ns.start = ns.cum %}
+            {% set ns.end = ns.cum + block.count - 1 %}
+            {% set ns.type = block.type %}
+            {% set ns.count = block.count %}
+            {% set ns.is_transition = (ns.cum > 0) %}
+            {% if not loop.last %}
+                {% set ns.next_type = study.flow[loop.index].type %}
+            {% endif %}
+        {% endif %}
+        {% set ns.cum = ns.cum + block.count %}
+    {% endfor %}
+{% else %}
+    {# Fallback for old studies without flow #}
+    {% set ns.found = true %}
+    {% set ns.start = 0 %}
+    {% set ns.end = study.total_pages - 1 %}
+    {% set ns.type = study.type %}
+    {% set ns.count = study.total_pages %}
+    {% set ns.is_transition = false %}
+{% endif %}
+
 <div class="card" style="margin-bottom:16px;">
   <div class="card-title" style="margin-bottom:0;">
     <div>
       <h1>✏️ {{ study.title }}</h1>
       <div class="pill-row" style="margin-top:8px;">
-        <span class="tag">Step 3 of 3</span>
-        <span class="tag">Page {{ page_idx + 1 }} / {{ study.total_pages }}</span>
-        <span class="tag" style="color:var(--blue);">{{ study.pages[page_idx].type|replace('_',' ')|capitalize }}</span>
+        <span class="tag">Page {{ page_idx + 1 }} of {{ study.total_pages }}</span>
+        <span class="tag" style="color:var(--blue);">{{ ns.type|replace('_',' ')|title }}</span>
+        <span class="tag">Page {{ page_idx - ns.start + 1 }} of {{ ns.count }}</span>
       </div>
     </div>
-    <button class="cancel-btn" onclick="handleCancel()" title="Cancel">✖</button>
+    <div class="row-inline">
+      <button class="btn btn-sm btn-red" onclick="deletePage()" title="Delete this page">🗑 Delete</button>
+      <button class="btn btn-sm btn-green" onclick="addPage()" title="Add page to this section">➕ Add Page</button>
+      <button class="cancel-btn" onclick="handleCancel()" title="Cancel">✖</button>
+    </div>
   </div>
 </div>
+
+<!-- TRANSITION CARD (Lalabas lang kapag start ng bagong section) -->
+{% if ns.is_transition %}
+<div id="transitionView">
+  <div class="transition-card">
+    <h2>🎉 Section Complete!</h2>
+    <p>You have finished the <b>{{ study.pages[page_idx - 1].type|replace('_', ' ')|title }}</b> section.</p>
+    <p style="font-size:1.2rem; color:#fff; margin-top:10px;">Next Section: <b style="color:var(--blue-hover);">{{ ns.type|replace('_', ' ')|title }}</b> ({{ ns.count }} Pages)</p>
+    <div style="margin-top: 20px;">
+      <a href="/teacher/activity/{{ study.id }}/{{ page_idx - 1 }}" class="btn btn-ghost" style="margin-right:10px;">← Previous Section</a>
+      <button class="btn btn-blue" onclick="continueToEditor()">Continue →</button>
+    </div>
+  </div>
+</div>
+<div id="pageEditorView" style="display:none;">
+{% else %}
+<div id="pageEditorView">
+{% endif %}
 
 <div class="nav-container">
   {% if page_idx > 0 %}
@@ -478,7 +553,7 @@ select[data-custom]{display:none !important}
       {% if page_idx < study.pages|length %}
         {% set current = study.pages[page_idx] %}
       {% else %}
-        {% set current = {'question':'', 'type': 'identification'} %}
+        {% set current = {'question':'', 'type': ns.type} %}
       {% endif %}
 
       <div class="card">
@@ -536,6 +611,7 @@ select[data-custom]{display:none !important}
       </div>
 
       <div class="mobile-nav">
+        
         {% if page_idx > 0 %}
           <a href="/teacher/activity/{{ study.id }}/{{ page_idx - 1 }}" class="btn btn-ghost">← Previous</a>
         {% else %}
@@ -555,7 +631,7 @@ select[data-custom]{display:none !important}
     {% if page_idx + 1 < study.total_pages %}&gt;{% else %}✓{% endif %}
   </button>
 </div>
-
+</div> <!-- End of pageEditorView -->
 {% endif %}
 </div>
 
@@ -575,8 +651,64 @@ select[data-custom]{display:none !important}
 </div>
 
 <script>
+var currentStudyId = "{{ study.id }}";
+var currentPageIdx = {{ page_idx }};
+var currentPageType = "{{ study.pages[page_idx].type if page_idx < study.pages|length else ns.type }}";
+
 /* ═══════════════════════════════════════════════════════════
-   1. SMART CANCEL LOGIC
+   1. TRANSITION & NAVIGATION LOGIC
+   ═══════════════════════════════════════════════════════════ */
+function continueToEditor() {
+  document.getElementById('transitionView').style.display = 'none';
+  document.getElementById('pageEditorView').style.display = 'block';
+  var input = document.querySelector('input[name="question"]');
+  if (input) input.focus();
+}
+
+async function addPage() {
+  var ok = await showConfirm('Magdadagdag ka ng bagong page sa section na ito. Magpapatuloy ba?', { title: '➕ Add Page', okText: 'Add' });
+  if (!ok) return;
+  
+  try {
+    var res = await fetch('/api/studies/' + currentStudyId + '/add_page', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ page_idx: currentPageIdx, type: currentPageType })
+    });
+    var data = await res.json();
+    if (data.ok) {
+      window.location.href = data.next_url;
+    } else {
+      showAlert(data.error, { title: 'Error', danger: true });
+    }
+  } catch(e) {
+    showAlert('Network error.', { title: 'Error', danger: true });
+  }
+}
+
+async function deletePage() {
+  var ok = await showConfirm('Sigurado ka bang gusto mong burahin ang page na ito?', { title: '🗑 Delete Page', okText: 'Delete', danger: true });
+  if (!ok) return;
+  
+  try {
+    var res = await fetch('/api/studies/' + currentStudyId + '/delete_page', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ page_idx: currentPageIdx })
+    });
+    var data = await res.json();
+    if (data.ok) {
+      window.location.href = data.next_url;
+    } else {
+      showAlert(data.error, { title: 'Error', danger: true });
+    }
+  } catch(e) {
+    showAlert('Network error.', { title: 'Error', danger: true });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   2. SMART CANCEL LOGIC
    ═══════════════════════════════════════════════════════════ */
 async function handleCancel() {
   var status = "{{ study.status }}";
@@ -608,7 +740,7 @@ async function handleCancel() {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   2. FLOW BUILDER LOGIC (SETTINGS PAGE)
+   3. FLOW BUILDER LOGIC (SETTINGS PAGE)
    ═══════════════════════════════════════════════════════════ */
 function toggleFlowBlock(checkbox) {
   var block = checkbox.closest('.flow-block');
@@ -619,7 +751,6 @@ function toggleFlowBlock(checkbox) {
   }
 }
 
-// Mag-load ng existing data kung nag-e-edit
 var existingFlowRaw = `{{ study.get('flow', [])|tojson }}`;
 var existingFlow = [];
 try {
@@ -630,8 +761,6 @@ try {
       if (block) {
         block.querySelector('.flow-enable').checked = true;
         block.classList.add('active');
-        
-        // I-set ang mga values
         block.querySelector('.flow-order').value = f.order || 1;
         block.querySelector('.flow-count').value = f.count || 1;
         block.querySelector('.flow-timer').value = f.timer || 30;
@@ -640,16 +769,13 @@ try {
       }
     });
   } else {
-    // Kung wala pang data (bagong gawa), i-default check ang Multiple Choice
     var defaultBlock = document.querySelector('.flow-block[data-type="multiple_choice"]');
     if (defaultBlock) {
       defaultBlock.querySelector('.flow-enable').checked = true;
       defaultBlock.classList.add('active');
     }
   }
-} catch (e) {
-  console.error("Flow Load Error", e);
-}
+} catch (e) {}
 
 document.addEventListener('DOMContentLoaded', function() {
   var settingMode = document.getElementById('setting_mode');
@@ -665,18 +791,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (window.convertSelects) window.convertSelects(document);
 
-  // Form Submit (Packaging the Flow Data)
   var settingsForm = document.getElementById('settingsForm');
   if (settingsForm) {
     settingsForm.addEventListener('submit', function(e) {
       e.preventDefault();
-      
       var blocks = document.querySelectorAll('.flow-block');
       var flowData = [];
       
       blocks.forEach(function(b) {
         if (!b.querySelector('.flow-enable').checked) return;
-        
         flowData.push({
           type: b.dataset.type,
           order: parseInt(b.querySelector('.flow-order').value) || 1,
@@ -693,8 +816,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       document.getElementById('flow_data_input').value = JSON.stringify(flowData);
-      
-      // Trigger AJAX submit
       const btn = settingsForm.querySelector('button[type="submit"]');
       const origText = btn.innerHTML;
       btn.disabled = true;
@@ -726,7 +847,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /* ═══════════════════════════════════════════════════════════
-   3. LOCAL SHOWCONFIRM / SHOWALERT
+   4. LOCAL SHOWCONFIRM / SHOWALERT
    ═══════════════════════════════════════════════════════════ */
 window.showConfirm = function (message, opts) {
   opts = opts || {};
@@ -872,7 +993,6 @@ function convertSelects(root) {
       else doOpen();
     });
     
-    // Check positioning
     function positionMenu() {
       menu.classList.remove('up');
       var rect = wrap.getBoundingClientRect();
@@ -881,7 +1001,6 @@ function convertSelects(root) {
       }
     }
     
-    // Override doOpen to position first
     var originalDoOpen = doOpen;
     doOpen = function() {
       originalDoOpen();

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review - {{ study.title }}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#1e1e1e;--card:#2d2d30;--border:#3a3a3a;--text:#e0e0e0;
+    --blue:#1877f2;--green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;
+  }
+  body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;padding:24px 16px;line-height:1.5;min-height:100vh;}
+  .wrap{max-width:1100px;margin:0 auto;}
+  
+  /* Header */
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:15px;}
+  .header h1{font-size:1.5rem;color:#fff;display:flex;align-items:center;gap:10px;}
+  .header .sub{color:#999;font-size:0.9rem;margin-top:4px;}
+  .btn{padding:9px 16px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:0.85rem;text-decoration:none;display:inline-flex;align-items:center;gap:6px;color:#fff;transition:0.2s;}
+  .btn:hover{opacity:0.85;}
+  .btn-blue{background:var(--blue);} .btn-red{background:var(--red);} .btn-green{background:var(--green);} .btn-purple{background:var(--purple);} .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+  
+  /* Stats */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;text-align:center;}
+  .stat-card .label{font-size:0.75rem;text-transform:uppercase;color:#999;font-weight:700;letter-spacing:0.05em;}
+  .stat-card .value{font-size:1.8rem;font-weight:700;margin-top:8px;color:var(--blue);}
+
+  /* Student Cards */
+  .student-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:16px;}
+  .student-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 12px rgba(0,0,0,0.2);transition:transform 0.2s;}
+  .student-card:hover{transform:translateY(-2px);border-color:#555;}
+  .student-name{font-size:1.1rem;font-weight:700;color:#fff;}
+  .student-meta{font-size:0.85rem;color:#999;}
+  .student-score{font-size:1.5rem;font-weight:700;color:var(--green);margin-top:auto;}
+  .student-score span{font-size:0.9rem;color:#999;font-weight:400;}
+
+  /* Modals */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px;backdrop-filter:blur(4px);}
+  .modal-backdrop.active{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:12px;width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,0.7);animation:pop 0.2s ease;}
+  @keyframes pop{from{transform:scale(0.95);opacity:0}to{transform:scale(1);opacity:1}}
+  
+  .modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .modal-header h3{font-size:1.2rem;color:#fff;}
+  .close-btn{background:transparent;border:none;color:#999;font-size:1.5rem;cursor:pointer;}
+  .close-btn:hover{color:#fff;}
+  
+  .modal-body{padding:20px;overflow-y:auto;flex:1;}
+  .modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+
+  /* Form Controls */
+  .form-group{margin-bottom:16px;}
+  .form-group label{display:block;font-size:0.8rem;font-weight:600;color:#999;margin-bottom:6px;text-transform:uppercase;}
+  .form-control{width:100%;padding:10px;border-radius:6px;border:1px solid var(--border);background:#151517;color:#fff;font-size:1rem;outline:none;}
+  .form-control:focus{border-color:var(--blue);}
+  
+  /* Violations List */
+  .violation-list{background:#1a1a1c;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px;}
+  .violation-item{display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--border);font-size:0.9rem;}
+  .violation-item:last-child{border-bottom:none;}
+  .violation-item input[type="checkbox"]{width:20px;height:20px;cursor:pointer;accent-color:var(--red);}
+  .violation-text{flex:1;}
+  .violation-time{font-size:0.75rem;color:#999;}
+
+  /* Modal 3 Fullscreen */
+  #modal3 .modal{max-width:1000px;height:100%;max-height:100vh;border-radius:0;}
+  .page-item{background:#1a1a1c;border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px;}
+  .page-item.correct{border-left:4px solid var(--green);}
+  .page-item.wrong{border-left:4px solid var(--red);}
+  .page-header{display:flex;justify-content:space-between;margin-bottom:10px;font-weight:600;}
+  .answer-box{background:#151517;padding:12px;border-radius:6px;margin-top:8px;font-family:monospace;}
+
+  .empty-state{text-align:center;padding:60px 20px;background:var(--card);border-radius:10px;border:1px dashed var(--border);grid-column: 1 / -1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <h1>🛡️ Proctoring & Results</h1>
+      <div class="sub">Activity: <b>{{ study.title }}</b></div>
+    </div>
+    <a href="/teacher#history" class="btn btn-blue">← Back to Dashboard</a>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="label">Total Submissions</div>
+      <div class="value">{{ students_data|length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Penalty per Violation</div>
+      <div class="value" style="color:var(--red);">-{{ study.get('penalty', 0) }} pts</div>
+    </div>
+  </div>
+
+  {% if not students_data %}
+    <div class="empty-state">
+      <h2 style="color:var(--green);margin-bottom:10px;">✨ Wala pang Submissions</h2>
+      <p>Walang estudyanteng nag-submit ng quiz na ito.</p>
+    </div>
+  {% else %}
+    <div class="student-grid">
+      {% for s in students_data %}
+      <div class="student-card">
+        <div>
+          <div class="student-name">👤 {{ s.student_name }}</div>
+          <div class="student-meta">Submitted: {{ s.timestamp }}</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div class="student-score">{{ s.score }} <span>pts</span></div>
+          <button class="btn btn-blue" onclick='openModal2({{ s|tojson|safe }})'>Review</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<!-- MODAL 2: REVIEW & ADJUST -->
+<div class="modal-backdrop" id="modal2">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Review: <span id="m2_name"></span></h3>
+      <button class="close-btn" onclick="closeModal2()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Score</label>
+        <input type="number" class="form-control" id="m2_score" oninput="calculateScore()">
+        <div style="font-size:0.8rem;color:#999;margin-top:4px;">
+          Correct: <span id="m2_correct"></span> / <span id="m2_total"></span>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <label style="font-size:0.9rem;font-weight:600;color:#fff;">Violations Detected:</label>
+        <button class="btn btn-ghost" style="padding:4px 10px;font-size:0.8rem;" onclick="openModal3()">👁 View Pages</button>
+      </div>
+      
+      <div class="violation-list" id="m2_violations">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="m2_btn_close" onclick="closeModal2()">Close</button>
+      <button class="btn btn-blue" id="m2_btn_save" style="display:none;" onclick="saveChanges()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 3: FULL SCREEN PAGE VIEW -->
+<div class="modal-backdrop" id="modal3">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Answers of <span id="m3_name"></span></h3>
+      <button class="close-btn" onclick="closeModal3()">×</button>
+    </div>
+    <div class="modal-body" id="m3_content">
+      <!-- Populated via JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-blue" onclick="closeModal3()">Close View</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentStudent = null;
+  let baseScore = 0;
+  let originalScore = 0;
+  let hasChanges = false;
+  const PENALTY = {{ study.get('penalty', 0) }};
+
+  function openModal2(studentData) {
+    currentStudent = JSON.parse(JSON.stringify(studentData)); // deep copy
+    originalScore = currentStudent.score;
+    hasChanges = false;
+
+    document.getElementById('m2_name').innerText = currentStudent.student_name;
+    document.getElementById('m2_score').value = currentStudent.score;
+    document.getElementById('m2_correct').innerText = currentStudent.correct_count;
+    document.getElementById('m2_total').innerText = currentStudent.total_questions;
+    
+    // Render Violations
+    const vList = document.getElementById('m2_violations');
+    vList.innerHTML = '';
+    
+    if (currentStudent.violations.length === 0) {
+      vList.innerHTML = '<div style="text-align:center;color:#999;padding:10px;">Walang nakitang violation.</div>';
+    } else {
+      currentStudent.violations.forEach(v => {
+        const isChecked = (v.status === 'confirmed');
+        const div = document.createElement('label');
+        div.className = 'violation-item';
+        div.innerHTML = `
+          <input type="checkbox" onchange="toggleViolation('${v.id}', this.checked)" ${isChecked ? 'checked' : ''}>
+          <div class="violation-text">
+            <b style="color:#fca5a5;">${v.type.replace(/_/g, ' ')}</b><br>
+            <span class="violation-time">Source: ${v.source} | Time: ${v.time}</span>
+          </div>
+        `;
+        vList.appendChild(div);
+      });
+    }
+
+    updateButtons();
+    document.getElementById('modal2').classList.add('active');
+  }
+
+  function closeModal2() {
+    if (hasChanges) {
+      if (!confirm("May mga hindi na-save na changes. Sigurado ka bang gusto mong i-close?")) return;
+    }
+    document.getElementById('modal2').classList.remove('active');
+  }
+
+  function toggleViolation(vid, isChecked) {
+    const v = currentStudent.violations.find(x => x.id === vid);
+    if (v) v.status = isChecked ? 'confirmed' : 'dismissed';
+    calculateScore();
+    hasChanges = true;
+    updateButtons();
+  }
+
+  function calculateScore() {
+    let checkedCount = currentStudent.violations.filter(v => v.status === 'confirmed').length;
+    let newScore = originalScore - (checkedCount * PENALTY);
+    
+    // I-set ang input value
+    document.getElementById('m2_score').value = newScore;
+  }
+
+  function updateButtons() {
+    const btnSave = document.getElementById('m2_btn_save');
+    const btnClose = document.getElementById('m2_btn_close');
+    
+    if (hasChanges) {
+      btnSave.style.display = 'inline-flex';
+      btnClose.innerText = 'Cancel';
+    } else {
+      btnSave.style.display = 'none';
+      btnClose.innerText = 'Close';
+    }
+  }
+
+  async function saveChanges() {
+    const newScore = parseInt(document.getElementById('m2_score').value) || 0;
+    const violationsPayload = currentStudent.violations.map(v => ({
+      id: v.id,
+      checked: v.status === 'confirmed'
+    }));
+
+    try {
+      const res = await fetch('/api/violation/save_review', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          result_id: currentStudent.result_id,
+          new_score: newScore,
+          violations: violationsPayload
+        })
+      });
+      
+      const data = await res.json();
+      if (data.ok) {
+        window.location.reload();
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch(e) {
+      alert('Network error.');
+    }
+  }
+
+  /* MODAL 3 LOGIC */
+  function openModal3() {
+    document.getElementById('m3_name').innerText = currentStudent.student_name;
+    const container = document.getElementById('m3_content');
+    container.innerHTML = '';
+
+    if (!currentStudent.details || currentStudent.details.length === 0) {
+      container.innerHTML = '<div style="text-align:center;padding:20px;color:#999;">Walang page details.</div>';
+    } else {
+      currentStudent.details.forEach((d, i) => {
+        const div = document.createElement('div');
+        div.className = `page-item ${d.correct ? 'correct' : 'wrong'}`;
+        
+        let statusBadge = d.correct 
+          ? '<span style="color:var(--green);font-weight:bold;">✓ TAMA</span>' 
+          : '<span style="color:var(--red);font-weight:bold;">✗ MALI</span>';
+          
+        if (d.pending) statusBadge = '<span style="color:var(--yellow);font-weight:bold;">⏳ PENDING</span>';
+
+        div.innerHTML = `
+          <div class="page-header">
+            <span>Page ${i + 1}</span>
+            ${statusBadge}
+          </div>
+          <div style="font-size:0.95rem;margin-bottom:8px;">${d.question}</div>
+          <div class="answer-box">
+            <div style="font-size:0.75rem;color:#999;margin-bottom:4px;">Student Answer:</div>
+            ${d.your_answer || '(blank)'}
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    document.getElementById('modal3').classList.add('active');
+  }
+
+  function closeModal3() {
+    document.getElementById('modal3').classList.remove('active');
+  }
+</script>
+</body>
+</html>

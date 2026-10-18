@@ -40,7 +40,7 @@
             <th>Title</th>
             <th>Status</th>
             <th>Time</th>
-            <th style="width:110px;">Actions</th>
+            <th style="width:130px;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -58,10 +58,11 @@
             <td><span class="badge badge-green">Published</span></td>
             <td class="muted small">{{ s.published_at or s.updated_at or s.created_at or '—' }}</td>
             <td>
-              <button class="btn btn-blue btn-sm"
-                      data-action="view-study"
-                      data-id="{{ s.id }}"
-                      data-delurl="{{ url_for('delete_study', stid=s.id) }}">👁 View</button>
+              <!-- BINAGO: Direct link sa Review Page -->
+              <a class="btn btn-blue btn-sm" 
+                 href="/teacher/review/{{ s.id }}"
+                 data-action="direct-review" 
+                 data-id="{{ s.id }}">👁 Review Logs</a>
             </td>
           </tr>
           {% else %}
@@ -208,7 +209,7 @@
           <tr>
             <th>Title</th>
             <th>Time</th>
-            <th style="width:110px;">Actions</th>
+            <th style="width:130px;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -225,10 +226,11 @@
             </td>
             <td class="muted small">{{ s.published_at or s.updated_at or s.created_at or '—' }}</td>
             <td>
-              <button class="btn btn-blue btn-sm"
-                      data-action="view-study"
-                      data-id="{{ s.id }}"
-                      data-delurl="{{ url_for('delete_study', stid=s.id) }}">👁 View</button>
+              <!-- BINAGO: Direct link sa Review Page -->
+              <a class="btn btn-blue btn-sm" 
+                 href="/teacher/review/{{ s.id }}"
+                 data-action="direct-review" 
+                 data-id="{{ s.id }}">👁 Review Logs</a>
             </td>
           </tr>
           {% else %}
@@ -424,8 +426,6 @@
 
 <script type="application/json" id="studiesData">{{ studies|tojson }}</script>
 
-
-
 {# ═══════════════ VIEW MODAL ═══════════════ #}
 <div id="viewModal" class="modal-backdrop">
   <div class="modal">
@@ -539,7 +539,8 @@
   }
 
   function updateBadgeInTable(st) {
-    document.querySelectorAll('[data-action="view-study"][data-id="' + st.id + '"]')
+    // BINAGO: direct-review na ang tinitingnan imbes na view-study
+    document.querySelectorAll('[data-action="direct-review"][data-id="' + st.id + '"]')
       .forEach(function(btn) {
         var tr = btn.closest('tr');
         if (!tr) return;
@@ -568,60 +569,6 @@
           existing.remove();
         }
       });
-  }
-
-  /* ═══════════════════════════════════════════════════════
-     OPEN VIEW MODAL
-     ═══════════════════════════════════════════════════════ */
-  function openViewModal(s, btn) {
-    document.getElementById('v_title').innerText = s.title || '';
-    document.getElementById('v_last').innerText = s.updated_at || '';
-    document.getElementById('v_type').innerText = (s.type || '').replace(/_/g, ' ');
-    document.getElementById('v_direction').innerText = s.direction || '—';
-    document.getElementById('v_study').innerText = (s.study_timer || 0) + 's';
-    document.getElementById('v_question').innerText = (s.question_timer || 0) + 's';
-    document.getElementById('v_back').innerText = s.max_back || 0;
-    document.getElementById('v_score').innerText = s.score || 0;
-    document.getElementById('v_penalty').innerText = s.penalty || 0;
-    document.getElementById('v_pages').innerText = s.total_pages || 0;
-
-    var editBtn = document.querySelector('#viewModal [data-action="edit-study"]');
-    var delBtn = document.querySelector('#viewModal [data-action="confirm-delete"]');
-    var lockNote = document.getElementById('v_lockNote');
-
-    if (s.is_locked || s.locked) {
-      if (editBtn) editBtn.style.display = 'none';
-      if (delBtn) {
-        delBtn.disabled = true;
-        delBtn.style.opacity = '.4';
-      }
-      var msg = s.has_attempts
-        ? '🔒 Locked — may submitted attempts na'
-        : '🔒 May ' + (s.active_count || 1) + ' student(s) active';
-      if (!lockNote) {
-        lockNote = document.createElement('p');
-        lockNote.id = 'v_lockNote';
-        lockNote.className = 'badge badge-red';
-        lockNote.style.marginTop = '10px';
-        lockNote.style.display = 'inline-block';
-        document.getElementById('v_title').parentNode.appendChild(lockNote);
-      }
-      lockNote.textContent = msg;
-      lockNote.style.display = 'inline-block';
-    } else {
-      if (editBtn) {
-        editBtn.style.display = 'inline-flex';
-        editBtn.setAttribute('data-study-id', s.id);
-      }
-      if (delBtn) {
-        delBtn.disabled = false;
-        delBtn.style.opacity = '1';
-      }
-      if (lockNote) lockNote.style.display = 'none';
-    }
-
-    if (delBtn) delBtn.setAttribute('data-delete-url', btn.getAttribute('data-delurl'));
-    window.openModal('viewModal');
   }
 
   setInterval(refreshStudyStatuses, 20000);
@@ -680,28 +627,6 @@
       }).then(function() {
         window.location.href = '/teacher/activity/' + s.id + '/details';
       });
-    }
-
-    /* VIEW STUDY */
-    else if (a === 'view-study') {
-      ev.preventDefault();
-      var sid = btn.getAttribute('data-id');
-      var sv = findStudy(sid);
-      if (!sv) return;
-
-      fetch('/api/studies/' + sid + '/lock-status', { credentials: 'same-origin' })
-        .then(function(r) { return r.ok ? r.json() : null; })
-        .then(function(st) {
-          if (st && !st.error) {
-            sv.is_locked = st.is_locked;
-            sv.active_count = st.active_count;
-            sv.has_attempts = st.has_attempts;
-            sv.locked = st.is_locked;
-            updateBadgeInTable(st);
-          }
-          openViewModal(sv, btn);
-        })
-        .catch(function() { openViewModal(sv, btn); });
     }
 
     /* CLOSE */
