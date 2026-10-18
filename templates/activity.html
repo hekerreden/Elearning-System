@@ -620,30 +620,36 @@ function toggleFlowBlock(checkbox) {
 }
 
 // Mag-load ng existing data kung nag-e-edit
+var existingFlowRaw = `{{ study.get('flow', [])|tojson }}`;
+var existingFlow = [];
 try {
-  var existingFlow = {{ study.get('flow', [])|tojson }};
+  existingFlow = JSON.parse(existingFlowRaw);
   if (existingFlow && existingFlow.length > 0) {
     existingFlow.forEach(function(f) {
       var block = document.querySelector('.flow-block[data-type="' + f.type + '"]');
       if (block) {
         block.querySelector('.flow-enable').checked = true;
         block.classList.add('active');
-        block.querySelector('.flow-order').value = f.order;
-        block.querySelector('.flow-count').value = f.count;
-        block.querySelector('.flow-timer').value = f.timer;
-        block.querySelector('.flow-score').value = f.score;
-        block.querySelector('.flow-penalty').value = f.penalty;
+        
+        // I-set ang mga values
+        block.querySelector('.flow-order').value = f.order || 1;
+        block.querySelector('.flow-count').value = f.count || 1;
+        block.querySelector('.flow-timer').value = f.timer || 30;
+        block.querySelector('.flow-score').value = f.score || 1;
+        block.querySelector('.flow-penalty').value = f.penalty || 0;
       }
     });
   } else {
-    // Kung wala pang data, i-default check ang Multiple Choice
+    // Kung wala pang data (bagong gawa), i-default check ang Multiple Choice
     var defaultBlock = document.querySelector('.flow-block[data-type="multiple_choice"]');
     if (defaultBlock) {
       defaultBlock.querySelector('.flow-enable').checked = true;
       defaultBlock.classList.add('active');
     }
   }
-} catch(e) { console.error("Flow Load Error", e); }
+} catch (e) {
+  console.error("Flow Load Error", e);
+}
 
 document.addEventListener('DOMContentLoaded', function() {
   var settingMode = document.getElementById('setting_mode');

@@ -164,6 +164,7 @@ def register(app):
             "study_timer": max(0, get_int("study_timer", study.get("study_timer", 0))),
             "total_pages": total_pages,
             "pages": new_pages,
+            "flow": flow_data,  
             "question_timer": default_timer,
             "score": default_score,
             "penalty": default_penalty,
