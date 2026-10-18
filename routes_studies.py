@@ -361,6 +361,7 @@ def register(app):
             "activity.html",
             study=study,
             is_preview=True,
+            page_idx=0,
             is_admin=(actor.role == "SuperAdmin"),
         )
 

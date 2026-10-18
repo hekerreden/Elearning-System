@@ -457,7 +457,7 @@ select[data-custom]{display:none !important}
             {% if q.type == 'identification' %}{{ q.correct_answer or '—' }}
             {% elif q.type == 'multiple_choice' %}
               {% set letters = ['A','B','C','D'] %}
-              <b>{{ letters[q.correct_index] }}.</b> {{ q.choices[q.correct_index] if q.choices else '—' }}
+              <b>{{ letters[q.correct_index] }}.</b> {{ q.choices[q.correct_index] if q.choices and q.correct_index < q.choices|length else '—' }}
             {% elif q.type == 'true_false' %}{{ 'True' if q.correct_bool else 'False' }}
             {% else %}<span class="muted">(manual)</span>{% endif %}
           </td>
@@ -482,13 +482,13 @@ select[data-custom]{display:none !important}
 {% set ns = namespace(cum=0, found=false, start=0, end=0, type='', count=0, is_transition=false, next_type='') %}
 {% if study.flow %}
     {% for block in study.flow %}
-        {% if ns.cum == page_idx %}
+        {% if page_idx >= ns.cum and page_idx < ns.cum + block.count %}
             {% set ns.found = true %}
             {% set ns.start = ns.cum %}
             {% set ns.end = ns.cum + block.count - 1 %}
             {% set ns.type = block.type %}
             {% set ns.count = block.count %}
-            {% set ns.is_transition = (ns.cum > 0) %}
+            {% set ns.is_transition = (page_idx == ns.cum and ns.cum > 0) %}
             {% if not loop.last %}
                 {% set ns.next_type = study.flow[loop.index].type %}
             {% endif %}
