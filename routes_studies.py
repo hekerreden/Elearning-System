@@ -170,6 +170,35 @@ def register(app):
             return jsonify({"ok": True, "next_url": next_url})
         
         return redirect(next_url)
+    
+    # ✅ ITO YUNG KULANG NA ROUTE PARA SA DETAILS PAGE
+    @app.route("/teacher/activity/<stid>/details", methods=["GET"])
+    @role_required("Teacher", "SuperAdmin")
+    def activity_details(stid):
+        actor = current_user()
+        study = find_study(stid)
+        if not can_edit_study(actor, study):
+            flash("Study not found.", "error")
+            return redirect(url_for("teacher_page"))
+        if is_study_locked(study):
+            flash("🔒 Cannot edit — may student na nagsimula.", "error")
+            return redirect(url_for("teacher_page"))
+
+        # Kung published, i-set sa editing para hindi makita ng students
+        if study.get("status") == "published":
+            study["status"] = "editing"
+            study["updated_at"] = now_str()
+            notify(actor.id, "✏️ Study Hidden",
+                   f"'{study['title']}' is temporarily hidden from students while you edit it.",
+                   link="/teacher#studies", kind="info")
+
+        return render_template(
+            "activity.html",
+            study=study,
+            is_details=True,  # ✅ Importante ito para lumabas ang Details UI
+            page_idx=0,
+            is_admin=(actor.role == "SuperAdmin"),
+        )
 
     # ✅ BAGO: Settings Page Route
     @app.route("/teacher/activity/<stid>/settings", methods=["GET"])
