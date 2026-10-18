@@ -16,6 +16,7 @@ notifications = []
 connections = []
 activities_list = []
 temp_question = []
+active_violations = [] 
 
 
 def load_from_mongo():

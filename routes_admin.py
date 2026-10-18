@@ -62,7 +62,7 @@ def register(app):
                f"You flagged {target.full_name} (@{target.username}) for deletion in {unit_label}.",
                link="/super-admin#deletes", kind="info")
         flash(f"Deletion scheduled for {target.full_name} in {unit_label}.", "success")
-        return redirect(url_for("super_admin_page"))
+        return redirect(url_for("super_admin_page")+"#deletes")
 
     @app.route("/api/account/appeal", methods=["POST"])
     @role_required("Teacher", "Student")
@@ -83,7 +83,7 @@ def register(app):
                "Your appeal has been sent to the Super Admin for review.",
                link=f"/{u.role.lower()}#account", kind="info")
         flash("Appeal submitted. Super Admin will review.", "success")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("dashboard")+"#account")
 
     @app.route("/api/account/appeal/cancel", methods=["POST"])
     @role_required("Teacher", "Student")
@@ -97,7 +97,7 @@ def register(app):
         u.delete_grace_until = None
         u.delete_reason = ""
         flash("Account deletion cancelled. Welcome back!", "success")
-        return redirect(url_for("dashboard"))
+        return redirect(url_for("dashboard")+"#account")
 
     @app.route("/api/account/password", methods=["POST"])
     @role_required("Teacher", "Student")
@@ -136,7 +136,7 @@ def register(app):
         if wants_json:
             return jsonify({"ok": True, "message": "Password updated successfully!"})
         flash("Password updated successfully!", "success")
-        return redirect(url_for(role_home(u.role)))
+        return redirect(url_for(role_home(u.role))+"#account")
 
     @app.route("/api/admin/delete/<uid>/approve", methods=["POST"])
     @role_required("SuperAdmin")
@@ -149,7 +149,7 @@ def register(app):
         target.username = f"deleted_{target.id}"
         notify(target.id, "Account Deleted", "Your account has been deleted.", kind="info")
         flash(f"Deleted {target.full_name}.", "success")
-        return redirect(url_for("super_admin_page"))
+        return redirect(url_for("super_admin_page")+"#deletes")
 
     @app.route("/api/admin/delete/<uid>/reject", methods=["POST"])
     @role_required("SuperAdmin")
@@ -166,7 +166,7 @@ def register(app):
                "Super Admin rejected the deletion. Your account is active.",
                link=f"/{target.role.lower()}#account", kind="info")
         flash(f"Restored {target.full_name}.", "success")
-        return redirect(url_for("super_admin_page"))
+        return redirect(url_for("super_admin_page")+"#deletes")
 
     @app.route("/api/users/<uid>/delete", methods=["POST"])
     @role_required("SuperAdmin")
@@ -185,7 +185,7 @@ def register(app):
         connections[:] = [c for c in connections
                           if c["student_id"] != uid and c["teacher_id"] != uid]
         flash(f"User '{target.username}' permanently deleted.", "success")
-        return redirect(url_for("super_admin_page"))
+        return redirect(url_for("super_admin_page")+"#delete")
 
     @app.route("/api/admin/users/<uid>/reset-password", methods=["POST"])
     @role_required("SuperAdmin")

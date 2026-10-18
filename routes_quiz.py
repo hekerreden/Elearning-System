@@ -3,9 +3,11 @@
 import json as _json
 import uuid
 import os as _os
+import time
 from flask import request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
-from storage import quiz_results, UPLOAD_DIR
+from storage import quiz_results, UPLOAD_DIR, active_violations, save_to_mongo
+
 from helpers import (current_user, find_study,
                      active_teachers_for_student, now_str, notify)
 from decorators import role_required
@@ -73,7 +75,6 @@ def register(app):
         if not pages:
             return jsonify({"error": "Study has no questions."}), 400
 
-        stype = study.get("type", "identification")
         has_ppt = bool(study.get("slides"))
         study_secs = int(study.get("study_timer") or 0) if (
             study.get("mode") == "study_and_quiz" and has_ppt) else 3
@@ -88,6 +89,7 @@ def register(app):
         has_manual = False
         details = []
 
+        # ✅ MIXED-TYPE LOGIC
         for i, p in enumerate(pages):
             ans = answers[i] if i < len(answers) else None
             is_correct = False
@@ -95,14 +97,17 @@ def register(app):
             display_your = ans
             display_correct = ""
             file_info = files_map.get(i)
+            
+            # ✅ Kunin ang type ng PAGE, hindi ng study
+            p_type = p.get("type", study.get("type", "identification"))
 
-            if stype == "identification":
+            if p_type == "identification":
                 ua = (ans or "").strip().lower() if isinstance(ans, str) else ""
                 ca = (p.get("correct_answer", "") or "").strip().lower()
                 is_correct = bool(ca) and ua == ca
                 display_your = ans or ""
                 display_correct = p.get("correct_answer", "")
-            elif stype == "multiple_choice":
+            elif p_type == "multiple_choice":
                 try:
                     uidx = int(ans) if ans is not None else -1
                 except:
@@ -113,13 +118,13 @@ def register(app):
                 letters = ['A', 'B', 'C', 'D']
                 display_your = (letters[uidx] + ". " + choices[uidx]) if (0 <= uidx < len(choices)) else "(blank)"
                 display_correct = (letters[cidx] + ". " + choices[cidx]) if (0 <= cidx < len(choices)) else ""
-            elif stype == "true_false":
+            elif p_type == "true_false":
                 ua = str(ans).lower() if ans is not None else ""
                 ca = "true" if p.get("correct_bool", True) else "false"
                 is_correct = (ua == ca)
                 display_your = "True" if ua == "true" else ("False" if ua == "false" else "(blank)")
                 display_correct = "True" if ca == "true" else "False"
-            elif stype in ("essay", "file_upload"):
+            elif p_type in ("essay", "file_upload"):
                 pending = True
                 has_manual = True
                 display_your = ans if ans else "(blank)"
@@ -135,6 +140,7 @@ def register(app):
 
             details.append({
                 "idx": i,
+                "type": p_type, # ✅ Isama para sa review
                 "question": p.get("question", ""),
                 "your_answer": display_your,
                 "correct_answer": display_correct,
@@ -143,7 +149,9 @@ def register(app):
                 "file": file_info,
             })
 
-        # ✅ Tinanggal ang medal at pct
+        # ✅ KUNIN ANG VIOLATIONS
+        student_violations = [v for v in active_violations if v["student_id"] == actor.id and v["study_id"] == study_id]
+
         quiz_results.append({
             "id": uuid.uuid4().hex[:8],
             "student_id": actor.id, "student_name": actor.username,
@@ -156,17 +164,21 @@ def register(app):
             "has_manual": has_manual,
             "graded": not has_manual,
             "details": details,
+            "violations": student_violations,
             "timestamp": now_str(), "adjusted": False,
         })
 
         study["has_attempts"] = True
         
-        # ✅ IDAGDAG ITO: Pilitin i-save sa MongoDB
+        # ✅ LINISIN ANG ACTIVE VIOLATIONS PARA SA STUDENT NA ITO
+        active_violations[:] = [v for v in active_violations if not (v["student_id"] == actor.id and v["study_id"] == study_id)]
+
+        # ✅ EXPLICIT SAVE
         try: 
-            from storage import save_to_mongo
             save_to_mongo()
         except Exception as e: 
             print(f"⚠️ Quiz submit save failed: {e}")
+            
         notify(study["teacher_id"], "Quiz Submitted",
                f"{actor.full_name} submitted '{study['title']}'"
                + (f" — needs grading." if has_manual
@@ -199,8 +211,14 @@ def register(app):
         except ValueError:
             flash("Number required.", "error")
             return redirect(url_for("teacher_page"))
+            
         result["score"] = new_score
         result["adjusted"] = True
+        
+        # ✅ EXPLICIT SAVE
+        try: save_to_mongo()
+        except: pass
+        
         notify(result["student_id"], "Score Adjusted",
                f"Your score for '{study['title']}' was updated to {new_score}.",
                link="/student#history", kind="score")
@@ -223,6 +241,7 @@ def register(app):
             "study_title": result.get("study_title", ""),
             "study_type": study.get("type", ""),
             "details": result.get("details", []),
+            "violations": result.get("violations", []), # ✅ ISAMA ANG VIOLATIONS
             "graded": result.get("graded", True),
             "score": result.get("score", 0),
         })
@@ -262,9 +281,57 @@ def register(app):
         result["adjusted"] = True
         result["correct_count"] = correct_count
         result["correct"] = (correct_count == len(details))
+        
+        # ✅ EXPLICIT SAVE
+        try: save_to_mongo()
+        except: pass
 
         notify(result["student_id"], "📝 Quiz Graded",
                f"Your submission for '{study['title']}' has been graded. Score: {total}.",
                link="/student#history", kind="score")
 
         return jsonify({"ok": True, "score": total})
+    
+    @app.route("/api/violation/start", methods=["POST"])
+    @role_required("Student")
+    def log_violation_start():
+        actor = current_user()
+        data = request.get_json() or {}
+        study_id = data.get("study_id")
+        v_type = data.get("type")
+        source = data.get("source", "browser")
+
+        # ✅ KULANG NA TYPES IDINAGDAG
+        valid_types = ["LOOKED_LEFT", "LOOKED_RIGHT", "LOOKED_UP", "LOOKED_DOWN", 
+                       "CELLPHONE_DETECTED", "MULTIPLE_PERSONS", "NO_FACE", 
+                       "TAB_SWITCHED", "WINDOW_BLURRED", "FULLSCREEN_EXIT", 
+                       "PAGE_LEFT", "DEVICE_ROTATED", "RIGHT_CLICK", "CAMERA_DENIED",
+                       "NO_BLINK", "LIVENESS_FAILED", "FACE_TOO_CLOSE", "LOOKED_SIDE"]
+        if v_type not in valid_types:
+            return jsonify({"ok": False, "error": "Invalid type"}), 400
+
+        now = time.time()
+        for v in active_violations:
+            if v["student_id"] == actor.id and v["study_id"] == study_id and v["type"] == v_type:
+                if now - v["last_seen"] < 5:  # Throttle
+                    v["duration"] += (now - v["last_seen"])
+                    v["last_seen"] = now # ✅ I-update pagkatapos mag-calculate
+                    return jsonify({"ok": True, "status": "extended"})
+
+        v_id = uuid.uuid4().hex[:8]
+        active_violations.append({
+            "id": v_id,
+            "student_id": actor.id,
+            "student_name": actor.username,
+            "study_id": study_id,
+            "type": v_type,
+            "source": source,
+            "time": now_str(),
+            "duration": 1,
+            "last_seen": now
+        })
+        
+        try: save_to_mongo()
+        except: pass
+
+        return jsonify({"ok": True, "id": v_id})

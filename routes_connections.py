@@ -76,7 +76,7 @@ def register(app):
                kind="connection_request")
                
         flash(f"Request sent to {target.full_name}!", "success")
-        return redirect(url_for(role_home(actor.role)))
+        return redirect(url_for(role_home(actor.role))+"#connect")
 
     @app.route("/api/connections/<cid>/approve", methods=["POST"])
     @role_required("Teacher", "Student")
@@ -108,7 +108,7 @@ def register(app):
                    link=f"/{other.role.lower()}#{target_section}",
                    kind="connection_approved")
         flash("Connection approved!", "success")
-        return redirect(url_for(role_home(actor.role)))
+        return redirect(url_for(role_home(actor.role))+"#connect")
 
     @app.route("/api/connections/<cid>/reject", methods=["POST"])
     @role_required("Teacher", "Student")
@@ -136,4 +136,4 @@ def register(app):
                    link=f"/{other.role.lower()}#connect",
                    kind="connection_rejected")
         flash("Request rejected.", "success")
-        return redirect(url_for(role_home(actor.role)))
+        return redirect(url_for(role_home(actor.role))+"#connect")

@@ -169,6 +169,6 @@ def register(app):
                     "new_username": value,
                 })
             flash(f"Username updated to @{value}.", "success")
-            return redirect(url_for(role_home(u.role)))
+            return redirect(url_for(role_home(u.role))+"#account")
 
         return _err("Unknown field.")

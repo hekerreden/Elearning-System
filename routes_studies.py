@@ -5,6 +5,7 @@ from datetime import timedelta
 from flask import (request, redirect, url_for, flash, jsonify,
                    render_template)
 from storage import studies, quiz_results, save_to_mongo
+
 from helpers import (current_user, find_study, is_study_locked,
                      now_str, now_dt, get_int,
                      active_students_for_teacher, notify)
@@ -52,8 +53,9 @@ def register(app):
         if question_timer <= 0:
             return jsonify({"error": "Question timer must be positive."}), 400
 
+        
         def empty_page():
-            p = {"question": ""}
+            p = {"question": "", "type": study_type} # ✅ Bawat page may sariling type
             if study_type == "identification":
                 p["correct_answer"] = ""
             elif study_type == "multiple_choice":
@@ -63,8 +65,6 @@ def register(app):
                 p["correct_bool"] = True
             elif study_type == "essay":
                 p["reference"] = ""
-            elif study_type == "file_upload":
-                p["instruction"] = ""
             return p
 
         new_id = uuid.uuid4().hex[:8]
@@ -143,8 +143,8 @@ def register(app):
             
         flash("Settings updated. Now edit questions.", "success")
         if actor.role == "SuperAdmin":
-            return redirect(url_for("super_admin_page"))
-        return redirect(url_for("teacher_page"))
+            return redirect(url_for("super_admin_page") + "#studies")
+        return redirect(url_for("teacher_page") + "#studies")
 
     @app.route("/api/studies/<stid>/save_details", methods=["POST"])
     @role_required("Teacher", "SuperAdmin")
@@ -179,7 +179,7 @@ def register(app):
         study = find_study(stid)
         if not can_edit_study(actor, study):
             flash("Study not found.", "error")
-            return redirect(url_for("teacher_page"))
+            return redirect(url_for("teacher_page")+"#studies")
         if is_study_locked(study):
             flash("🔒 Cannot edit — may student na nagsimula.", "error")
             return redirect(url_for("teacher_page"))
@@ -208,7 +208,7 @@ def register(app):
         study = find_study(stid)
         if not can_edit_study(actor, study):
             flash("Study not found.", "error")
-            return redirect(url_for("teacher_page"))
+            return redirect(url_for("teacher_page")+"#studies")
         if is_study_locked(study):
             flash("🔒 Cannot edit — may student na nagsimula.", "error")
             return redirect(url_for("teacher_page"))
@@ -222,6 +222,8 @@ def register(app):
         )
 
 
+
+    # Sa save_page, palitan ang buong logic:
     @app.route("/api/studies/<stid>/save_page/<int:page_idx>", methods=["POST"])
     @role_required("Teacher", "SuperAdmin")
     def save_page(stid, page_idx):
@@ -232,36 +234,33 @@ def register(app):
         if is_study_locked(study):
             return jsonify({"ok": False, "error": "🔒 Locked — may student na nagsimula."}), 403
 
-        # ... (I-keep ang existing validation at pag-save ng page data mo dito) ...
-        # I'll assume you have the existing logic here, just keep it.
-        
         while len(study["pages"]) <= page_idx:
-            study["pages"].append({"question": ""})
+            study["pages"].append({"question": "", "type": "identification"})
 
         page = study["pages"][page_idx]
         page["question"] = request.form.get("question", "").strip()
-        stype = study["type"]
+        
+        # ✅ Kunin ang type galing sa form, default sa study type
+        page_type = request.form.get("type", study.get("type", "identification")).strip()
+        page["type"] = page_type
 
-        if stype == "identification":
+        if page_type == "identification":
             page["correct_answer"] = request.form.get("correct_answer", "").strip()
-        elif stype == "multiple_choice":
+        elif page_type == "multiple_choice":
             n = study.get("mc_options", 4)
             page["choices"] = [request.form.get(f"choice_{i}", "").strip() for i in range(n)]
             try:
                 page["correct_index"] = int(request.form.get("correct_index", 0))
             except ValueError:
                 page["correct_index"] = 0
-        elif stype == "true_false":
+        elif page_type == "true_false":
             val = request.form.get("correct_bool", "true")
             page["correct_bool"] = (val == "true")
-        elif stype == "essay":
+        elif page_type == "essay":
             page["reference"] = request.form.get("reference", "").strip()
-        elif stype == "file_upload":
-            page["instruction"] = request.form.get("instruction", "").strip()
 
         study["updated_at"] = now_str()
 
-        # ✅ Python Decision: Saan pupunta?
         if page_idx + 1 < study["total_pages"]:
             next_url = f"/teacher/activity/{stid}/{page_idx + 1}"
         else:
@@ -338,22 +337,31 @@ def register(app):
         study = find_study(stid)
         if not can_edit_study(actor, study):
             flash("Study not found.", "error")
-            return redirect(url_for("teacher_page"))
+            return redirect(url_for("teacher_page") + "#studies")
         if is_study_locked(study):
             flash("🔒 Cannot publish — may student na nagsimula ng quiz.", "error")
-            return redirect(url_for("teacher_page"))
+            return redirect(url_for("teacher_page") + "#studies")
 
-        stype = study.get("type", "identification")
+        # ✅ FIX: I-check ang type ng BAWAT page
         for i, p in enumerate(study["pages"]):
+            p_type = p.get("type", study.get("type", "identification")) # ✅ Galing sa page
+            
             if not p.get("question"):
                 flash(f"Cannot publish — page {i+1} has no question.", "error")
                 return redirect(f"/teacher/activity/{stid}/preview")
-            if stype == "identification" and not p.get("correct_answer"):
+                
+            if p_type == "identification" and not p.get("correct_answer"):
                 flash(f"Cannot publish — page {i+1} has no answer.", "error")
                 return redirect(f"/teacher/activity/{stid}/preview")
-            if stype == "multiple_choice":
+                
+            if p_type == "multiple_choice":
                 if not p.get("choices") or any(not c for c in p["choices"]):
                     flash(f"Cannot publish — page {i+1} has empty choices.", "error")
+                    return redirect(f"/teacher/activity/{stid}/preview")
+                    
+            if p_type == "true_false":
+                if p.get("correct_bool") is None:
+                    flash(f"Cannot publish — page {i+1} has no True/False answer.", "error")
                     return redirect(f"/teacher/activity/{stid}/preview")
 
         study["status"] = "published"
@@ -376,8 +384,8 @@ def register(app):
 
         flash(f"'{study['title']}' published! Students will see it in 10 seconds.", "success")
         if actor.role == "SuperAdmin":
-            return redirect(url_for("super_admin_page"))
-        return redirect(url_for("teacher_page"))
+            return redirect(url_for("super_admin_page")+"#studies")
+        return redirect(url_for("teacher_page")+"#studies")
 
     @app.route("/api/studies/<stid>/save_slides", methods=["POST"])
     @role_required("Teacher", "SuperAdmin")
@@ -491,8 +499,8 @@ def register(app):
             
         flash("Study deleted.", "success")
         if actor.role == "SuperAdmin":
-            return redirect(url_for("super_admin_page"))
-        return redirect(url_for("teacher_page"))
+            return redirect(url_for("super_admin_page")+"#studies")
+        return redirect(url_for("teacher_page")+"#studies")
         
     # ═══════════════════════════════════════════════════════════  
     # LIVE LOCK STATUS — para sa teacher dashboard
@@ -532,4 +540,5 @@ def register(app):
             "active_count": get_active_session_count(s),
             "has_attempts": s.get("has_attempts", False),
         })
-        
+
+    

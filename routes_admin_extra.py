@@ -16,7 +16,7 @@ def register(app):
     # EDIT USERNAME (by admin)
     # ═══════════════════════════════════════════════════════════
     @app.route("/api/admin/users/<uid>/edit-username", methods=["POST"])
-    @role_required("SuperAdmin")
+    @role_required("SuperAd min")
     def admin_edit_username(uid):
         target = find_user_by_id(uid)
         if not target:
@@ -95,4 +95,4 @@ def register(app):
                kind="info")
 
         flash(f"✅ Username changed: @{old_username} → @{new_username}", "success")
-        return redirect(url_for("super_admin_page"))
+        return redirect(url_for("super_admin_page")+"#teachers")

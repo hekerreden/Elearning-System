@@ -116,6 +116,57 @@ th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #3a3a3a}
 th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 .table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════ CUSTOM DROPDOWN ═══════════════ */
+.cs-wrap{position:relative;user-select:none;width:100%}
+.cs-trigger{
+  width:100%;padding:10px 12px;border-radius:6px;
+  border:1px solid var(--border);background:#151517;color:var(--text);
+  font-size:.9rem;font-family:inherit;text-align:left;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  transition:border-color .15s,box-shadow .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.cs-trigger:hover{border-color:#555}
+.cs-trigger:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,119,242,.18)}
+.cs-trigger.open{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,119,242,.18);}
+.cs-trigger .cs-value{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cs-trigger .cs-arrow{
+  width:16px;height:16px;flex-shrink:0;
+  transition:transform .2s ease;
+  stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.cs-trigger.open .cs-arrow{transform:rotate(180deg)}
+.cs-menu{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;box-shadow:0 12px 32px rgba(0,0,0,.65);
+  z-index:9999;max-height:280px;overflow-y:auto;
+  display:none;padding:4px;
+  animation:csSlide .15s ease;
+  scrollbar-width:thin;
+}
+.cs-menu.up{top:auto;bottom:calc(100% + 4px);animation:csSlideUp .15s ease}
+.cs-menu.open{display:block}
+@keyframes csSlide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes csSlideUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.cs-menu::-webkit-scrollbar{width:6px}
+.cs-menu::-webkit-scrollbar-track{background:transparent}
+.cs-menu::-webkit-scrollbar-thumb{background:rgba(24,119,242,.4);border-radius:10px;}
+.cs-option{
+  padding:9px 12px;border-radius:6px;cursor:pointer;
+  font-size:.88rem;color:var(--text);transition:background .1s;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.cs-option:hover,
+.cs-option.focused{background:rgba(24,119,242,.14)}
+.cs-option.selected{background:rgba(24,119,242,.18);color:#fff;font-weight:600;}
+.cs-option.selected::after{content:'✓';color:var(--blue-hover);font-weight:700;flex-shrink:0;}
+select[data-custom]{display:none !important}
+
+.type-field { display: none; }
 </style>
 </head>
 <body>
@@ -180,8 +231,8 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
   <div class="form-content">
     <form method="POST" action="/api/studies/{{ study.id }}/update" id="settingsForm">
       <div class="card">
-        <label>Quiz Type *
-          <select name="type" id="setting_type" required>
+        <label>Default Quiz Type *
+          <select name="type" id="setting_type" required data-custom>
             <option value="identification">Identification</option>
             <option value="multiple_choice">Multiple Choice</option>
             <option value="true_false">True or False</option>
@@ -191,7 +242,7 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
         </label>
 
         <label>Mode *
-          <select name="mode" id="setting_mode" required>
+          <select name="mode" id="setting_mode" required data-custom>
             <option value="direct_quiz">Direct Quiz</option>
             <option value="study_and_quiz">Study muna, then Quiz</option>
           </select>
@@ -204,7 +255,7 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 
         <div id="mcOptionsRow" style="display:none;">
           <label>Choices per question *
-            <select name="mc_options" id="setting_mc_options">
+            <select name="mc_options" id="setting_mc_options" data-custom>
               <option value="3">A, B, C (3 choices)</option>
               <option value="4">A, B, C, D (4 choices)</option>
             </select>
@@ -266,18 +317,19 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
   <div class="card-title"><h2>📝 Questions Preview</h2></div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>#</th><th>Question</th><th>Answer</th><th>Edit</th></tr></thead>
+      <thead><tr><th>#</th><th>Type</th><th>Question</th><th>Answer</th><th>Edit</th></tr></thead>
       <tbody>
         {% for q in study.pages %}
         <tr>
           <td><b>{{ loop.index }}</b></td>
+          <td><span class="tag" style="font-size:0.65rem;">{{ q.type|replace('_',' ')|capitalize }}</span></td>
           <td>{{ q.question or '—' }}</td>
           <td>
-            {% if study.type == 'identification' %}{{ q.correct_answer or '—' }}
-            {% elif study.type == 'multiple_choice' %}
+            {% if q.type == 'identification' %}{{ q.correct_answer or '—' }}
+            {% elif q.type == 'multiple_choice' %}
               {% set letters = ['A','B','C','D'] %}
               <b>{{ letters[q.correct_index] }}.</b> {{ q.choices[q.correct_index] if q.choices else '—' }}
-            {% elif study.type == 'true_false' %}{{ 'True' if q.correct_bool else 'False' }}
+            {% elif q.type == 'true_false' %}{{ 'True' if q.correct_bool else 'False' }}
             {% else %}<span class="muted">(manual)</span>{% endif %}
           </td>
           <td><a class="btn btn-blue btn-sm" href="/teacher/activity/{{ study.id }}/{{ loop.index0 }}">Edit</a></td>
@@ -324,21 +376,37 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
       {% if page_idx < study.pages|length %}
         {% set current = study.pages[page_idx] %}
       {% else %}
-        {% set current = {'question':''} %}
+        {% set current = {'question':'', 'type': study.type} %}
       {% endif %}
 
       <div class="card">
         <h2>Question {{ page_idx + 1 }}</h2>
+        
+        <!-- ✅ PAGE TYPE SELECTOR -->
+        <label>Question Type *
+          <select name="type" id="page_type_selector" required data-custom onchange="updatePageFields()">
+            <option value="identification" {% if current.type == 'identification' %}selected{% endif %}>Identification</option>
+            <option value="multiple_choice" {% if current.type == 'multiple_choice' %}selected{% endif %}>Multiple Choice</option>
+            <option value="true_false" {% if current.type == 'true_false' %}selected{% endif %}>True or False</option>
+            <option value="essay" {% if current.type == 'essay' %}selected{% endif %}>Essay</option>
+            <option value="file_upload" {% if current.type == 'file_upload' %}selected{% endif %}>File Upload</option>
+          </select>
+        </label>
+
         <label>Question *
           <input type="text" name="question" value="{{ current.question or '' }}"
                  placeholder="Type the question…" required autofocus>
         </label>
 
-        {% if study.type == 'identification' %}
+        <!-- ✅ IDENTIFICATION FIELDS -->
+        <div id="field_identification" class="type-field">
           <label>Correct Answer *
-            <input type="text" name="correct_answer" value="{{ current.correct_answer or '' }}" required>
+            <input type="text" name="correct_answer" value="{{ current.correct_answer or '' }}">
           </label>
-        {% elif study.type == 'multiple_choice' %}
+        </div>
+
+        <!-- ✅ MULTIPLE CHOICE FIELDS -->
+        <div id="field_multiple_choice" class="type-field">
           {% set letters = ['A','B','C','D'] %}
           <label>Choices</label>
           <div class="choices">
@@ -346,27 +414,36 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
               {% set choice_val = current.choices[i] if current.choices and current.choices|length > i else '' %}
               <div class="choice-row">
                 <input type="radio" name="correct_index" value="{{ i }}"
-                       {% if current.correct_index == i %}checked{% endif %} required>
+                       {% if current.correct_index == i %}checked{% endif %}>
                 <div class="choice-letter">{{ letters[i] }}</div>
-                <input type="text" name="choice_{{ i }}" value="{{ choice_val }}" required>
+                <input type="text" name="choice_{{ i }}" value="{{ choice_val }}">
               </div>
             {% endfor %}
           </div>
-        {% elif study.type == 'true_false' %}
+        </div>
+
+        <!-- ✅ TRUE/FALSE FIELDS -->
+        <div id="field_true_false" class="type-field">
           <label>Correct Answer *</label>
           <div class="tf-row">
             <label><input type="radio" name="correct_bool" value="true" {% if current.correct_bool != false %}checked{% endif %}> ✓ True</label>
             <label><input type="radio" name="correct_bool" value="false" {% if current.correct_bool == false %}checked{% endif %}> ✗ False</label>
           </div>
-        {% elif study.type == 'essay' %}
+        </div>
+
+        <!-- ✅ ESSAY FIELDS -->
+        <div id="field_essay" class="type-field">
           <label>Reference Answer (Optional)
             <textarea name="reference">{{ current.reference or '' }}</textarea>
           </label>
-        {% elif study.type == 'file_upload' %}
+        </div>
+
+        <!-- ✅ FILE UPLOAD FIELDS -->
+        <div id="field_file_upload" class="type-field">
           <label>Instruction (Optional)
             <textarea name="instruction">{{ current.instruction or '' }}</textarea>
           </label>
-        {% endif %}
+        </div>
       </div>
 
       <div class="mobile-nav">
@@ -429,36 +506,52 @@ async function handleCancel() {
   if (isEdit) {
     fetch('/api/studies/{{ study.id }}/cancel_edit', { method: 'POST', credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
-    .then(function() { window.location.href = '/teacher'; })
-    .catch(function() { window.location.href = '/teacher'; });
+    .then(function() { window.location.href = '/teacher#studies'; })
+    .catch(function() { window.location.href = '/teacher#studies'; });
   } else if (isDraft) {
     fetch('/api/studies/{{ study.id }}/cancel', { method: 'POST', credentials: 'same-origin' })
     .then(function(r) { return r.json(); })
-    .then(function() { window.location.href = '/teacher'; })
-    .catch(function() { window.location.href = '/teacher'; });
+    .then(function() { window.location.href = '/teacher#studies'; })
+    .catch(function() { window.location.href = '/teacher#studies'; });
   } else {
-    window.location.href = '/teacher';
+    window.location.href = '/teacher#studies';
   }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   2. AJAX FORM HANDLER (Seamless Save & Redirect)
+   2. PAGE TYPE TOGGLE (For Mixed-Type Questions)
+   ═══════════════════════════════════════════════════════════ */
+function updatePageFields() {
+  var selector = document.getElementById('page_type_selector');
+  if (!selector) return;
+  var type = selector.value;
+  
+  // Itago lahat ng fields
+  document.querySelectorAll('.type-field').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  
+  // Ipakita yung tamang field base sa type
+  var target = document.getElementById('field_' + type);
+  if (target) target.style.display = 'block';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   3. AJAX FORM HANDLER (Seamless Save & Redirect)
    ═══════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
   
-  // --- INIT SETTINGS PAGE (Kung nasa settings view tayo) ---
+  // Init Settings Page defaults
   var settingType = document.getElementById('setting_type');
   var settingMode = document.getElementById('setting_mode');
   
   if (settingType && settingMode) {
-    // Set default values galing sa DB
     settingType.value = "{{ study.type }}";
     settingMode.value = "{{ study.mode }}";
     if (document.getElementById('setting_mc_options') && "{{ study.mc_options }}") {
       document.getElementById('setting_mc_options').value = "{{ study.mc_options }}";
     }
 
-    // Toggle visibility ng Timer/MC options
     function toggleSettingsFields() {
       var stRow = document.getElementById('studyTimerRow');
       var mcRow = document.getElementById('mcOptionsRow');
@@ -469,19 +562,23 @@ document.addEventListener('DOMContentLoaded', function() {
     settingType.addEventListener('change', toggleSettingsFields);
     settingMode.addEventListener('change', toggleSettingsFields);
     toggleSettingsFields();
-    
-    // Init custom dropdowns kung meron man
-    if (window.convertSelects) window.convertSelects(document);
   }
 
-  // --- AJAX SUBMIT LOGIC PARA SA LAHAT NG FORMS ---
+  // Init Page Type Fields
+  if (document.getElementById('page_type_selector')) {
+    updatePageFields();
+  }
+
+  // Init custom dropdowns
+  if (window.convertSelects) window.convertSelects(document);
+
+  // AJAX Form Submit
   const forms = document.querySelectorAll('form[action*="/save_"], form[action*="/update"]');
   
   forms.forEach(form => {
     form.addEventListener('submit', async function(e) {
       e.preventDefault(); 
       
-      // Hanapin lahat ng buttons na naka-link sa form na ito (kasama side buttons)
       const submitBtns = document.querySelectorAll('[form="' + form.id + '"], button[type="submit"]');
       const originalTexts = [];
       
@@ -527,7 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /* ═══════════════════════════════════════════════════════════
-   3. LOCAL SHOWCONFIRM / SHOWALERT
+   4. LOCAL SHOWCONFIRM / SHOWALERT
    ═══════════════════════════════════════════════════════════ */
 window.showConfirm = function (message, opts) {
   opts = opts || {};
@@ -602,6 +699,155 @@ window.showAlert = function (message, opts) {
     dlg.classList.add('active');
   });
 };
+
+/* ═══════════════ ZERO-CLEAR ON FOCUS (Para sa "01" bug) ═══════════════ */
+document.addEventListener('focusin', function(e) {
+  var t = e.target;
+  if (!t || t.tagName !== 'INPUT') return;
+  if (t.type !== 'number') return;
+  if (t.value === '0') {
+    t.dataset.hadZero = '1';
+    t.value = '';
+  }
+});
+
+document.addEventListener('focusout', function(e) {
+  var t = e.target;
+  if (!t || t.tagName !== 'INPUT') return;
+  if (t.type !== 'number') return;
+  if (t.dataset.hadZero === '1') {
+    if (t.value === '' || t.value === null) {
+      t.value = '0';
+    }
+    delete t.dataset.hadZero;
+  }
+  if (t.value && /^0\d+/.test(t.value)) {
+    t.value = String(parseInt(t.value, 10));
+  }
+});
+
+document.addEventListener('input', function(e) {
+  var t = e.target;
+  if (!t || t.tagName !== 'INPUT') return;
+  if (t.type !== 'number') return;
+  if (t.value && /^0\d+/.test(t.value)) {
+    var pos = t.selectionStart;
+    t.value = String(parseInt(t.value, 10));
+    try { t.setSelectionRange(pos - 1, pos - 1); } catch (err) {}
+  }
+});
+
+/* ═══════════════ CUSTOM DROPDOWN ENGINE ═══════════════ */
+function convertSelects(root) {
+  root = root || document;
+  root.querySelectorAll('select[data-custom]:not([data-converted])').forEach(function(sel) {
+    sel.setAttribute('data-converted', '1');
+    
+    var wrap = document.createElement('div');
+    wrap.className = 'cs-wrap';
+    
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'cs-trigger';
+    trigger.innerHTML = '<span class="cs-value"></span><svg class="cs-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
+    
+    var menu = document.createElement('div');
+    menu.className = 'cs-menu';
+    
+    var options = [];
+    var focusedIdx = -1;
+    var menuOpen = false;
+    
+    Array.prototype.forEach.call(sel.options, function(opt, i) {
+      var div = document.createElement('div');
+      div.className = 'cs-option';
+      div.setAttribute('data-value', opt.value);
+      div.textContent = opt.textContent;
+      div.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        doSelect(i);
+        doClose();
+      });
+      menu.appendChild(div);
+      options.push(div);
+    });
+    
+    function doSelect(idx) {
+      if (idx < 0 || idx >= sel.options.length) return;
+      sel.value = sel.options[idx].value;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      refreshValue();
+    }
+    
+    function refreshValue() {
+      var selected = sel.options[sel.selectedIndex];
+      trigger.querySelector('.cs-value').textContent = selected ? selected.textContent : '';
+      options.forEach(function(o) {
+        o.classList.toggle('selected', o.getAttribute('data-value') === sel.value);
+      });
+    }
+    
+    function doOpen() {
+      document.querySelectorAll('.cs-menu.open').forEach(function(m) { m.classList.remove('open'); });
+      document.querySelectorAll('.cs-trigger.open').forEach(function(t) { t.classList.remove('open'); });
+      menu.classList.add('open');
+      trigger.classList.add('open');
+      menuOpen = true;
+    }
+    
+    function doClose() {
+      menu.classList.remove('open', 'up');
+      trigger.classList.remove('open');
+      menuOpen = false;
+    }
+    
+    trigger.addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (menuOpen) doClose();
+      else doOpen();
+    });
+    
+    // Check positioning
+    function positionMenu() {
+      menu.classList.remove('up');
+      var rect = wrap.getBoundingClientRect();
+      if (window.innerHeight - rect.bottom < 200 && rect.top > 200) {
+        menu.classList.add('up');
+      }
+    }
+    
+    // Override doOpen to position first
+    var originalDoOpen = doOpen;
+    doOpen = function() {
+      originalDoOpen();
+      positionMenu();
+    };
+    
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+    wrap.appendChild(sel);
+    
+    sel.addEventListener('change', refreshValue);
+    sel._csUpdate = refreshValue;
+    refreshValue();
+  });
+}
+
+document.addEventListener('pointerdown', function(e) {
+  if (e.target.closest('.cs-wrap')) return;
+  document.querySelectorAll('.cs-menu.open').forEach(function(m) { m.classList.remove('open'); });
+  document.querySelectorAll('.cs-trigger.open').forEach(function(t) { t.classList.remove('open'); });
+}, true);
+
+document.addEventListener('DOMContentLoaded', function() {
+  convertSelects(document);
+});
+window.convertSelects = convertSelects;
 </script>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
 </body>
 </html>

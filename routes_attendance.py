@@ -69,7 +69,7 @@ def register(app):
                 "date": date, "status": status, "timestamp": now_str(),
             })
         flash(f"Attendance recorded for {student.username}.", "success")
-        return redirect(url_for("teacher_page"))
+        return redirect(url_for("teacher_page")+"#attendance")
 
     @app.route("/api/attendance/<aid>/update", methods=["POST"])
     @role_required("Teacher")
@@ -88,7 +88,7 @@ def register(app):
         rec["status"] = status
         rec["timestamp"] = now_str()
         flash("Attendance updated.", "success")
-        return redirect(url_for("teacher_page"))
+        return redirect(url_for("teacher_page")+"#attendance")
 
     @app.route("/api/attendance/<aid>/delete", methods=["POST"])
     @role_required("Teacher")
@@ -101,4 +101,4 @@ def register(app):
 
         attendance.remove(rec)
         flash("Attendance deleted.", "success")
-        return redirect(url_for("teacher_page"))
+        return redirect(url_for("teacher_page")+"#attendance")

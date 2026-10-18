@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ study.title }}</title>
+<!-- ✅ MEDIAPIPE AI SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -80,7 +82,7 @@ textarea{resize:vertical;min-height:70px}
 }
 .cancel-btn:hover{background:var(--red); color:#fff;}
 
-/* 🖥️ DESKTOP NAVIGATION */
+/* 🖥️ DESKTOP NAVIGATION (SIDE BUTTONS) */
 .nav-container { display: flex; align-items: flex-start; gap: 20px; }
 .nav-side-btn {
   background: var(--card); border: 1px solid var(--border);
@@ -98,6 +100,23 @@ textarea{resize:vertical;min-height:70px}
 .mobile-nav { display: none; gap: 10px; margin-top: 16px; }
 .mobile-nav .btn { flex: 1; justify-content: center; }
 
+/* MODAL ENGINE */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);
+  display:none;align-items:center;justify-content:center;
+  z-index:9999;padding:24px 16px;backdrop-filter:blur(4px);}
+.modal-backdrop.active{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);
+  border-radius:10px;width:100%;max-width:420px;padding:20px 22px;
+  box-shadow:0 20px 50px rgba(0,0,0,.7);animation:pop .18s ease;}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-head{display:flex;justify-content:space-between;align-items:center;
+  gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.modal-head h3{margin:0;color:#fff;font-size:1.05rem}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.icon-btn{background:transparent;border:none;color:var(--muted);
+  font-size:1.4rem;cursor:pointer;line-height:1;padding:0 4px}
+#appConfirmMessage{margin:0;line-height:1.65;color:var(--text);white-space:pre-wrap;word-break:break-word;}
+
 @media(max-width: 768px) {
   .nav-container { display: block; }
   .nav-side-btn { display: none; }
@@ -110,25 +129,21 @@ textarea{resize:vertical;min-height:70px}
   h1{font-size:1.15rem}
   .timer{font-size:1.8rem}
 }
-
-/* ═══════════ CUSTOM MODAL (Self-contained) ═══════════ */
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);
-  display:none;align-items:center;justify-content:center;
-  z-index:99999;padding:24px 16px;backdrop-filter:blur(4px);}
-.modal-backdrop.active{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);
-  border-radius:10px;width:100%;max-width:420px;padding:20px 22px;
-  box-shadow:0 20px 50px rgba(0,0,0,.7);animation:pop .18s ease;}
-@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
-.modal-head{display:flex;justify-content:space-between;align-items:center;
-  gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.modal-head h3{margin:0;color:#fff;font-size:1.05rem;font-weight:600}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;
-  margin-top:18px;flex-wrap:wrap}
-.icon-btn{background:transparent;border:none;color:var(--muted);
-  font-size:1.4rem;cursor:pointer;line-height:1;padding:0 4px}
-#appConfirmMessage{margin:0;line-height:1.65;color:var(--text);
-  white-space:pre-wrap;word-break:break-word;}
+.choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.choice-row{display:flex;gap:8px;align-items:center}
+.choice-letter{width:32px;height:32px;background:#151517;
+  border:1px solid var(--border);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:var(--text-dim);flex-shrink:0}
+.choice-row input[type=radio]{width:20px;height:20px;flex-shrink:0}
+.tf-row{display:flex;gap:16px;margin-top:8px}
+.tf-row label{flex-direction:row;align-items:center;text-transform:none;
+  font-size:.95rem;font-weight:500;gap:8px;margin:0;color:var(--text)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #3a3a3a}
+th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -172,9 +187,8 @@ textarea{resize:vertical;min-height:70px}
   </div>
 </div>
 
-<!-- ═══════════════ QUIZ PHASE (With Side Buttons) ═══════════════ -->
+<!-- ═══════════════ QUIZ PHASE ═══════════════ -->
 <div id="quizPhase" style="display:none">
-  
   <div class="card">
     <div class="card-title" style="margin-bottom:0;">
       <div>
@@ -182,9 +196,9 @@ textarea{resize:vertical;min-height:70px}
         <p class="muted small mb1" id="qDirection" style="margin-top:6px;"></p>
       </div>
       <div class="row-inline">
-        <div class="timer-box" style="margin:0;padding:8px 16px;border-radius:8px;">
-          <div class="timer-label">Time left</div>
-          <div class="timer" id="questionTimer" style="font-size:1.4rem;">--:--</div>
+        <div class="timer-box" style="margin:0;padding:8px 16px;border-radius:8px;border-color:var(--yellow);">
+          <div class="timer-label" style="color:var(--yellow);">Time left</div>
+          <div class="timer" id="questionTimer" style="font-size:1.4rem;color:var(--yellow);">--:--</div>
         </div>
         <button class="cancel-btn" onclick="exitQuiz()" title="Exit Quiz">✖</button>
       </div>
@@ -195,25 +209,23 @@ textarea{resize:vertical;min-height:70px}
   </div>
 
   <div class="nav-container">
-    <!-- Desktop Prev (Left) -->
-    <button type="button" class="nav-side-btn" id="sidePrevBtn" title="Previous Question">&lt;</button>
+    <!-- Left: Previous Button -->
+    <button type="button" class="nav-side-btn" id="sidePrevBtn" title="Previous Question" style="display:none;">&lt;</button>
 
-    <!-- Main Content -->
     <div class="form-content">
       <div class="card">
         <p id="qText" style="font-size:1.15rem;min-height:3rem;margin-bottom:1rem;"></p>
         <div id="answerArea"></div>
       </div>
 
-      <!-- Mobile Nav (Bottom) -->
+      <!-- Mobile Navigation (Previous only) -->
       <div class="mobile-nav">
-        <button type="button" class="btn btn-ghost" id="mobilePrevBtn">← Previous</button>
-        <button type="button" class="btn btn-blue" id="mobileNextBtn">Next →</button>
+        <button type="button" class="btn btn-ghost" id="mobilePrevBtn" style="display:none;">← Previous</button>
       </div>
     </div>
 
-    <!-- Desktop Next (Right) -->
-    <button type="button" class="nav-side-btn" id="sideNextBtn" title="Next Question">&gt;</button>
+    <!-- Right: Hidden (Timer handles auto-advance) -->
+    <button type="button" class="nav-side-btn" id="sideNextBtn" style="display:none;"></button>
   </div>
 </div>
 
@@ -247,7 +259,26 @@ textarea{resize:vertical;min-height:70px}
   </div>
 
   <div style="text-align:center;margin-top:1.5rem;">
-    <a class="btn btn-blue" href="/student">← Back to Dashboard</a>
+    <a class="btn btn-blue" href="/student#studies">← Back to Dashboard</a>
+  </div>
+</div>
+
+<!-- ═══════════════ CAMERA OVERLAY & MODAL ═══════════════ -->
+<div id="camera-overlay" style="position:fixed;bottom:20px;right:20px;width:100px;height:75px;background:#000;border:2px solid var(--red);border-radius:8px;z-index:9999;overflow:hidden;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.5);">
+  <video id="webcam" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);"></video>
+  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(239,68,68,0.8);color:#fff;font-size:8px;text-align:center;font-weight:bold;">PROCTORED</div>
+</div>
+
+<div class="modal-backdrop active" id="cameraPermissionModal" style="z-index: 100000; align-items:center; backdrop-filter: blur(10px);">
+  <div class="modal" style="max-width: 400px; text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 10px;">📷</div>
+    <h3 style="margin-bottom: 10px;">Proctoring Enabled</h3>
+    <p class="muted small" style="margin-bottom: 20px;">
+      To ensure fairness, this quiz requires camera access. 
+      We will <b>not</b> record your video. We only detect face and head movements.
+    </p>
+    <div id="camStatus" style="margin-bottom: 15px; font-weight: bold; color: var(--yellow);">Waiting for permission...</div>
+    <button type="button" class="btn btn-blue btn-block" id="allowCamBtn">I Agree & Enable Camera</button>
   </div>
 </div>
 
@@ -265,6 +296,9 @@ textarea{resize:vertical;min-height:70px}
   var qSecs     = data.question_timer || 30;
   var maxBack   = data.max_back || 0;
 
+  var autosaveKey = 'quiz_autosave_' + data.id + '_' + "{{ user.id }}";
+  var quizActive = false;
+
   var state = {
     phase:'idle', slides:data.slides||[], slideIdx:0, qIdx:0,
     answers:new Array(pages.length).fill(null),
@@ -275,7 +309,202 @@ textarea{resize:vertical;min-height:70px}
 
   var pingInterval = null;
   var leftPage = false;
+  var isSubmitted = false;
 
+  /* ═══════════════════════════════════════════════════════════
+     ANTI-CHEAT & LIVENESS SYSTEM
+     ═══════════════════════════════════════════════════════════ */
+  var lastViolationTime = 0;
+  
+  function logViolation(type, source) {
+    if (!quizActive || state.phase !== 'quiz' || isSubmitted) return;
+    
+    var now = Date.now();
+    if (now - lastViolationTime < 3000) return; // 3 sec throttle para hindi mag-spam
+    lastViolationTime = now;
+
+    // Visual Warning
+    var warning = document.createElement('div');
+    warning.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:12px 24px;border-radius:8px;z-index:10000;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.5);animation:slideIn .3s ease;';
+    warning.textContent = '⚠️ WARNING: ' + type.replace(/_/g, ' ');
+    document.body.appendChild(warning);
+    setTimeout(function() { warning.remove(); }, 4000);
+
+    fetch('/api/violation/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ study_id: data.id, type: type, source: source })
+    }).catch(function(){});
+  }
+
+  // 1. Tab Switch Detection
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden && quizActive) {
+      logViolation('TAB_SWITCHED', 'browser');
+    }
+  });
+
+  // 2. Copy/Paste/Right Click Blocking
+  document.addEventListener('copy', function(e) { e.preventDefault(); logViolation('RIGHT_CLICK', 'browser'); });
+  document.addEventListener('paste', function(e) { e.preventDefault(); logViolation('RIGHT_CLICK', 'browser'); });
+  document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+  // 3. MediaPipe AI (Head Pose + Liveness)
+  async function startMediaPipe(videoEl) {
+    var faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+    faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: 0.5 });
+    
+    var lookingAwayTime = 0;
+    var lastBlinkTime = Date.now();
+    var challengeActive = false;
+    var challengeType = null;
+
+    // Random Liveness Challenge
+    function triggerRandomChallenge() {
+      if (!quizActive || isSubmitted || challengeActive) return;
+      challengeActive = true;
+      challengeType = Math.random() > 0.5 ? 'BLINK' : 'LOOK_LEFT';
+      
+      var msg = challengeType === 'BLINK' 
+        ? '👁️ LIVENESS CHECK: Pumikit ka dalawang beses (Blink twice)' 
+        : '👀 LIVENESS CHECK: Tumingin ka sa kaliwa (Look Left)';
+
+      var overlay = document.createElement('div');
+      overlay.id = 'livenessChallenge';
+      overlay.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--blue);color:#fff;padding:20px 40px;border-radius:12px;z-index:100001;font-weight:bold;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.8);animation:pop .3s ease;';
+      overlay.innerHTML = msg + '<br><small style="font-size:0.8rem;opacity:0.8;">(Kailangan mong gawin ito sa loob ng 5 segundo)</small>';
+      document.body.appendChild(overlay);
+
+      setTimeout(function() {
+        if (challengeActive && document.getElementById('livenessChallenge')) {
+          document.getElementById('livenessChallenge').remove();
+          logViolation('LIVENESS_FAILED', 'camera');
+          challengeActive = false;
+        }
+      }, 5000);
+    }
+    setInterval(triggerRandomChallenge, 120000 + Math.random() * 60000); // Every 2-3 mins
+
+    faceMesh.onResults(function(results) {
+      if (!quizActive || isSubmitted) return;
+      
+      if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+        var landmarks = results.multiFaceLandmarks[0];
+        var nose = landmarks[1];
+        var leftEye = landmarks[33];
+        var rightEye = landmarks[263];
+        
+        // 1. Face Too Close (Picture trick)
+        var faceWidth = Math.abs(rightEye.x - leftEye.x);
+        if (faceWidth > 0.4) { logViolation('FACE_TOO_CLOSE', 'camera'); }
+
+        // 2. Head Pose Detection
+        var leftDist = Math.abs(nose.x - leftEye.x);
+        var rightDist = Math.abs(rightEye.x - nose.x);
+        var ratio = leftDist / rightDist;
+
+        if (challengeActive && challengeType === 'LOOK_LEFT' && (ratio > 1.5 || ratio < 0.6)) {
+           var el = document.getElementById('livenessChallenge');
+           if (el) el.remove();
+           challengeActive = false;
+           lastBlinkTime = Date.now();
+        } 
+        else if (!challengeActive) {
+          if (ratio > 1.8 || ratio < 0.5) {
+            if (lookingAwayTime === 0) lookingAwayTime = Date.now();
+            else if (Date.now() - lookingAwayTime > 2000) {
+              logViolation('LOOKED_SIDE', 'camera');
+              lookingAwayTime = 0; 
+            }
+          } else { lookingAwayTime = 0; }
+        }
+
+        // 3. Blink Detection
+        var leftEyeTop = landmarks[159];
+        var leftEyeBottom = landmarks[145];
+        var rightEyeTop = landmarks[386];
+        var rightEyeBottom = landmarks[374];
+        
+        var leftEyeOpen = Math.abs(leftEyeTop.y - leftEyeBottom.y);
+        var rightEyeOpen = Math.abs(rightEyeTop.y - rightEyeBottom.y);
+        
+        if (leftEyeOpen < 0.01 && rightEyeOpen < 0.01) {
+           lastBlinkTime = Date.now();
+           if (challengeActive && challengeType === 'BLINK') {
+             var el2 = document.getElementById('livenessChallenge');
+             if (el2) el2.remove();
+             challengeActive = false;
+           }
+        }
+
+        if (Date.now() - lastBlinkTime > 15000 && !challengeActive) {
+           logViolation('NO_BLINK', 'camera');
+           lastBlinkTime = Date.now();
+        }
+
+      } else {
+        if (lookingAwayTime === 0) lookingAwayTime = Date.now();
+        else if (Date.now() - lookingAwayTime > 3000) {
+          logViolation('NO_FACE', 'camera');
+          lookingAwayTime = 0;
+        }
+      }
+    });
+
+    async function processVideo() {
+      if (quizActive && !isSubmitted) {
+        await faceMesh.send({image: videoEl});
+        requestAnimationFrame(processVideo);
+      }
+    }
+    processVideo();
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     CAMERA PERMISSION LOGIC
+     ═══════════════════════════════════════════════════════════ */
+  document.getElementById('allowCamBtn').addEventListener('click', async function() {
+    var btn = this;
+    var status = document.getElementById('camStatus');
+    
+    btn.disabled = true;
+    btn.textContent = 'Requesting...';
+    status.textContent = 'Please click "Allow" on your browser prompt.';
+    status.style.color = 'var(--blue)';
+
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      
+      status.textContent = '✅ Camera access granted. Starting quiz...';
+      status.style.color = 'var(--green)';
+      document.getElementById('cameraPermissionModal').classList.remove('active');
+      document.getElementById('camera-overlay').style.display = 'block';
+      
+      var video = document.getElementById('webcam');
+      video.srcObject = stream;
+      video.play();
+      
+      quizActive = true;
+      startMediaPipe(video);
+
+      // Simulan ang Quiz Flow
+      if (hasPPT && studySecs > 0) startStudyPhase();
+      else startCountdownPhase();
+      
+    } catch (err) {
+      status.textContent = '❌ Camera denied. You cannot take this quiz.';
+      status.style.color = 'var(--red)';
+      btn.textContent = 'Go Back to Dashboard';
+      btn.classList.replace('btn-blue', 'btn-red');
+      
+      logViolation('CAMERA_DENIED', 'camera');
+      btn.onclick = function() { window.location.href = '/student#studies'; };
+    }
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     QUIZ LOGIC (Timers, Autosave, Auto-advance)
+     ═══════════════════════════════════════════════════════════ */
   function fmt(v){
     v = Math.max(0, v|0);
     var h=(v/3600)|0, m=((v%3600)/60)|0, s=v%60;
@@ -296,10 +525,32 @@ textarea{resize:vertical;min-height:70px}
     return;
   }
 
-  /* ═══ START PHASE LOGIC ═══ */
-  if(hasPPT && studySecs > 0) startStudyPhase();
-  else startCountdownPhase();
+  // Autosave Logic
+  function saveProgress() {
+    if (state.phase !== 'quiz') return;
+    try {
+      var safeAnswers = state.answers.map(function(a) {
+        if (a instanceof File) return "[FILE_ATTACHED]"; 
+        return a;
+      });
+      var saveData = { qIdx: state.qIdx, answers: safeAnswers, startedAt: state.startedAt };
+      localStorage.setItem(autosaveKey, JSON.stringify(saveData));
+    } catch(e) {}
+  }
 
+  function checkSavedProgress() {
+    try {
+      var saved = localStorage.getItem(autosaveKey);
+      if (!saved) return false;
+      var parsed = JSON.parse(saved);
+      if (parsed.qIdx > 0 || parsed.answers.some(function(a){ return a !== null && a !== ''; })) {
+        return parsed;
+      }
+    } catch(e) {}
+    return false;
+  }
+
+  // Start Phase (Called after Camera is allowed)
   function startStudyPhase(){
     state.phase = 'study';
     show('studyPhase');
@@ -366,22 +617,40 @@ textarea{resize:vertical;min-height:70px}
     show('quizPhase');
     document.getElementById('qTotal').textContent = pages.length;
     document.getElementById('qDirection').textContent = data.direction || '';
+    
+    // Check for saved progress before starting Q1
+    var saved = checkSavedProgress();
+    if (saved) {
+      if(confirm('Nakita namin na may hindi ka pa tapos na pagsusulit. Gusto mo bang ituloy?')) {
+        state.answers = saved.answers;
+        state.startedAt = saved.startedAt;
+        showQuestion(saved.qIdx);
+        return;
+      } else {
+        localStorage.removeItem(autosaveKey);
+      }
+    }
     showQuestion(0);
   }
 
-  /* ═══ QUIZ LOGIC ═══ */
+  /* ═══════════════════════════════════════════════════════════
+     MIXED-TYPE RENDER LOGIC
+     ═══════════════════════════════════════════════════════════ */
   function renderAnswerArea(p, saved){
     var area = document.getElementById('answerArea');
     area.innerHTML = '';
 
-    if(qType === 'identification'){
+    // ✅ Kunin ang type ng PAGE, default sa study type
+    var pType = p.type || qType; 
+
+    if(pType === 'identification'){
       var inp = document.createElement('input');
       inp.type = 'text'; inp.id = 'answerInput';
       inp.placeholder = 'Type your answer…';
       inp.value = saved || '';
       area.appendChild(inp);
 
-    } else if(qType === 'multiple_choice'){
+    } else if(pType === 'multiple_choice'){
       var letters = ['A','B','C','D'];
       var wrap = document.createElement('div');
       wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
@@ -405,7 +674,7 @@ textarea{resize:vertical;min-height:70px}
       });
       area.appendChild(wrap);
 
-    } else if(qType === 'true_false'){
+    } else if(pType === 'true_false'){
       var twrap = document.createElement('div');
       twrap.style.cssText = 'display:flex;gap:16px;flex-wrap:wrap;';
       [['true','✓ True'],['false','✗ False']].forEach(function(pair){
@@ -426,14 +695,14 @@ textarea{resize:vertical;min-height:70px}
       });
       area.appendChild(twrap);
 
-    } else if(qType === 'essay'){
+    } else if(pType === 'essay'){
       var ta = document.createElement('textarea');
       ta.id = 'answerInput'; ta.rows = 5;
       ta.placeholder = 'Write your answer here…';
       ta.value = saved || '';
       area.appendChild(ta);
 
-    } else if(qType === 'file_upload'){
+    } else if(pType === 'file_upload'){
       if(p.instruction){
         var note = document.createElement('p');
         note.className = 'muted small';
@@ -452,7 +721,10 @@ textarea{resize:vertical;min-height:70px}
       preview.className = 'muted small';
       preview.style.marginTop = '10px';
 
-      if (saved instanceof File) {
+      if (saved === "[FILE_ATTACHED]") {
+        preview.innerHTML = '<span style="color:var(--yellow);">⚠️ Na-refresh ang page. Paki-upload muli ang file.</span>';
+        state.answers[state.qIdx] = null;
+      } else if (saved instanceof File) {
         preview.innerHTML = '📄 ' + saved.name + ' (' + Math.round(saved.size/1024) + ' KB) <span style="color:var(--green);">— already attached</span>';
       } else {
         preview.textContent = '';
@@ -469,19 +741,22 @@ textarea{resize:vertical;min-height:70px}
 
   function captureAnswer(){
     var idx = state.qIdx;
-    if(qType === 'identification'){
+    var p = pages[idx] || {};
+    var pType = p.type || qType;
+
+    if(pType === 'identification'){
       var el = document.getElementById('answerInput');
       state.answers[idx] = el ? el.value.trim() : '';
-    } else if(qType === 'multiple_choice'){
+    } else if(pType === 'multiple_choice'){
       var checked = document.querySelector('input[name="mc_answer"]:checked');
       state.answers[idx] = checked ? parseInt(checked.value) : null;
-    } else if(qType === 'true_false'){
+    } else if(pType === 'true_false'){
       var checked2 = document.querySelector('input[name="tf_answer"]:checked');
       state.answers[idx] = checked2 ? checked2.value : null;
-    } else if(qType === 'essay'){
+    } else if(pType === 'essay'){
       var el2 = document.getElementById('answerInput');
       state.answers[idx] = el2 ? el2.value.trim() : '';
-    } else if(qType === 'file_upload'){
+    } else if(pType === 'file_upload'){
       var f = document.getElementById('answerFile');
       if (f && f.files && f.files[0]) {
         state.answers[idx] = f.files[0];
@@ -498,17 +773,18 @@ textarea{resize:vertical;min-height:70px}
     document.getElementById('qText').textContent = p.question || '(no question)';
     document.getElementById('progressBar').style.width = ((idx + 1) / pages.length * 100) + '%';
 
-    // Side buttons logic
+    // Previous button logic
     var isFirst = (idx === 0) || ((idx - maxBack) < 0);
-    var isLast = (idx === pages.length - 1);
-
-    document.getElementById('sidePrevBtn').disabled = isFirst;
-    document.getElementById('mobilePrevBtn').disabled = isFirst;
-    
-    document.getElementById('sideNextBtn').innerHTML = isLast ? '✓' : '&gt;';
-    document.getElementById('mobileNextBtn').textContent = isLast ? 'Submit ✓' : 'Next →';
+    if (isFirst) {
+      document.getElementById('sidePrevBtn').style.display = 'none';
+      document.getElementById('mobilePrevBtn').style.display = 'none';
+    } else {
+      document.getElementById('sidePrevBtn').style.display = 'flex';
+      document.getElementById('mobilePrevBtn').style.display = 'inline-flex';
+    }
 
     renderAnswerArea(p, state.answers[idx]);
+    saveProgress();
 
     setTimeout(function(){
       var inp = document.getElementById('answerInput');
@@ -538,42 +814,29 @@ textarea{resize:vertical;min-height:70px}
 
   function autoAdvance(){
     captureAnswer();
-    if(state.qIdx >= pages.length - 1) submitAll();
-    else showQuestion(state.qIdx + 1);
+    saveProgress();
+    if(state.qIdx >= pages.length - 1) {
+       submitAll();
+    } else {
+       showQuestion(state.qIdx + 1);
+    }
   }
-  
-  function goNext(){
-    captureAnswer();
-    if(state.qIdx >= pages.length - 1) submitAll();
-    else showQuestion(state.qIdx + 1);
-  }
-  
+
   function goPrev(){
     captureAnswer();
+    saveProgress();
     if(state.qIdx > 0) showQuestion(state.qIdx - 1);
   }
 
-  // Bind Event Listeners for Desktop & Mobile
-  document.getElementById('sideNextBtn').onclick = goNext;
-  document.getElementById('mobileNextBtn').onclick = goNext;
   document.getElementById('sidePrevBtn').onclick = goPrev;
   document.getElementById('mobilePrevBtn').onclick = goPrev;
 
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Enter' && qType !== 'essay'){
-      var ae = document.activeElement;
-      if(ae && ae.tagName !== 'TEXTAREA'){
-        if (state.qIdx >= pages.length - 1) return;
-        e.preventDefault();
-        goNext();
-      }
-    }
-  });
-
-  /* ═══ EXIT QUIZ LOGIC ═══ */
+  /* ═══════════════════════════════════════════════════════════
+     EXIT & SUBMIT
+     ═══════════════════════════════════════════════════════════ */
   window.exitQuiz = async function() {
-    var ok = await showConfirm('Are you sure you want to leave? Your progress will be lost.', {
-      title: '⚠️ Exit Quiz', okText: 'Leave', danger: true
+    var ok = await showConfirm('Sigurado ka bang gusto mong umalis? Mawawala ang mga hindi pa na-submit na sagot.', {
+      title: '⚠️ Exit Quiz', okText: 'Umalis', danger: true
     });
     if (!ok) return;
 
@@ -583,15 +846,13 @@ textarea{resize:vertical;min-height:70px}
     clearInterval(state.qInterval);
     clearInterval(state.countdownInterval);
     
-    window.location.href = '/student';
+    window.location.href = '/student#studies';
   };
 
-  /* ═══ SUBMIT LOGIC ═══ */
   function submitAll(){
     if(state.submitting) return;
     state.submitting = true;
-    leftPage = true;
-    if (pingInterval) clearInterval(pingInterval);
+    quizActive = false; // I-off ang logging
     clearInterval(state.qInterval);
     captureAnswer();
     var totalTime = Math.round((Date.now() - state.startedAt) / 1000);
@@ -624,16 +885,19 @@ textarea{resize:vertical;min-height:70px}
         });
         return;
       }
+      isSubmitted = true;
+      leftPage = true;
+      localStorage.removeItem(autosaveKey);
+      if (pingInterval) clearInterval(pingInterval);
       showResult(res);
     })
     .catch(function(err){
-      showAlert('Submit failed: ' + err.message, { title: 'Error', danger: true }).then(function() {
+      showAlert('Submit failed. Paki-check ang internet at i-try ulit.\n\nError: ' + err.message, { title: 'Network Error', danger: true }).then(function() {
         state.submitting = false;
       });
     });
   }
 
-  /* ═══ RESULT LOGIC ═══ */
   function esc(s){
     return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
@@ -672,7 +936,9 @@ textarea{resize:vertical;min-height:70px}
     window.scrollTo(0, 0);
   }
 
-  /* ═══ HEARTBEAT ═══ */
+  /* ═══════════════════════════════════════════════════════════
+     HEARTBEAT
+     ═══════════════════════════════════════════════════════════ */
   function startHeartbeat() {
     sendPing();
     pingInterval = setInterval(sendPing, 10000);
@@ -694,21 +960,15 @@ textarea{resize:vertical;min-height:70px}
     leftPage = true;
     if (pingInterval) clearInterval(pingInterval);
   });
-  window.addEventListener('beforeunload', function() {
-    leftPage = true;
-    if (pingInterval) clearInterval(pingInterval);
-    clearInterval(state.studyInterval);
-    clearInterval(state.qInterval);
-    clearInterval(state.countdownInterval);
-  });
 
-  /* ═══ LOCAL CONFIRM / ALERT MODALS ═══ */
+  /* ═══════════════════════════════════════════════════════════
+     LOCAL CONFIRM / ALERT MODALS
+     ═══════════════════════════════════════════════════════════ */
   window.showConfirm = function (message, opts) {
     opts = opts || {};
     return new Promise(function (resolve) {
       var dlg = document.getElementById('appConfirmModal');
       if (!dlg) { resolve(window.confirm(message)); return; }
-
       var title = document.getElementById('appConfirmTitle');
       var msg = document.getElementById('appConfirmMessage');
       var okBtn = document.getElementById('appConfirmOk');
@@ -746,7 +1006,6 @@ textarea{resize:vertical;min-height:70px}
     return new Promise(function (resolve) {
       var dlg = document.getElementById('appConfirmModal');
       if (!dlg) { window.alert(message); resolve(); return; }
-
       var title = document.getElementById('appConfirmTitle');
       var msg = document.getElementById('appConfirmMessage');
       var okBtn = document.getElementById('appConfirmOk');
@@ -780,7 +1039,7 @@ textarea{resize:vertical;min-height:70px}
 })();
 </script>
 
-<!-- ═══════════ CUSTOM MODAL ═══════════ -->
+<!-- ═══════════ CUSTOM CONFIRM MODAL ═══════════ -->
 <div class="modal-backdrop" id="appConfirmModal">
   <div class="modal">
     <div class="modal-head">
