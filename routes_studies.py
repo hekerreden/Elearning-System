@@ -10,6 +10,7 @@ from helpers import (current_user, find_study, is_study_locked,
                      now_str, now_dt, get_int,
                      active_students_for_teacher, notify)
 from decorators import role_required
+import json
 
 
 def can_edit_study(actor, study):
@@ -100,6 +101,8 @@ def register(app):
         studies.append(new_study)
         return jsonify({"id": new_id})
 
+
+
     @app.route("/api/studies/<stid>/update", methods=["POST"])
     @role_required("Teacher", "SuperAdmin")
     def update_study(stid):
@@ -110,33 +113,63 @@ def register(app):
             return redirect(url_for("teacher_page"))
 
         title = request.form.get("title", "").strip() or study.get("title", "Untitled Study")
-        study_type = request.form.get("type", study.get("type", "identification")).strip()
-        if study_type not in ("identification", "multiple_choice",
-                              "true_false", "essay", "file_upload"):
-            study_type = study.get("type", "identification")
         mode = request.form.get("mode", study.get("mode", "direct_quiz")).strip()
         if mode not in ("direct_quiz", "study_and_quiz"):
             mode = study.get("mode", "direct_quiz")
 
-        mc_options = get_int("mc_options", study.get("mc_options", 4))
-        if mc_options not in (3, 4):
-            mc_options = 4
+        flow_data_raw = request.form.get("flow_data", "[]")
+        try:
+            flow_data = json.loads(flow_data_raw)
+        except:
+            flow_data = []
+
+        # ✅ I-sort base sa order
+        flow_data.sort(key=lambda x: x.get("order", 1))
+
+        new_pages = []
+        total_pages = 0
+        default_timer = 30
+        default_score = 1
+        default_penalty = 0
+
+        # ✅ I-generate ang pages base sa flow
+        for block in flow_data:
+            b_type = block.get("type", "identification")
+            b_count = max(1, int(block.get("count", 1)))
+            b_timer = max(1, int(block.get("timer", 30)))
+            b_score = max(0, int(block.get("score", 1)))
+            b_penalty = max(0, int(block.get("penalty", 0)))
+
+            # Gawing default ang unang block para sa buong study
+            if total_pages == 0:
+                default_timer = b_timer
+                default_score = b_score
+                default_penalty = b_penalty
+
+            for _ in range(b_count):
+                new_pages.append({
+                    "question": "",
+                    "type": b_type,
+                    "timer": b_timer,
+                    "score": b_score,
+                    "penalty": b_penalty
+                })
+            total_pages += b_count
 
         study.update({
             "title": title,
-            "type": study_type,
             "mode": mode,
+            "type": "mixed", # ✅ Mixed type na siya
             "direction": request.form.get("direction", study.get("direction", "")).strip(),
             "study_timer": max(0, get_int("study_timer", study.get("study_timer", 0))),
-            "question_timer": max(1, get_int("question_timer", study.get("question_timer", 30))),
-            "max_back": max(0, get_int("max_back", study.get("max_back", 0))),
-            "score": max(0, get_int("score", study.get("score", 0))),
-            "penalty": max(0, get_int("penalty", study.get("penalty", 0))),
-            "mc_options": mc_options if study_type == "multiple_choice" else 0,
+            "total_pages": total_pages,
+            "pages": new_pages,
+            "question_timer": default_timer,
+            "score": default_score,
+            "penalty": default_penalty,
             "updated_at": now_str(),
         })
         
-        # ✅ FIX: Check kung AJAX, ibalik ang JSON para maka-proceed sa Page 1
         wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         if wants_json:
             return jsonify({"ok": True, "next_url": f"/teacher/activity/{stid}/0"})

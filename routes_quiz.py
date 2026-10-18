@@ -97,6 +97,16 @@ def register(app):
             display_your = ans
             display_correct = ""
             file_info = files_map.get(i)
+            p_score = p.get("score", score_per)
+            p_penalty = p.get("penalty", penalty_per)
+
+            if pending:
+                pass
+            elif is_correct:
+                total_score += p_score
+                correct_count += 1
+            else:
+                total_score -= p_penalty
             
             # ✅ Kunin ang type ng PAGE, hindi ng study
             p_type = p.get("type", study.get("type", "identification"))
@@ -192,6 +202,7 @@ def register(app):
             "total": len(pages),
             "has_manual": has_manual,
             "details": details,
+            "violations": student_violations
         })
 
     @app.route("/api/results/<rid>/update", methods=["POST"])
@@ -274,6 +285,7 @@ def register(app):
                 total += awarded
                 if awarded > 0:
                     correct_count += 1
+                    
 
         result["details"] = details
         result["score"] = total
