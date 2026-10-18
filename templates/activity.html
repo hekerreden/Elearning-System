@@ -166,8 +166,6 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 .cs-option.selected::after{content:'✓';color:var(--blue-hover);font-weight:700;flex-shrink:0;}
 select[data-custom]{display:none !important}
 
-.type-field { display: none; }
-
 /* Flow Builder Styles */
 .flow-block {
   background: var(--bg-2);
@@ -269,7 +267,7 @@ select[data-custom]{display:none !important}
     </div>
     <button class="cancel-btn" onclick="handleCancel()" title="Cancel">✖</button>
   </div>
-  <p class="muted small" style="margin-top:10px;">I-check ang mga type ng activity na gusto mong isama, at i-set ang kanilang order at settings.</p>
+  <p class="muted small" style="margin-top:10px;">I-check ang mga type na gusto mong isama, at i-set ang kanilang order at settings.</p>
 </div>
 
 <div class="nav-container">
@@ -296,12 +294,96 @@ select[data-custom]{display:none !important}
         <h3 style="margin-bottom:12px;">Flow Builder</h3>
         
         <div id="flow-builder">
-          <!-- JS will render the blocks here -->
-        </div>
+          <!-- MULTIPLE CHOICE BLOCK -->
+          <div class="flow-block" data-type="multiple_choice">
+            <div class="flow-header">
+              <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
+              <b>Multiple Choice</b>
+              <select class="flow-order">
+                <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+                <option value="4">4th</option><option value="5">5th</option>
+              </select>
+            </div>
+            <div class="flow-config">
+              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="30"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="1"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+            </div>
+          </div>
 
-        <button type="button" class="btn btn-ghost btn-block mt2" onclick="addFlowBlock()">
-          ＋ Add Another Type Block
-        </button>
+          <!-- IDENTIFICATION BLOCK -->
+          <div class="flow-block" data-type="identification">
+            <div class="flow-header">
+              <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
+              <b>Identification</b>
+              <select class="flow-order">
+                <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+                <option value="4">4th</option><option value="5">5th</option>
+              </select>
+            </div>
+            <div class="flow-config">
+              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="30"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="1"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+            </div>
+          </div>
+
+          <!-- ESSAY BLOCK -->
+          <div class="flow-block" data-type="essay">
+            <div class="flow-header">
+              <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
+              <b>Essay (manual)</b>
+              <select class="flow-order">
+                <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+                <option value="4">4th</option><option value="5">5th</option>
+              </select>
+            </div>
+            <div class="flow-config">
+              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="60"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="5"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+            </div>
+          </div>
+
+          <!-- TRUE/FALSE BLOCK -->
+          <div class="flow-block" data-type="true_false">
+            <div class="flow-header">
+              <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
+              <b>True or False</b>
+              <select class="flow-order">
+                <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+                <option value="4">4th</option><option value="5">5th</option>
+              </select>
+            </div>
+            <div class="flow-config">
+              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="15"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="1"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+            </div>
+          </div>
+
+          <!-- FILE UPLOAD BLOCK -->
+          <div class="flow-block" data-type="file_upload">
+            <div class="flow-header">
+              <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
+              <b>File Upload (manual)</b>
+              <select class="flow-order">
+                <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
+                <option value="4">4th</option><option value="5">5th</option>
+              </select>
+            </div>
+            <div class="flow-config">
+              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="120"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="10"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="mobile-nav">
@@ -528,54 +610,6 @@ async function handleCancel() {
 /* ═══════════════════════════════════════════════════════════
    2. FLOW BUILDER LOGIC (SETTINGS PAGE)
    ═══════════════════════════════════════════════════════════ */
-const TYPES = [
-  { id: 'multiple_choice', label: 'Multiple Choice' },
-  { id: 'identification', label: 'Identification' },
-  { id: 'essay', label: 'Essay (manual)' },
-  { id: 'true_false', label: 'True or False' },
-  { id: 'file_upload', label: 'File Upload (manual)' }
-];
-
-// Data galing sa backend (kung mag-e-edit)
-var existingFlow = [];
-try {
-  var existingFlowRaw = `{{ study.get('flow', [])|tojson }}`.replace(/&quot;/g, '"');
-  if (existingFlowRaw) existingFlow = JSON.parse(existingFlowRaw);
-} catch(e) {}
-
-function addFlowBlock(typeId, count, timer, score, penalty, order) {
-  var container = document.getElementById('flow-builder');
-  if (!container) return;
-
-  var typeObj = TYPES.find(t => t.id === typeId) || TYPES[0];
-  
-  var block = document.createElement('div');
-  block.className = 'flow-block';
-  block.dataset.type = typeObj.id;
-  
-  var isActive = !!typeId;
-  if (isActive) block.classList.add('active');
-
-  block.innerHTML = `
-    <div class="flow-header">
-      <input type="checkbox" class="flow-enable" ${isActive ? 'checked' : ''} onchange="toggleFlowBlock(this)">
-      <b>${typeObj.label}</b>
-      <select class="flow-order" onchange="updateFlowOrders()">
-        ${[1,2,3,4,5].map(n => `<option value="${n}" ${order==n?'selected':''}>${n}${n===1?'st':n===2?'nd':n===3?'rd':'th'}</option>`).join('')}
-      </select>
-    </div>
-    <div class="flow-config">
-      <label>Pages <input type="number" class="flow-count" min="1" value="${count||1}"></label>
-      <label>Timer (s) <input type="number" class="flow-timer" min="1" value="${timer||30}"></label>
-      <label>Score <input type="number" class="flow-score" min="0" value="${score||1}"></label>
-      <label>Penalty <input type="number" class="flow-penalty" min="0" value="${penalty||0}"></label>
-    </div>
-  `;
-  
-  container.appendChild(block);
-  updateFlowOrders();
-}
-
 function toggleFlowBlock(checkbox) {
   var block = checkbox.closest('.flow-block');
   if (checkbox.checked) {
@@ -585,25 +619,33 @@ function toggleFlowBlock(checkbox) {
   }
 }
 
-function updateFlowOrders() {
-  // Optional: Logic to ensure unique orders or re-sequence
-}
-
-// Initialize Builder
-document.addEventListener('DOMContentLoaded', function() {
-  var container = document.getElementById('flow-builder');
-  if (!container) return; // Wala tayo sa settings page
-
-  if (existingFlow.length > 0) {
+// Mag-load ng existing data kung nag-e-edit
+try {
+  var existingFlow = {{ study.get('flow', [])|tojson }};
+  if (existingFlow && existingFlow.length > 0) {
     existingFlow.forEach(function(f) {
-      addFlowBlock(f.type, f.count, f.timer, f.score, f.penalty, f.order);
+      var block = document.querySelector('.flow-block[data-type="' + f.type + '"]');
+      if (block) {
+        block.querySelector('.flow-enable').checked = true;
+        block.classList.add('active');
+        block.querySelector('.flow-order').value = f.order;
+        block.querySelector('.flow-count').value = f.count;
+        block.querySelector('.flow-timer').value = f.timer;
+        block.querySelector('.flow-score').value = f.score;
+        block.querySelector('.flow-penalty').value = f.penalty;
+      }
     });
   } else {
-    // Default: Unang block lang, Multiple Choice
-    addFlowBlock('multiple_choice', 1, 30, 1, 0, 1);
+    // Kung wala pang data, i-default check ang Multiple Choice
+    var defaultBlock = document.querySelector('.flow-block[data-type="multiple_choice"]');
+    if (defaultBlock) {
+      defaultBlock.querySelector('.flow-enable').checked = true;
+      defaultBlock.classList.add('active');
+    }
   }
+} catch(e) { console.error("Flow Load Error", e); }
 
-  // Init settings page dropdowns
+document.addEventListener('DOMContentLoaded', function() {
   var settingMode = document.getElementById('setting_mode');
   if (settingMode) {
     settingMode.value = "{{ study.mode }}";
@@ -627,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function() {
       var flowData = [];
       
       blocks.forEach(function(b) {
-        if (!b.classList.contains('active')) return;
+        if (!b.querySelector('.flow-enable').checked) return;
         
         flowData.push({
           type: b.dataset.type,
@@ -680,12 +722,187 @@ document.addEventListener('DOMContentLoaded', function() {
 /* ═══════════════════════════════════════════════════════════
    3. LOCAL SHOWCONFIRM / SHOWALERT
    ═══════════════════════════════════════════════════════════ */
-window.showConfirm = function (message, opts) { /* ... */ };
-window.showAlert = function (message, opts) { /* ... */ };
+window.showConfirm = function (message, opts) {
+  opts = opts || {};
+  return new Promise(function (resolve) {
+    var dlg = document.getElementById('appConfirmModal');
+    if (!dlg) { resolve(window.confirm(message)); return; }
+    var title = document.getElementById('appConfirmTitle');
+    var msg = document.getElementById('appConfirmMessage');
+    var okBtn = document.getElementById('appConfirmOk');
+    var cancelBtn = document.getElementById('appConfirmCancel');
+    var closeBtn = document.getElementById('appConfirmClose');
+
+    title.textContent = opts.title || '⚠️ Confirm';
+    msg.textContent = message;
+    okBtn.textContent = opts.okText || 'OK';
+    okBtn.className = 'btn ' + (opts.danger === false ? 'btn-blue' : 'btn-red');
+    cancelBtn.textContent = opts.cancelText || 'Cancel';
+    cancelBtn.style.display = '';
+
+    function close(result) {
+      dlg.classList.remove('active');
+      okBtn.onclick = null; cancelBtn.onclick = null; closeBtn.onclick = null; dlg.onclick = null;
+      document.removeEventListener('keydown', onKey);
+      resolve(result);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') close(false);
+      else if (e.key === 'Enter') close(true);
+    }
+    okBtn.onclick = function () { close(true); };
+    cancelBtn.onclick = function () { close(false); };
+    closeBtn.onclick = function () { close(false); };
+    dlg.onclick = function (e) { if (e.target === dlg) close(false); };
+    document.addEventListener('keydown', onKey);
+    dlg.classList.add('active');
+  });
+};
+
+window.showAlert = function (message, opts) {
+  opts = opts || {};
+  return new Promise(function (resolve) {
+    var dlg = document.getElementById('appConfirmModal');
+    if (!dlg) { window.alert(message); resolve(); return; }
+    var title = document.getElementById('appConfirmTitle');
+    var msg = document.getElementById('appConfirmMessage');
+    var okBtn = document.getElementById('appConfirmOk');
+    var cancelBtn = document.getElementById('appConfirmCancel');
+    var closeBtn = document.getElementById('appConfirmClose');
+
+    title.textContent = opts.title || 'ℹ️ Notice';
+    msg.textContent = message;
+    okBtn.textContent = opts.okText || 'OK';
+    okBtn.className = 'btn ' + (opts.danger === true ? 'btn-red' : 'btn-blue');
+    cancelBtn.style.display = 'none';
+
+    function close() {
+      dlg.classList.remove('active');
+      okBtn.onclick = null; closeBtn.onclick = null; dlg.onclick = null;
+      cancelBtn.style.display = '';
+      document.removeEventListener('keydown', onKey);
+      resolve();
+    }
+    function onKey(e) {
+      if (e.key === 'Escape' || e.key === 'Enter') close();
+    }
+    okBtn.onclick = close;
+    closeBtn.onclick = close;
+    dlg.onclick = function (e) { if (e.target === dlg) close(); };
+    document.addEventListener('keydown', onKey);
+    dlg.classList.add('active');
+  });
+};
 
 /* ═══════════════ CUSTOM DROPDOWN ENGINE ═══════════════ */
-function convertSelects(root) { /* ... */ }
-document.addEventListener('pointerdown', function(e) { /* ... */ }, true);
+function convertSelects(root) {
+  root = root || document;
+  root.querySelectorAll('select[data-custom]:not([data-converted])').forEach(function(sel) {
+    sel.setAttribute('data-converted', '1');
+    
+    var wrap = document.createElement('div');
+    wrap.className = 'cs-wrap';
+    
+    var trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'cs-trigger';
+    trigger.innerHTML = '<span class="cs-value"></span><svg class="cs-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
+    
+    var menu = document.createElement('div');
+    menu.className = 'cs-menu';
+    
+    var options = [];
+    var focusedIdx = -1;
+    var menuOpen = false;
+    
+    Array.prototype.forEach.call(sel.options, function(opt, i) {
+      var div = document.createElement('div');
+      div.className = 'cs-option';
+      div.setAttribute('data-value', opt.value);
+      div.textContent = opt.textContent;
+      div.addEventListener('pointerdown', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        doSelect(i);
+        doClose();
+      });
+      menu.appendChild(div);
+      options.push(div);
+    });
+    
+    function doSelect(idx) {
+      if (idx < 0 || idx >= sel.options.length) return;
+      sel.value = sel.options[idx].value;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      refreshValue();
+    }
+    
+    function refreshValue() {
+      var selected = sel.options[sel.selectedIndex];
+      trigger.querySelector('.cs-value').textContent = selected ? selected.textContent : '';
+      options.forEach(function(o) {
+        o.classList.toggle('selected', o.getAttribute('data-value') === sel.value);
+      });
+    }
+    
+    function doOpen() {
+      document.querySelectorAll('.cs-menu.open').forEach(function(m) { m.classList.remove('open'); });
+      document.querySelectorAll('.cs-trigger.open').forEach(function(t) { t.classList.remove('open'); });
+      menu.classList.add('open');
+      trigger.classList.add('open');
+      menuOpen = true;
+    }
+    
+    function doClose() {
+      menu.classList.remove('open', 'up');
+      trigger.classList.remove('open');
+      menuOpen = false;
+    }
+    
+    trigger.addEventListener('pointerdown', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (menuOpen) doClose();
+      else doOpen();
+    });
+    
+    // Check positioning
+    function positionMenu() {
+      menu.classList.remove('up');
+      var rect = wrap.getBoundingClientRect();
+      if (window.innerHeight - rect.bottom < 200 && rect.top > 200) {
+        menu.classList.add('up');
+      }
+    }
+    
+    // Override doOpen to position first
+    var originalDoOpen = doOpen;
+    doOpen = function() {
+      originalDoOpen();
+      positionMenu();
+    };
+    
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+    wrap.appendChild(sel);
+    
+    sel.addEventListener('change', refreshValue);
+    sel._csUpdate = refreshValue;
+    refreshValue();
+  });
+}
+
+document.addEventListener('pointerdown', function(e) {
+  if (e.target.closest('.cs-wrap')) return;
+  document.querySelectorAll('.cs-menu.open').forEach(function(m) { m.classList.remove('open'); });
+  document.querySelectorAll('.cs-trigger.open').forEach(function(t) { t.classList.remove('open'); });
+}, true);
+
+document.addEventListener('DOMContentLoaded', function() {
+  convertSelects(document);
+});
+window.convertSelects = convertSelects;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
