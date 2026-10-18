@@ -361,7 +361,7 @@ def register(app):
             "activity.html",
             study=study,
             is_preview=True,
-            page_idx=0,
+            page_idx=0,  # ✅ IDINAGDAG ITO PARA HINDI MAG-500 ERROR
             is_admin=(actor.role == "SuperAdmin"),
         )
 
@@ -590,10 +590,20 @@ def register(app):
             return jsonify({"ok": False, "error": "🔒 Locked."}), 403
 
         data = request.get_json() or {}
-        current_idx = int(data.get("page_idx", 0)) # Matched with JS
+        current_idx = int(data.get("page_idx", 0))
         p_type = data.get("type", "identification")
 
-        new_page = {"question": "", "type": p_type, "timer": 30, "score": 1, "penalty": 0}
+        # ✅ Kunin ang settings ng kasalukuyang page para ma-inherit ng bago
+        current_page = study["pages"][current_idx] if current_idx < len(study["pages"]) else {}
+        
+        new_page = {
+            "question": "", 
+            "type": p_type, 
+            "timer": current_page.get("timer", 30), 
+            "score": current_page.get("score", 1), 
+            "penalty": current_page.get("penalty", 0)
+        }
+        
         if p_type == 'multiple_choice':
             new_page["choices"] = ["", "", "", ""]
             new_page["correct_index"] = 0
@@ -622,9 +632,10 @@ def register(app):
         try: save_to_mongo()
         except: pass
 
+        # ✅ MANATILI SA CURRENT PAGE (para ma-access ang bago via Next)
         return jsonify({
             "ok": True, 
-            "next_url": f"/teacher/activity/{stid}/{current_idx + 1}"
+            "next_url": f"/teacher/activity/{stid}/{current_idx}"
         })
 
     @app.route("/api/studies/<stid>/delete_page", methods=["POST"])

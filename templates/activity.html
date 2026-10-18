@@ -274,7 +274,6 @@ select[data-custom]{display:none !important}
         </label>
       </div>
       <div class="mobile-nav">
-        <button type="button" class="btn btn-ghost" disabled>← Previous</button>
         <button type="submit" class="btn btn-blue">Next: Settings →</button>
       </div>
     </form>
@@ -325,7 +324,7 @@ select[data-custom]{display:none !important}
             <div class="flow-header">
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>Multiple Choice</b>
-              <select class="flow-order">
+              <select class="flow-order" onchange="updateFlowOrders()">
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -343,7 +342,7 @@ select[data-custom]{display:none !important}
             <div class="flow-header">
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>Identification</b>
-              <select class="flow-order">
+              <select class="flow-order" onchange="updateFlowOrders()">
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -361,7 +360,7 @@ select[data-custom]{display:none !important}
             <div class="flow-header">
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>Essay (manual)</b>
-              <select class="flow-order">
+              <select class="flow-order" onchange="updateFlowOrders()">
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -379,7 +378,7 @@ select[data-custom]{display:none !important}
             <div class="flow-header">
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>True or False</b>
-              <select class="flow-order">
+              <select class="flow-order" onchange="updateFlowOrders()">
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -397,7 +396,7 @@ select[data-custom]{display:none !important}
             <div class="flow-header">
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>File Upload (manual)</b>
-              <select class="flow-order">
+              <select class="flow-order" onchange="updateFlowOrders()">
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -505,24 +504,6 @@ select[data-custom]{display:none !important}
     {% set ns.is_transition = false %}
 {% endif %}
 
-<div class="card" style="margin-bottom:16px;">
-  <div class="card-title" style="margin-bottom:0;">
-    <div>
-      <h1>✏️ {{ study.title }}</h1>
-      <div class="pill-row" style="margin-top:8px;">
-        <span class="tag">Page {{ page_idx + 1 }} of {{ study.total_pages }}</span>
-        <span class="tag" style="color:var(--blue);">{{ ns.type|replace('_',' ')|title }}</span>
-        <span class="tag">Page {{ page_idx - ns.start + 1 }} of {{ ns.count }}</span>
-      </div>
-    </div>
-    <div class="row-inline">
-      <button class="btn btn-sm btn-red" onclick="deletePage()" title="Delete this page">🗑 Delete</button>
-      <button class="btn btn-sm btn-green" onclick="addPage()" title="Add page to this section">➕ Add Page</button>
-      <button class="cancel-btn" onclick="handleCancel()" title="Cancel">✖</button>
-    </div>
-  </div>
-</div>
-
 <!-- TRANSITION CARD (Lalabas lang kapag start ng bagong section) -->
 {% if ns.is_transition %}
 <div id="transitionView">
@@ -540,6 +521,25 @@ select[data-custom]{display:none !important}
 {% else %}
 <div id="pageEditorView">
 {% endif %}
+
+<!-- ✅ INILIPAT DITO SA LOOB PARA HINDI MAKITA KAPAG TRANSITION -->
+<div class="card" style="margin-bottom:16px;">
+  <div class="card-title" style="margin-bottom:0;">
+    <div>
+      <h1>✏️ {{ study.title }}</h1>
+      <div class="pill-row" style="margin-top:8px;">
+        <span class="tag">Page {{ page_idx + 1 }} of {{ study.total_pages }}</span>
+        <span class="tag" style="color:var(--blue);">{{ ns.type|replace('_',' ')|title }}</span>
+        <span class="tag">Page {{ page_idx - ns.start + 1 }} of {{ ns.count }}</span>
+      </div>
+    </div>
+    <div class="row-inline">
+      <button class="btn btn-sm btn-red" onclick="deletePage()" title="Delete this page">🗑 Delete</button>
+      <button class="btn btn-sm btn-green" onclick="addPage()" title="Add page to this section">➕ Add Page</button>
+      <button class="cancel-btn" onclick="handleCancel()" title="Cancel">✖</button>
+    </div>
+  </div>
+</div>
 
 <div class="nav-container">
   {% if page_idx > 0 %}
@@ -742,6 +742,42 @@ async function handleCancel() {
 /* ═══════════════════════════════════════════════════════════
    3. FLOW BUILDER LOGIC (SETTINGS PAGE)
    ═══════════════════════════════════════════════════════════ */
+function updateFlowOrders() {
+  // Kunin lahat ng active blocks
+  var activeBlocks = document.querySelectorAll('.flow-block.active');
+  var selectedOrders = {};
+
+  // 1. I-save muna kung anong order ang napili sa bawat active block
+  activeBlocks.forEach(function(block) {
+    var select = block.querySelector('.flow-order');
+    selectedOrders[block.dataset.type] = select.value;
+  });
+
+  // 2. I-update ang options ng bawat active block
+  activeBlocks.forEach(function(block) {
+    var select = block.querySelector('.flow-order');
+    var currentType = block.dataset.type;
+
+    // I-enable lahat ng options
+    Array.from(select.options).forEach(function(opt) {
+      opt.disabled = false;
+      opt.textContent = opt.textContent.replace(" (Taken)", ""); // Reset text
+    });
+
+    // I-disable ang mga napili na ng ibang block
+    Object.keys(selectedOrders).forEach(function(type) {
+      if (type !== currentType) {
+        var takenValue = selectedOrders[type];
+        var optionToDisable = select.querySelector('option[value="' + takenValue + '"]');
+        if (optionToDisable) {
+          optionToDisable.disabled = true;
+          optionToDisable.textContent += " (Taken)"; // Visual indicator
+        }
+      }
+    });
+  });
+}
+
 function toggleFlowBlock(checkbox) {
   var block = checkbox.closest('.flow-block');
   if (checkbox.checked) {
@@ -749,6 +785,7 @@ function toggleFlowBlock(checkbox) {
   } else {
     block.classList.remove('active');
   }
+  updateFlowOrders(); // ✅ Tawagin ang update logic kapag may tinoggle
 }
 
 var existingFlowRaw = `{{ study.get('flow', [])|tojson }}`;
@@ -768,12 +805,14 @@ try {
         block.querySelector('.flow-penalty').value = f.penalty || 0;
       }
     });
+    updateFlowOrders(); // ✅ Tawagin pagka-load ng existing data
   } else {
     var defaultBlock = document.querySelector('.flow-block[data-type="multiple_choice"]');
     if (defaultBlock) {
       defaultBlock.querySelector('.flow-enable').checked = true;
       defaultBlock.classList.add('active');
     }
+    updateFlowOrders(); // ✅ Tawagin pagka-default
   }
 } catch (e) {}
 
