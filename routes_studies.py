@@ -370,34 +370,37 @@ def register(app):
     def publish_study(stid):
         actor = current_user()
         study = find_study(stid)
+        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
         if not can_edit_study(actor, study):
+            if is_ajax: return jsonify({"ok": False, "error": "Study not found."}), 404
             flash("Study not found.", "error")
             return redirect(url_for("teacher_page") + "#studies")
+            
         if is_study_locked(study):
+            if is_ajax: return jsonify({"ok": False, "error": "🔒 Cannot publish — may student na nagsimula ng quiz."}), 403
             flash("🔒 Cannot publish — may student na nagsimula ng quiz.", "error")
             return redirect(url_for("teacher_page") + "#studies")
 
-        # ✅ FIX: I-check ang type ng BAWAT page
+        # ✅ FIX: I-check ang type ng BAWAT page at mag-return ng JSON kung AJAX
         for i, p in enumerate(study["pages"]):
-            p_type = p.get("type", study.get("type", "identification")) # ✅ Galing sa page
+            p_type = p.get("type", study.get("type", "identification"))
             
+            error_msg = None
             if not p.get("question"):
-                flash(f"Cannot publish — page {i+1} has no question.", "error")
+                error_msg = f"Page {i+1} has no question."
+            elif p_type == "identification" and not p.get("correct_answer"):
+                error_msg = f"Page {i+1} has no answer."
+            elif p_type == "multiple_choice" and (not p.get("choices") or any(not c for c in p["choices"])):
+                error_msg = f"Page {i+1} has empty choices."
+            elif p_type == "true_false" and p.get("correct_bool") is None:
+                error_msg = f"Page {i+1} has no True/False answer."
+
+            if error_msg:
+                if is_ajax:
+                    return jsonify({"ok": False, "error": error_msg, "page_idx": i})
+                flash(f"Cannot publish — {error_msg}", "error")
                 return redirect(f"/teacher/activity/{stid}/preview")
-                
-            if p_type == "identification" and not p.get("correct_answer"):
-                flash(f"Cannot publish — page {i+1} has no answer.", "error")
-                return redirect(f"/teacher/activity/{stid}/preview")
-                
-            if p_type == "multiple_choice":
-                if not p.get("choices") or any(not c for c in p["choices"]):
-                    flash(f"Cannot publish — page {i+1} has empty choices.", "error")
-                    return redirect(f"/teacher/activity/{stid}/preview")
-                    
-            if p_type == "true_false":
-                if p.get("correct_bool") is None:
-                    flash(f"Cannot publish — page {i+1} has no True/False answer.", "error")
-                    return redirect(f"/teacher/activity/{stid}/preview")
 
         study["status"] = "published"
         study["has_attempts"] = False
@@ -416,6 +419,9 @@ def register(app):
             notify(study["teacher_id"], "✏️ Study Updated by Admin",
                    f"'{study['title']}' was edited and re-published by SuperAdmin.",
                    link="/teacher#studies", kind="info")
+
+        if is_ajax:
+            return jsonify({"ok": True, "redirect": "/teacher#studies"})
 
         flash(f"'{study['title']}' published! Students will see it in 10 seconds.", "success")
         if actor.role == "SuperAdmin":

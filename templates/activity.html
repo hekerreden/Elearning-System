@@ -161,10 +161,12 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   -webkit-tap-highlight-color:transparent;
 }
-.cs-option:hover,
-.cs-option.focused{background:rgba(24,119,242,.14)}
+.cs-option:hover:not(.disabled),
+.cs-option.focused:not(.disabled){background:rgba(24,119,242,.14)}
 .cs-option.selected{background:rgba(24,119,242,.18);color:#fff;font-weight:600;}
 .cs-option.selected::after{content:'✓';color:var(--blue-hover);font-weight:700;flex-shrink:0;}
+.cs-option.disabled { opacity: 0.4; cursor: not-allowed; background: transparent !important; }
+.cs-option.disabled::after { content: ''; }
 select[data-custom]{display:none !important}
 
 /* Flow Builder Styles */
@@ -274,6 +276,7 @@ select[data-custom]{display:none !important}
         </label>
       </div>
       <div class="mobile-nav">
+        <button type="button" class="btn btn-ghost" disabled>← Previous</button>
         <button type="submit" class="btn btn-blue">Next: Settings →</button>
       </div>
     </form>
@@ -325,6 +328,7 @@ select[data-custom]{display:none !important}
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>Multiple Choice</b>
               <select class="flow-order" onchange="updateFlowOrders()">
+                <option value="">Select...</option>
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -343,6 +347,7 @@ select[data-custom]{display:none !important}
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>Identification</b>
               <select class="flow-order" onchange="updateFlowOrders()">
+                <option value="">Select...</option>
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -361,6 +366,7 @@ select[data-custom]{display:none !important}
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>Essay (manual)</b>
               <select class="flow-order" onchange="updateFlowOrders()">
+                <option value="">Select...</option>
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -379,6 +385,7 @@ select[data-custom]{display:none !important}
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>True or False</b>
               <select class="flow-order" onchange="updateFlowOrders()">
+                <option value="">Select...</option>
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -397,6 +404,7 @@ select[data-custom]{display:none !important}
               <input type="checkbox" class="flow-enable" onchange="toggleFlowBlock(this)">
               <b>File Upload (manual)</b>
               <select class="flow-order" onchange="updateFlowOrders()">
+                <option value="">Select...</option>
                 <option value="1">1st</option><option value="2">2nd</option><option value="3">3rd</option>
                 <option value="4">4th</option><option value="5">5th</option>
               </select>
@@ -470,9 +478,7 @@ select[data-custom]{display:none !important}
 
 <div class="row-between">
   <a href="/teacher/activity/{{ study.id }}/0" class="btn btn-ghost">← Edit Page 1</a>
-  <form method="POST" action="/api/studies/{{ study.id }}/publish" style="display:inline;" data-no-ajax="true">
-    <button type="submit" class="btn btn-green">🚀 Publish to Students</button>
-  </form>
+  <button type="button" class="btn btn-green" id="publishBtn" onclick="publishStudy()">🚀 Publish to Students</button>
 </div>
 
 {% else %}
@@ -504,7 +510,7 @@ select[data-custom]{display:none !important}
     {% set ns.is_transition = false %}
 {% endif %}
 
-<!-- TRANSITION CARD (Lalabas lang kapag start ng bagong section) -->
+<!-- TRANSITION CARD -->
 {% if ns.is_transition %}
 <div id="transitionView">
   <div class="transition-card">
@@ -522,7 +528,6 @@ select[data-custom]{display:none !important}
 <div id="pageEditorView">
 {% endif %}
 
-<!-- ✅ INILIPAT DITO SA LOOB PARA HINDI MAKITA KAPAG TRANSITION -->
 <div class="card" style="margin-bottom:16px;">
   <div class="card-title" style="margin-bottom:0;">
     <div>
@@ -655,9 +660,37 @@ var currentStudyId = "{{ study.id }}";
 var currentPageIdx = {{ page_idx }};
 var currentPageType = "{{ study.pages[page_idx].type if page_idx < study.pages|length else ns.type }}";
 
-/* ═══════════════════════════════════════════════════════════
-   1. TRANSITION & NAVIGATION LOGIC
-   ═══════════════════════════════════════════════════════════ */
+async function publishStudy() {
+  var btn = document.getElementById('publishBtn');
+  var origText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Publishing...';
+  
+  try {
+    var res = await fetch('/api/studies/{{ study.id }}/publish', {
+      method: 'POST',
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
+    });
+    var data = await res.json();
+    
+    if (data.ok) {
+      window.location.href = data.redirect;
+    } else {
+      showAlert(`❌ Hindi ma-publish: ${data.error}\n\nPumunta sa Page ${data.page_idx + 1} para ayusin.`, {title: 'Validation Error', danger: true})
+      .then(function() {
+        window.location.href = `/teacher/activity/{{ study.id }}/${data.page_idx}`;
+      });
+      
+      btn.disabled = false;
+      btn.innerHTML = origText;
+    }
+  } catch(e) {
+    showAlert('Network error: ' + e.message, {title: 'Error', danger: true});
+    btn.disabled = false;
+    btn.innerHTML = origText;
+  }
+}
+
 function continueToEditor() {
   document.getElementById('transitionView').style.display = 'none';
   document.getElementById('pageEditorView').style.display = 'block';
@@ -707,9 +740,6 @@ async function deletePage() {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   2. SMART CANCEL LOGIC
-   ═══════════════════════════════════════════════════════════ */
 async function handleCancel() {
   var status = "{{ study.status }}";
   var isEdit = (status === 'editing');
@@ -739,42 +769,43 @@ async function handleCancel() {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   3. FLOW BUILDER LOGIC (SETTINGS PAGE)
-   ═══════════════════════════════════════════════════════════ */
 function updateFlowOrders() {
-  // Kunin lahat ng active blocks
-  var activeBlocks = document.querySelectorAll('.flow-block.active');
-  var selectedOrders = {};
+  var blocks = document.querySelectorAll('.flow-block');
+  var selectedValues = [];
 
-  // 1. I-save muna kung anong order ang napili sa bawat active block
-  activeBlocks.forEach(function(block) {
-    var select = block.querySelector('.flow-order');
-    selectedOrders[block.dataset.type] = select.value;
+  // 1. Kunin lahat ng napiling order sa mga active (checked) blocks
+  blocks.forEach(function(block) {
+    if (block.classList.contains('active')) {
+      var val = block.querySelector('.flow-order').value;
+      if (val) selectedValues.push(val);
+    }
   });
 
-  // 2. I-update ang options ng bawat active block
-  activeBlocks.forEach(function(block) {
+  // 2. I-update ang bawat block
+  blocks.forEach(function(block) {
     var select = block.querySelector('.flow-order');
-    var currentType = block.dataset.type;
+    var isActive = block.classList.contains('active');
+    var currentVal = select.value;
 
-    // I-enable lahat ng options
     Array.from(select.options).forEach(function(opt) {
-      opt.disabled = false;
-      opt.textContent = opt.textContent.replace(" (Taken)", ""); // Reset text
-    });
+      if (!opt.value) return; // Skip "Select..."
 
-    // I-disable ang mga napili na ng ibang block
-    Object.keys(selectedOrders).forEach(function(type) {
-      if (type !== currentType) {
-        var takenValue = selectedOrders[type];
-        var optionToDisable = select.querySelector('option[value="' + takenValue + '"]');
-        if (optionToDisable) {
-          optionToDisable.disabled = true;
-          optionToDisable.textContent += " (Taken)"; // Visual indicator
+      var isTakenByOther = selectedValues.includes(opt.value) && (currentVal !== opt.value);
+
+      // I-disable kung taken ng ibang active block
+      if (isActive && isTakenByOther) {
+        opt.disabled = true;
+        if (!opt.textContent.includes('(Taken)')) {
+          opt.textContent += ' (Taken)';
         }
+      } else {
+        opt.disabled = false;
+        opt.textContent = opt.textContent.replace(' (Taken)', '');
       }
     });
+
+    // I-refresh ang custom dropdown UI
+    if (select._csUpdate) select._csUpdate();
   });
 }
 
@@ -784,8 +815,10 @@ function toggleFlowBlock(checkbox) {
     block.classList.add('active');
   } else {
     block.classList.remove('active');
+    // Optional: Reset to empty when unchecked? Yes, para malinis.
+    block.querySelector('.flow-order').value = ''; 
   }
-  updateFlowOrders(); // ✅ Tawagin ang update logic kapag may tinoggle
+  updateFlowOrders();
 }
 
 var existingFlowRaw = `{{ study.get('flow', [])|tojson }}`;
@@ -798,23 +831,24 @@ try {
       if (block) {
         block.querySelector('.flow-enable').checked = true;
         block.classList.add('active');
-        block.querySelector('.flow-order').value = f.order || 1;
+        block.querySelector('.flow-order').value = f.order || '';
         block.querySelector('.flow-count').value = f.count || 1;
         block.querySelector('.flow-timer').value = f.timer || 30;
         block.querySelector('.flow-score').value = f.score || 1;
         block.querySelector('.flow-penalty').value = f.penalty || 0;
       }
     });
-    updateFlowOrders(); // ✅ Tawagin pagka-load ng existing data
   } else {
+    // Default pag wala pang laman
     var defaultBlock = document.querySelector('.flow-block[data-type="multiple_choice"]');
     if (defaultBlock) {
       defaultBlock.querySelector('.flow-enable').checked = true;
       defaultBlock.classList.add('active');
+      defaultBlock.querySelector('.flow-order').value = '1'; // Set default to 1st
     }
-    updateFlowOrders(); // ✅ Tawagin pagka-default
   }
-} catch (e) {}
+  updateFlowOrders();
+} catch (e) { console.error(e); }
 
 document.addEventListener('DOMContentLoaded', function() {
   var settingMode = document.getElementById('setting_mode');
@@ -836,19 +870,31 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       var blocks = document.querySelectorAll('.flow-block');
       var flowData = [];
+      var hasError = false;
       
       blocks.forEach(function(b) {
         if (!b.querySelector('.flow-enable').checked) return;
+        
+        var orderVal = b.querySelector('.flow-order').value;
+        if (!orderVal) {
+          showAlert('Pumili ng order (1st, 2nd, etc.) para sa lahat ng naka-check na type.', { title: 'Missing Order', danger: true });
+          hasError = true;
+          return;
+        }
+
+        // ✅ FIX: parseInt para mawala ang "01"
         flowData.push({
           type: b.dataset.type,
-          order: parseInt(b.querySelector('.flow-order').value) || 1,
-          count: parseInt(b.querySelector('.flow-count').value) || 1,
-          timer: parseInt(b.querySelector('.flow-timer').value) || 30,
-          score: parseInt(b.querySelector('.flow-score').value) || 0,
-          penalty: parseInt(b.querySelector('.flow-penalty').value) || 0
+          order: parseInt(orderVal, 10),
+          count: parseInt(b.querySelector('.flow-count').value || 1, 10),
+          timer: parseInt(b.querySelector('.flow-timer').value || 30, 10),
+          score: parseInt(b.querySelector('.flow-score').value || 0, 10),
+          penalty: parseInt(b.querySelector('.flow-penalty').value || 0, 10)
         });
       });
       
+      if (hasError) return;
+
       if (flowData.length === 0) {
         showAlert('Pumili ng kahit isang type ng activity.', { title: 'Error', danger: true });
         return;
@@ -885,9 +931,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-/* ═══════════════════════════════════════════════════════════
-   4. LOCAL SHOWCONFIRM / SHOWALERT
-   ═══════════════════════════════════════════════════════════ */
 window.showConfirm = function (message, opts) {
   opts = opts || {};
   return new Promise(function (resolve) {
@@ -960,7 +1003,6 @@ window.showAlert = function (message, opts) {
   });
 };
 
-/* ═══════════════ CUSTOM DROPDOWN ENGINE ═══════════════ */
 function convertSelects(root) {
   root = root || document;
   root.querySelectorAll('select[data-custom]:not([data-converted])').forEach(function(sel) {
@@ -986,9 +1028,12 @@ function convertSelects(root) {
       div.className = 'cs-option';
       div.setAttribute('data-value', opt.value);
       div.textContent = opt.textContent;
+      
+      // ✅ BLOCK CLICK KAPAG DISABLED
       div.addEventListener('pointerdown', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        if (opt.disabled) return;
         doSelect(i);
         doClose();
       });
@@ -998,6 +1043,7 @@ function convertSelects(root) {
     
     function doSelect(idx) {
       if (idx < 0 || idx >= sel.options.length) return;
+      if (sel.options[idx].disabled) return;
       sel.value = sel.options[idx].value;
       sel.dispatchEvent(new Event('change', { bubbles: true }));
       refreshValue();
@@ -1005,9 +1051,13 @@ function convertSelects(root) {
     
     function refreshValue() {
       var selected = sel.options[sel.selectedIndex];
-      trigger.querySelector('.cs-value').textContent = selected ? selected.textContent : '';
-      options.forEach(function(o) {
-        o.classList.toggle('selected', o.getAttribute('data-value') === sel.value);
+      trigger.querySelector('.cs-value').textContent = selected ? selected.textContent.replace(' (Taken)', '') : 'Select...';
+      
+      options.forEach(function(o, i) {
+        var opt = sel.options[i];
+        o.classList.toggle('selected', opt.value === sel.value);
+        o.classList.toggle('disabled', opt.disabled);
+        o.textContent = opt.textContent; // I-update ang text
       });
     }
     
