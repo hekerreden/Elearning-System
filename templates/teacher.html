@@ -660,7 +660,7 @@
     }
 
     /* EDIT STUDY */
-    } else if (a === 'edit-study') {
+    else if (a === 'edit-study') {
       ev.preventDefault();
       window.closeModal('viewModal');
 
@@ -683,7 +683,7 @@
     }
 
     /* VIEW STUDY */
-    } else if (a === 'view-study') {
+    else if (a === 'view-study') {
       ev.preventDefault();
       var sid = btn.getAttribute('data-id');
       var sv = findStudy(sid);
@@ -702,23 +702,26 @@
           openViewModal(sv, btn);
         })
         .catch(function() { openViewModal(sv, btn); });
+    }
 
     /* CLOSE */
-    } else if (a === 'close-view') {
+    else if (a === 'close-view') {
       ev.preventDefault();
       window.closeModal('viewModal');
+    }
 
     /* EDIT SCORE */
-    } else if (a === 'edit-score') {
+    else if (a === 'edit-score') {
       ev.preventDefault();
       document.getElementById('scoreForm').action =
         '/api/results/' + btn.getAttribute('data-result-id') + '/update';
       document.getElementById('scoreStudent').textContent = btn.getAttribute('data-student-name');
       document.getElementById('scoreValue').value = btn.getAttribute('data-current-score');
       window.openModal('scoreModal');
+    }
 
     /* DELETE */
-    } else if (a === 'confirm-delete') {
+    else if (a === 'confirm-delete') {
       ev.preventDefault();
       var url = btn.getAttribute('data-delete-url');
       var msg = btn.getAttribute('data-delete-msg') || 'Are you sure?';
