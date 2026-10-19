@@ -153,6 +153,23 @@ else:
     print("⚠️  Running WITHOUT persistence — data will be lost on restart")
     seed_defaults()
 
+# ═══════════════════════════════════════════════════════════════
+# SMART AUTO-SAVE AFTER MUTATIONS
+# ═══════════════════════════════════════════════════════════════
+@app.after_request
+def persist_after_mutation(response):
+    """
+    Auto-save to MongoDB after successful POST requests.
+    Uses optimized bulk_write to prevent lag.
+    """
+    if request.method == "POST" and db.is_connected():
+        # Mag-save lang kung successful ang request (200 OK o 302 Redirect)
+        if response.status_code in (200, 302):
+            try:
+                save_to_mongo()
+            except Exception as e:
+                print(f"⚠️  Auto-save failed: {e}")
+    return response
 
 
 # ═══════════════════════════════════════════════════════════════
