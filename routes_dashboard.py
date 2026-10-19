@@ -45,6 +45,7 @@ def register(app):
             results=quiz_results,
             attendance=attendance,
             pending_deletes=[user_with_reset_info(x) for x in pending_deletes],
+            all_users=users, 
             total_notifications=0,
         )
         

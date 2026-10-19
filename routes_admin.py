@@ -3,14 +3,80 @@
 from datetime import timedelta
 from flask import (request, redirect, url_for, flash, jsonify,
                    session)
-from storage import users, studies, quiz_results, attendance, connections
+from storage import users, studies, quiz_results, attendance, connections, save_to_mongo
 from helpers import (current_user, find_user_by_id, role_home,
                      notify, now_str, now_dt)
 from decorators import role_required
-
+import re
 
 def register(app):
 
+    # ═══════════════════════════════════════════════════════════
+    # ✅ BAGONG FEATURE: ADMIN CHANGE USERNAME / FULL NAME
+    # ═══════════════════════════════════════════════════════════
+    @app.route("/api/admin/users/<uid>/update_profile", methods=["POST"])
+    @role_required("SuperAdmin")
+    def admin_update_user_profile(uid):
+        admin = current_user()
+        target = find_user_by_id(uid)
+        if not target:
+            return jsonify({"ok": False, "error": "User not found"}), 404
+            
+        if target.role == "SuperAdmin":
+            return jsonify({"ok": False, "error": "Cannot edit another SuperAdmin."}), 403
+
+        field = (request.form.get("field") or "").strip()
+        value = (request.form.get("value") or "").strip()
+
+        # ─── FULL NAME ───
+        if field == "full_name":
+            if len(value) < 2:
+                return jsonify({"ok": False, "error": "Name too short."}), 400
+            
+            old_name = target.full_name
+            target.full_name = value
+            
+            notify(target.id, "✏️ Full Name Updated by Admin", 
+                   f"Your full name was updated to \"{value}\" by an admin.", 
+                   kind="info")
+            
+            try: save_to_mongo()
+            except: pass
+            return jsonify({"ok": True, "message": f"Full name updated to {value}."})
+
+        # ─── USERNAME ───
+        elif field == "username":
+            if len(value) < 3 or len(value) > 30:
+                return jsonify({"ok": False, "error": "Username must be 3-30 characters."}), 400
+            if not re.match(r"^[a-zA-Z0-9_.\-]+$", value):
+                return jsonify({"ok": False, "error": "Invalid characters."}), 400
+
+            for other in users:
+                if other.id != target.id and other.username.lower() == value.lower():
+                    return jsonify({"ok": False, "error": "Username already taken."}), 409
+
+            old_username = target.username
+            
+            # ✅ I-save sa history para makapag-login pa rin gamit ang luma
+            if not hasattr(target, 'username_history') or target.username_history is None:
+                target.username_history = []
+            target.username_history.append(old_username)
+            
+            target.username = value
+            
+            notify(target.id, "✏️ Username Changed by Admin", 
+                   f"Your username was changed by an admin from @{old_username} to @{value}. You can still use your old username to log in.", 
+                   kind="info")
+            
+            try: save_to_mongo()
+            except: pass
+            return jsonify({"ok": True, "message": f"Username updated to @{value}."})
+            
+        return jsonify({"ok": False, "error": "Unknown field"}), 400
+
+    # ═══════════════════════════════════════════════════════════
+    # EXISTING ROUTES
+    # ═══════════════════════════════════════════════════════════
     @app.route("/api/admin/delete/<uid>/flag", methods=["POST"])
     @role_required("SuperAdmin")
     def admin_flag_user(uid):
@@ -99,45 +165,6 @@ def register(app):
         flash("Account deletion cancelled. Welcome back!", "success")
         return redirect(url_for("dashboard")+"#account")
 
-    @app.route("/api/account/password", methods=["POST"])
-    @role_required("Teacher", "Student")
-    def change_password():
-        u = current_user()
-        current = request.form.get("current", "")
-        new = request.form.get("new", "")
-        confirm = request.form.get("confirm", "")
-
-        wants_json = (request.headers.get("X-Requested-With") == "XMLHttpRequest"
-                      or request.form.get("_ajax") == "1")
-
-        def _err(msg):
-            if wants_json:
-                return jsonify({"ok": False, "error": msg}), 400
-            flash(msg, "error")
-            return redirect(url_for(role_home(u.role)))
-
-        if not u.check_password(current):
-            return _err("Current password is incorrect.")
-        if len(new) < 8:
-            return _err("New password must be at least 8 characters.")
-        if new != confirm:
-            return _err("New passwords do not match.")
-        if new == current:
-            return _err("New password must be different from current.")
-
-        u.set_password(new)
-        u.finalize_password_change()
-        session.pop("force_password_change", None)
-
-        notify(u.id, "Password Changed",
-               "Your password was updated successfully.",
-               link=f"/{u.role.lower()}#account", kind="info")
-
-        if wants_json:
-            return jsonify({"ok": True, "message": "Password updated successfully!"})
-        flash("Password updated successfully!", "success")
-        return redirect(url_for(role_home(u.role))+"#account")
-
     @app.route("/api/admin/delete/<uid>/approve", methods=["POST"])
     @role_required("SuperAdmin")
     def admin_approve_delete(uid):
@@ -205,7 +232,6 @@ def register(app):
         target.reset_with_temp()
         target.reset_by = admin.id
 
-        # ✅ Walang password leak sa admin notification
         notify(admin.id, "🔑 Password Reset Successful",
                f"Password reset for @{target.username} ({target.full_name}). "
                f"The user will see their temp password on the login page.",

@@ -351,7 +351,7 @@
     <p class="muted small mb1">
       User: <b id="eu_name">—</b>
     </p>
-    <form method="POST" id="editUsernameForm" class="form" data-no-ajax>
+    <form method="POST" id="editUsernameForm" class="form" onsubmit="submitAdminEditProfile(event)">
       <label>New Username *
         <input type="text" name="username" id="eu_username" required
           minlength="3" maxlength="30"
@@ -642,6 +642,40 @@
           btn.textContent = '🔑 Generate Reset';
         });
     });
+    /* ✅ IDAGDAG ITO PARA GUMANA ANG ADMIN EDIT PROFILE */
+    window.submitAdminEditProfile = function(ev) {
+      ev.preventDefault();
+      var form = ev.target;
+      var fd = new FormData(form);
+      var uid = currentUser ? currentUser.id : null;
+      if (!uid) return;
+      
+      var submitBtn = form.querySelector('button[type="submit"]');
+      var origText = submitBtn ? submitBtn.textContent : 'Save';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving...'; }
+
+      fetch('/api/admin/users/' + uid + '/update_profile', {
+        method: 'POST',
+        body: fd,
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          window.closeModal('editUsernameModal');
+          showAlert('✅ ' + data.message, {danger: false}).then(() => {
+            window.location.reload(); // I-reload para makita ang bagong username sa table
+          });
+        } else {
+          showAlert('❌ ' + data.error, {danger: true});
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
+        }
+      })
+      .catch(err => {
+        showAlert('Network error.', {danger: true});
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origText; }
+      });
+    };
     
     /* ═══════════════════════════════════════════════════════════
        AUTO-REFRESH pag AJAX replace ang DOM

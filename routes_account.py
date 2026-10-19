@@ -15,9 +15,10 @@ def register(app):
     @role_required("Teacher", "Student", "SuperAdmin")
     def change_password():
         u = current_user()
-        current_password = request.form.get("current_password", "")
-        new_password = request.form.get("new_password", "")
-        confirm_password = request.form.get("confirm_password", "")
+        # ✅ FIX: Ginamit ang "current", "new", "confirm" base sa base.html mo
+        current_password = request.form.get("current", "")
+        new_password = request.form.get("new", "")
+        confirm_password = request.form.get("confirm", "")
 
         wants_json = (request.headers.get("X-Requested-With") == "XMLHttpRequest"
                       or request.form.get("_ajax") == "1")
@@ -27,11 +28,9 @@ def register(app):
             flash(msg, "error")
             return redirect(url_for(role_home(u.role)) + "#account")
 
-        # 1. Check kung tama ang current (o temp) password
         if not u.check_password(current_password):
             return _err("Current password is incorrect.")
 
-        # 2. Validation
         if len(new_password) < 8:
             return _err("New password must be at least 8 characters.")
         if new_password != confirm_password:
@@ -39,11 +38,9 @@ def register(app):
         if new_password == current_password:
             return _err("New password must be different from current.")
 
-        # 3. Save
         u.set_password(new_password)
-        u.finalize_password_change() # Tinatanggal ang reset_pending at temp_password flags
+        u.finalize_password_change() 
         
-        # 4. Alisin ang force_password_change sa session
         session.pop("force_password_change", None)
         session.pop("current_temp_password", None)
 
@@ -112,25 +109,21 @@ def register(app):
             if value.lower() == u.username.lower():
                 return _err("New username is the same as your current username.")
 
-            # Check kung nagamit na sa history (Bawal gamitin muli)
             if hasattr(u, 'username_history') and u.username_history:
                 for old_u in u.username_history:
                     if old_u.lower() == value.lower():
                         return _err("You cannot reuse a previous username.")
 
-            # Check kung taken na ng iba
             for other in users:
                 if other.id == u.id: continue
                 if other.username and other.username.lower() == value.lower():
                     return _err(f"Username '{value}' is already taken.", code=409)
 
-            # I-save sa history BAGO palitan
             old_username = u.username
             if not hasattr(u, 'username_history') or u.username_history is None:
                 u.username_history = []
             u.username_history.append(old_username)
             
-            # Palitan na
             u.username = value
             notify(u.id, "✏️ Username Changed", f"Your username was updated from @{old_username} to @{value}.", kind="info")
             
