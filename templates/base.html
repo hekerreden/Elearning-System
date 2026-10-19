@@ -1985,7 +1985,7 @@ select[data-custom]{display:none !important}
           if (newField) newField.focus();
         }
       }
-      }
+      
     })
     .catch(function (err) {
       errBox.textContent = '❌ Network error: ' + err.message;
@@ -2538,6 +2538,14 @@ select[data-custom]{display:none !important}
       t.setAttribute('aria-expanded', 'false');
     });
   }, true);
+  
+  // ✅ EMERGENCY CLOSE KUNG MAG-STUCK ANG MODAL
+  window.closeAllModals = function() {
+    document.querySelectorAll('.modal-backdrop.active').forEach(function(m) {
+      m.classList.remove('active');
+    });
+    document.body.style.overflow = '';
+  };
 
   /* Escape key — close dropdowns */
   document.addEventListener('keydown', function (e) {

@@ -300,21 +300,15 @@
       <h3 style="color:#fca5a5;">⚠️ Account Flagged for Deletion</h3>
       <p class="mt1"><b>Reason:</b> {{ user.delete_reason or 'No reason provided' }}</p>
       <p class="muted small">Scheduled for deletion: <b>{{ user.delete_grace_until or '—' }}</b></p>
-      <hr class="sep">
-      <h3>Submit an Appeal</h3>
-      <p class="muted small">Explain why your account should not be deleted.</p>
-      <form method="POST" action="{{ url_for('appeal_delete') }}" class="form mt1">
-        <label>Your appeal message
-          <textarea name="message" required placeholder="I believe my account was flagged by mistake because..."></textarea>
-        </label>
-        <button type="submit" class="btn btn-blue">📩 Submit Appeal</button>
-      </form>
+      <button type="button" class="btn btn-blue mt2" onclick="openAppealModal(null, null)">
+        📩 Submit Appeal
+      </button>
     </div>
     {% elif user.status == 'appealed' %}
     <div class="card mt2" style="border-left:3px solid #3b82f6;background:rgba(24,119,242,.06);">
       <h3>📩 Appeal Under Review</h3>
       <p class="muted small mt1">The Super Admin is reviewing your appeal. Please wait for a response.</p>
-      <button type="button" class="btn btn-blue btn-sm mt2" onclick="openAppealModal('{{ user.appeal_message|replace("'", "\\'") }}', '{{ user.appeal_at }}')">
+      <button type="button" class="btn btn-blue btn-sm mt2" onclick="openAppealModal('{{ user.appeal_message|default('', true) }}', '{{ user.appeal_at|default('', true) }}')">
         View My Appeal
       </button>
     </div>
