@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime, timedelta
 from flask import session, request
-from storage import (users, studies, quiz_results, attendance,
+from storage import (users, studies, quiz_results,
                      notifications, connections)
 
 

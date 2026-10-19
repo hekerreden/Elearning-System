@@ -99,6 +99,8 @@ def register(app):
             "updated_at": now_str(),
         }
         studies.append(new_study)
+        try: save_to_mongo()
+        except: pass
         return jsonify({"id": new_id})
 
 
@@ -171,6 +173,9 @@ def register(app):
             "updated_at": now_str(),
         })
         
+        try: save_to_mongo()
+        except: pass
+
         wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         if wants_json:
             return jsonify({"ok": True, "next_url": f"/teacher/activity/{stid}/0"})
@@ -195,6 +200,9 @@ def register(app):
             study["title"] = title
         study["direction"] = request.form.get("direction", "").strip()
         study["updated_at"] = now_str()
+
+        try: save_to_mongo()
+        except: pass
 
         # ✅ Redirect sa Settings Page (Step 2)
         next_url = f"/teacher/activity/{stid}/settings"
@@ -225,6 +233,10 @@ def register(app):
             notify(actor.id, "✏️ Study Hidden",
                    f"'{study['title']}' is temporarily hidden from students while you edit it.",
                    link="/teacher#studies", kind="info")
+            
+            # ✅ IDINAGDAG: I-save agad dahil GET request ito
+            try: save_to_mongo()
+            except: pass
 
         return render_template(
             "activity.html",
@@ -295,6 +307,9 @@ def register(app):
 
         study["updated_at"] = now_str()
 
+        try: save_to_mongo()
+        except: pass
+
         if page_idx + 1 < study["total_pages"]:
             next_url = f"/teacher/activity/{stid}/{page_idx + 1}"
         else:
@@ -329,6 +344,10 @@ def register(app):
         if study.get("status") == "editing":
             study["edit_started_at"] = now_dt().strftime("%Y-%m-%d %H:%M:%S")
             study["entered_activity"] = True
+            
+        # ✅ IDINAGDAG: I-save agad dahil GET request ito
+        try: save_to_mongo()
+        except: pass
 
         return render_template(
             "activity.html",
@@ -356,6 +375,10 @@ def register(app):
         if study.get("status") == "editing":
             study["edit_started_at"] = now_dt().strftime("%Y-%m-%d %H:%M:%S")
             study["entered_activity"] = True
+            
+        # ✅ IDINAGDAG: I-save agad dahil GET request ito
+        try: save_to_mongo()
+        except: pass
 
         return render_template(
             "activity.html",
@@ -420,6 +443,9 @@ def register(app):
                    f"'{study['title']}' was edited and re-published by SuperAdmin.",
                    link="/teacher#studies", kind="info")
 
+        try: save_to_mongo()
+        except: pass
+
         if is_ajax:
             return jsonify({"ok": True, "redirect": "/teacher#studies"})
 
@@ -450,6 +476,10 @@ def register(app):
 
         study["slides"] = clean
         study["updated_at"] = now_str()
+        
+        try: save_to_mongo()
+        except: pass
+        
         return jsonify({"ok": True, "count": len(clean)})
 
     @app.route("/api/studies/<stid>/start_edit", methods=["POST"])
@@ -472,6 +502,10 @@ def register(app):
                 notify(s.id, "📚 Study Update",
                        f"'{study['title']}' is being updated. Please wait.",
                        link="/student#studies", kind="info")
+        
+        try: save_to_mongo()
+        except: pass
+        
         return jsonify({"ok": True, "status": study["status"]})
 
     @app.route("/api/studies/<stid>/cancel_edit", methods=["POST"])
@@ -490,6 +524,10 @@ def register(app):
             study["updated_at"] = now_str()
             study.pop("edit_started_at", None)
             study.pop("entered_activity", None)
+            
+        try: save_to_mongo()
+        except: pass
+            
         return jsonify({"ok": True, "status": study["status"]})
 
     @app.route("/api/studies/<stid>/cancel", methods=["POST"])

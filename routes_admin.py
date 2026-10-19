@@ -3,7 +3,7 @@
 from datetime import timedelta
 from flask import (request, redirect, url_for, flash, jsonify,
                    session)
-from storage import users, studies, quiz_results, attendance, connections, save_to_mongo
+from storage import users, studies, quiz_results, connections, save_to_mongo
 from helpers import (current_user, find_user_by_id, role_home,
                      notify, now_str, now_dt)
 from decorators import role_required
@@ -165,7 +165,7 @@ def register(app):
         users.remove(target)
         studies[:] = [s for s in studies if s.get("teacher_id") != uid]
         quiz_results[:] = [r for r in quiz_results if r["student_id"] != uid]
-        attendance[:] = [a for a in attendance if a["student_id"] != uid]
+        # ✅ TINANGGAL: attendance[:] = [a for a in attendance if a["student_id"] != uid]
         connections[:] = [c for c in connections
                           if c["student_id"] != uid and c["teacher_id"] != uid]
                           

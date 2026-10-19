@@ -2,7 +2,7 @@
 """Student activity page + heartbeat ping."""
 from datetime import datetime
 from flask import render_template, redirect, url_for, flash, jsonify
-from storage import quiz_results
+from storage import quiz_results, save_to_mongo
 from helpers import (current_user, find_study, now_dt, now_str,
                      active_teachers_for_student, notify,
                      get_active_session_count)
@@ -64,7 +64,6 @@ def register(app):
 
             # ✅ Force save to MongoDB (kasi GET ito)
             try:
-                from storage import save_to_mongo
                 save_to_mongo()
             except Exception as e:
                 print(f"⚠️ student_activity save failed: {e}")
@@ -130,4 +129,9 @@ def register(app):
                 "started_at", now_str()
             ),
         }
+        
+        # ✅ SAVE SA DB (Para malaman ng teacher na active pa ang student)
+        try: save_to_mongo()
+        except Exception as e: print(f"⚠️ Ping save failed: {e}")
+        
         return jsonify({"ok": True, "active": get_active_session_count(study)})

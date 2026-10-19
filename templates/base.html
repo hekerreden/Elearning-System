@@ -352,8 +352,8 @@ input[type=checkbox]{width:auto}
   display:flex;align-items:center;justify-content:space-between;gap:8px;
   -webkit-tap-highlight-color:transparent;
 }
-.cs-option:hover,
-.cs-option.focused{background:rgba(24,119,242,.14)}
+.cs-option:hover:not(.disabled),
+.cs-option.focused:not(.disabled){background:rgba(24,119,242,.14)}
 .cs-option.selected{
   background:rgba(24,119,242,.18);
   color:#fff;font-weight:600;
@@ -362,6 +362,8 @@ input[type=checkbox]{width:auto}
   content:'✓';color:var(--blue-hover);
   font-weight:700;flex-shrink:0;
 }
+.cs-option.disabled { opacity: 0.3; cursor: not-allowed; background: transparent !important; }
+.cs-option.disabled::after { content: ''; }
 select[data-custom]{display:none !important}
 
 /* ═══════════════ FLASH ═══════════════ */
@@ -2307,6 +2309,7 @@ select[data-custom]{display:none !important}
         div.addEventListener('pointerdown', function (e) {
           e.preventDefault();
           e.stopPropagation();
+          if (opt.disabled) return;
           doSelect(i);
           doClose();
         });
@@ -2321,6 +2324,7 @@ select[data-custom]{display:none !important}
 
       function doSelect(idx) {
         if (idx < 0 || idx >= sel.options.length) return;
+        if (sel.options[idx].disabled) return;
         sel.value = sel.options[idx].value;
         sel.dispatchEvent(new Event('change', { bubbles: true }));
         refreshValue();
@@ -2329,10 +2333,13 @@ select[data-custom]{display:none !important}
       function refreshValue() {
         var selected = sel.options[sel.selectedIndex];
         trigger.querySelector('.cs-value').textContent =
-          selected ? selected.textContent : '';
-        options.forEach(function (o) {
-          var match = o.getAttribute('data-value') === sel.value;
+          selected ? selected.textContent.replace(' (Taken)', '') : 'Select...';
+        options.forEach(function (o, i) {
+          var opt = sel.options[i];
+          var match = opt.value === sel.value;
           o.classList.toggle('selected', match);
+          o.classList.toggle('disabled', opt.disabled);
+          o.textContent = opt.textContent;
           o.setAttribute('aria-selected', match ? 'true' : 'false');
         });
       }
@@ -2391,6 +2398,7 @@ select[data-custom]{display:none !important}
       trigger.addEventListener('pointerdown', function (e) {
         e.preventDefault();
         e.stopPropagation();
+        if (sel.disabled) return;
         if (menuOpen) doClose();
         else doOpen();
       });
@@ -2450,6 +2458,7 @@ select[data-custom]{display:none !important}
       sel._csClose = doClose;
 
       refreshValue();
+      if (sel.disabled && trigger) trigger.disabled = true;
     });
   }
 
@@ -2501,7 +2510,5 @@ window.goBack = function () {
 </script>
 
 {% block scripts %}{% endblock %}
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Notifications + search API."""
 from flask import jsonify, request
-from storage import notifications
+from storage import notifications, save_to_mongo
 from helpers import current_user, unread_count, search_users
 from helpers import now_str  # noqa
 
@@ -32,6 +32,10 @@ def register(app):
                   if x["id"] == nid and x["user_id"] == u.id), None)
         if n:
             n["read"] = True
+            # ✅ SAVE SA DB (Para hindi na maging unread ulit pag nag-refresh)
+            try: save_to_mongo()
+            except Exception as e: print(f"⚠️ Save failed: {e}")
+            
         return jsonify({"ok": True})
 
     @app.route("/api/notifications/read-all", methods=["POST"])
@@ -39,9 +43,18 @@ def register(app):
         u = current_user()
         if not u:
             return jsonify({"ok": False}), 401
+        
+        has_changes = False
         for n in notifications:
-            if n["user_id"] == u.id:
+            if n["user_id"] == u.id and not n.get("read"):
                 n["read"] = True
+                has_changes = True
+                
+        if has_changes:
+            # ✅ SAVE SA DB (Para permanenteng read na silang lahat)
+            try: save_to_mongo()
+            except Exception as e: print(f"⚠️ Save failed: {e}")
+            
         return jsonify({"ok": True})
 
     @app.route("/api/search")
@@ -71,10 +84,7 @@ def register(app):
         if target:
             notifications.remove(target)
             # ✅ Explicit save para mawala agad sa MongoDB
-            try:
-                from storage import save_to_mongo
-                save_to_mongo()
-            except Exception as e:
-                print(f"⚠️ Delete notif save failed: {e}")
+            try: save_to_mongo()
+            except Exception as e: print(f"⚠️ Delete notif save failed: {e}")
                 
         return jsonify({"ok": True})

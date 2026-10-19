@@ -9,7 +9,7 @@
 <li><a class="adminnav" data-section="students"><span>🎒 My Students</span></a></li>
 <li><a class="adminnav" data-section="studies"><span>📚 Studies</span></a></li>
 <li><a class="adminnav" data-section="history"><span>📝 Quiz Attempts</span></a></li>
-<li><a class="adminnav" data-section="attendance"><span>🗓 Attendance</span></a></li>
+{# ✅ TINANGGAL: Attendance Nav Item #}
 {% endblock %}
 
 {% block content %}
@@ -58,7 +58,6 @@
             <td><span class="badge badge-green">Published</span></td>
             <td class="muted small">{{ s.published_at or s.updated_at or s.created_at or '—' }}</td>
             <td>
-              <!-- BINAGO: Direct link sa Review Page -->
               <a class="btn btn-blue btn-sm" 
                  href="/teacher/review/{{ s.id }}"
                  data-action="direct-review" 
@@ -226,7 +225,6 @@
             </td>
             <td class="muted small">{{ s.published_at or s.updated_at or s.created_at or '—' }}</td>
             <td>
-              <!-- BINAGO: Direct link sa Review Page -->
               <a class="btn btn-blue btn-sm" 
                  href="/teacher/review/{{ s.id }}"
                  data-action="direct-review" 
@@ -284,76 +282,7 @@
   </div>
 </section>
 
-{# ═══════════════ ATTENDANCE ═══════════════ #}
-<section class="content-section" data-section="attendance">
-  <div class="card mb2">
-    <div class="card-title"><h2>Mark Attendance</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Student</th><th>Date</th><th>Status</th><th>Save</th></tr></thead>
-        <tbody>
-          {% for s in students %}
-          <tr>
-            <td>{{ s.username }}</td>
-            <td colspan="3">
-              <form method="POST" action="{{ url_for('mark_attendance') }}" class="row-inline">
-                <input type="hidden" name="student_id" value="{{ s.id }}">
-                <input type="date" name="date" value="{{ today }}" style="max-width:170px">
-                <select name="status" data-custom>
-                  <option>Present</option><option>Late</option><option>Absent</option>
-                </select>
-                <button class="btn btn-green btn-sm" type="submit" style="max-width:100px">Save</button>
-              </form>
-            </td>
-          </tr>
-          {% else %}
-          <tr><td colspan="4" class="empty">No students connected yet.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title"><h2>Attendance History</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Student</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-          {% for a in attendance %}
-          <tr>
-            <td>{{ a.student_name }}</td>
-            <td>{{ a.date }}</td>
-            <td>
-              {% if a.status == 'Present' %}<span class="badge badge-green">Present</span>
-              {% elif a.status == 'Late' %}<span class="badge badge-yellow">Late</span>
-              {% else %}<span class="badge badge-red">Absent</span>{% endif %}
-            </td>
-            <td>
-              <div class="row-inline">
-                <form method="POST" action="{{ url_for('update_attendance', aid=a.id) }}" class="row-inline" style="flex:1">
-                  <select name="status" style="max-width:130px" data-custom>
-                    <option {% if a.status=='Present' %}selected{% endif %}>Present</option>
-                    <option {% if a.status=='Late' %}selected{% endif %}>Late</option>
-                    <option {% if a.status=='Absent' %}selected{% endif %}>Absent</option>
-                  </select>
-                  <button class="btn btn-yellow btn-sm" type="submit" style="max-width:100px">Update</button>
-                </form>
-                <button class="btn btn-red btn-sm"
-                        data-delete-url="{{ url_for('delete_attendance', aid=a.id) }}"
-                        data-delete-msg="Delete this record?"
-                        data-action="confirm-delete">Delete</button>
-              </div>
-            </td>
-          </tr>
-          {% else %}
-          <tr><td colspan="4" class="empty">No attendance yet.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
+{# ✅ TINANGGAL NA ANG ATTENDANCE SECTION DITO #}
 
 {# ═══════════════ ACCOUNT ═══════════════ #}
 <section class="content-section" data-section="account">
@@ -539,7 +468,6 @@
   }
 
   function updateBadgeInTable(st) {
-    // BINAGO: direct-review na ang tinitingnan imbes na view-study
     document.querySelectorAll('[data-action="direct-review"][data-id="' + st.id + '"]')
       .forEach(function(btn) {
         var tr = btn.closest('tr');

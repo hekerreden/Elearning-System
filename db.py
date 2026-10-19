@@ -87,17 +87,17 @@ def doc_to_user(doc):
     return user
 
 
-def load_all(users, studies, quiz_results, attendance, notifications, connections):
+def load_all(users, studies, quiz_results, notifications, connections):
     if not _is_connected: return
     users.clear()
     for doc in _db["users"].find({}, {"_id": 0}):
         try: users.append(doc_to_user(doc))
-        except Exception as e: pass
+        except Exception: pass
     studies.clear(); studies.extend(list(_db["studies"].find({}, {"_id": 0})))
     quiz_results.clear(); quiz_results.extend(list(_db["quiz_results"].find({}, {"_id": 0})))
-    attendance.clear(); attendance.extend(list(_db["attendance"].find({}, {"_id": 0})))
     notifications.clear(); notifications.extend(list(_db["notifications"].find({}, {"_id": 0})))
     connections.clear(); connections.extend(list(_db["connections"].find({}, {"_id": 0})))
+    # ✅ TINANGGAL: attendance
 
 
 def _clean_doc(doc):
@@ -105,7 +105,7 @@ def _clean_doc(doc):
     return {k: v for k, v in doc.items() if k != "_id"}
 
 
-def save_all(users, studies, quiz_results, attendance, notifications, connections):
+def save_all(users, studies, quiz_results, notifications, connections):
     """✅ OPTIMIZED: Gumagamit ng bulk_write para isang bagsakan lang ang save."""
     if not _is_connected: return
 
@@ -134,15 +134,7 @@ def save_all(users, studies, quiz_results, attendance, notifications, connection
             ops.append(ReplaceOne({"id": r["id"]}, _clean_doc(r), upsert=True))
         if ops: _db["quiz_results"].bulk_write(ops, ordered=False)
 
-        # 4. ATTENDANCE
-        ops = []
-        current_ids = [a["id"] for a in attendance]
-        ops.append(DeleteMany({"id": {"$nin": current_ids}}))
-        for a in attendance:
-            ops.append(ReplaceOne({"id": a["id"]}, _clean_doc(a), upsert=True))
-        if ops: _db["attendance"].bulk_write(ops, ordered=False)
-
-        # 5. NOTIFICATIONS
+        # 4. NOTIFICATIONS
         ops = []
         current_ids = [n["id"] for n in notifications]
         ops.append(DeleteMany({"id": {"$nin": current_ids}}))
@@ -150,13 +142,15 @@ def save_all(users, studies, quiz_results, attendance, notifications, connection
             ops.append(ReplaceOne({"id": n["id"]}, _clean_doc(n), upsert=True))
         if ops: _db["notifications"].bulk_write(ops, ordered=False)
 
-        # 6. CONNECTIONS
+        # 5. CONNECTIONS
         ops = []
         current_ids = [c["id"] for c in connections]
         ops.append(DeleteMany({"id": {"$nin": current_ids}}))
         for c in connections:
             ops.append(ReplaceOne({"id": c["id"]}, _clean_doc(c), upsert=True))
         if ops: _db["connections"].bulk_write(ops, ordered=False)
+
+        # ✅ TINANGGAL: ATTENDANCE
 
     except Exception as e:
         print(f"❌ Save to MongoDB failed: {e}")

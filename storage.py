@@ -11,7 +11,6 @@ _os.makedirs(UPLOAD_DIR, exist_ok=True)
 users = []
 studies = []
 quiz_results = []
-attendance = []
 notifications = []
 connections = []
 activities_list = []
@@ -22,12 +21,10 @@ active_violations = []
 def load_from_mongo():
     """Load all data from MongoDB into memory. Called on startup."""
     import db
-    db.load_all(users, studies, quiz_results,
-                attendance, notifications, connections)
+    db.load_all(users, studies, quiz_results, notifications, connections)
 
 
 def save_to_mongo():
     """Save all in-memory data to MongoDB. Called after mutations."""
     import db
-    db.save_all(users, studies, quiz_results,
-                attendance, notifications, connections)
+    db.save_all(users, studies, quiz_results, notifications, connections)

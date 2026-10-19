@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Dashboard pages: super admin, teacher, student."""
 from flask import render_template
-from storage import (users, studies, quiz_results, attendance, connections, load_from_mongo)
+from storage import (users, studies, quiz_results, connections, load_from_mongo)
 from helpers import (current_user, now_dt, today_str, classmates_of,
                      active_teachers_for_student, active_students_for_teacher,
                      cleanup_empty_drafts,
@@ -17,7 +17,6 @@ def register(app):
     @role_required("SuperAdmin")
     def super_admin_page():
         u = current_user()
-        # ✅ SYNC: Kunin ang pinakabagong data mula MongoDB
         if is_connected():
             load_from_mongo()
 
@@ -43,7 +42,7 @@ def register(app):
                       if x.role == "Student" and x.status == "active"],
             studies=studies,
             results=quiz_results,
-            attendance=attendance,
+            # ✅ TINANGGAL: attendance=attendance,
             pending_deletes=[user_with_reset_info(x) for x in pending_deletes],
             total_notifications=0,
         )
@@ -52,13 +51,12 @@ def register(app):
     @role_required("Teacher")
     def teacher_page():
         u = current_user()
-        # ✅ SYNC: Kunin ang pinakabagong data mula MongoDB
         if is_connected():
             load_from_mongo()
+            
         removed = cleanup_empty_drafts(u.id)
         restored = cleanup_stale_editing(u.id)
 
-        # Persist cleanup changes sa MongoDB (kasi GET ito, hindi auto-save)
         if removed or restored:
             try:
                 from storage import save_to_mongo
@@ -89,8 +87,8 @@ def register(app):
         visible_ids = {s["id"] for s in my_studies}
         my_results = [r for r in quiz_results if r["study_id"] in visible_ids]
         my_results.sort(key=lambda r: r["timestamp"], reverse=True)
-        my_attendance = [a for a in attendance if a["teacher_id"] == u.id]
-        my_attendance.sort(key=lambda a: a["timestamp"], reverse=True)
+        
+        # ✅ TINANGGAL: my_attendance variables
 
         pending_in_details = []
         for c in pending_in:
@@ -113,7 +111,7 @@ def register(app):
             pending_out=pending_out_details,
             studies=my_studies,
             results=my_results,
-            attendance=my_attendance,
+            # ✅ TINANGGAL: attendance=my_attendance,
             today=today_str(),
             my_id=u.id,
         )
@@ -122,9 +120,9 @@ def register(app):
     @role_required("Student")
     def student_page():
         u = current_user()
-        # ✅ SYNC: Kunin ang pinakabagong data mula MongoDB
         if is_connected():
             load_from_mongo()
+            
         my_teachers = active_teachers_for_student(u.id)
         classmates = classmates_of(u)
         pending_in = [c for c in connections
@@ -201,8 +199,8 @@ def register(app):
 
         my_results = [r for r in quiz_results if r["student_id"] == u.id]
         my_results.sort(key=lambda r: r["timestamp"], reverse=True)
-        my_attendance = [a for a in attendance if a["student_id"] == u.id]
-        my_attendance.sort(key=lambda a: a["date"], reverse=True)
+        
+        # ✅ TINANGGAL: my_attendance variables
 
         return render_template(
             "student.html",
@@ -213,7 +211,7 @@ def register(app):
             pending_out=pending_out_details,
             studies=safe_studies,
             results=my_results,
-            attendance=my_attendance,
+            # ✅ TINANGGAL: attendance=my_attendance,
             my_id=u.id,
             show_temp_reset=u.reset_pending,
             temp_password=u.temp_password if u.reset_pending else None,

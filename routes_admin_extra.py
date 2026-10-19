@@ -2,7 +2,7 @@
 """Extra admin features: edit username."""
 import re
 from flask import request, redirect, url_for, flash
-from storage import users, save_to_mongo  # ✅ IDINAGDAG
+from storage import users, save_to_mongo
 from helpers import find_user_by_id, notify
 from decorators import role_required
 
@@ -16,7 +16,7 @@ def register(app):
     # EDIT USERNAME (by admin)
     # ═══════════════════════════════════════════════════════════
     @app.route("/api/admin/users/<uid>/edit-username", methods=["POST"])
-    @role_required("SuperAd min")
+    @role_required("SuperAdmin") # ✅ FIX: Tinanggal ang space sa "SuperAd min"
     def admin_edit_username(uid):
         target = find_user_by_id(uid)
         if not target:
@@ -72,16 +72,16 @@ def register(app):
         old_username = target.username
         target.username = new_username
         
-        # ✅ IDINAGDAG ITO
-        try: save_to_mongo()
-        except Exception as e: print(f"⚠️ Save failed: {e}")
-        
-        # ✅ IDAGDAG ITO
-        if not hasattr(target, 'username_history'):
+        # ✅ FIX: Ilagay ang history BAGO mag-save
+        if not hasattr(target, 'username_history') or target.username_history is None:
             target.username_history = []
         if old_username not in target.username_history:
             target.username_history.append(old_username)
-            target.username_history = target.username_history[-5:]
+            target.username_history = target.username_history[-5:] # Max 5 history
+            
+        # ✅ Save sa DB
+        try: save_to_mongo()
+        except Exception as e: print(f"⚠️ Save failed: {e}")
 
         # ── Audit log ──
         print(f"✏️ [AUDIT] Admin edit-username: "

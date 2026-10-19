@@ -209,28 +209,7 @@
       </table>
     </div>
   </div>
-
-  <div class="card mt2">
-    <div class="card-title"><h2>My Attendance</h2></div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Date</th><th>Teacher</th><th>Status</th></tr></thead>
-        <tbody>
-          {% for a in attendance %}
-          <tr>
-            <td>{{ a.date }}</td>
-            <td>{{ a.teacher_name }}</td>
-            <td>{% if a.status == 'Present' %}<span class="badge badge-green">Present</span>
-                {% elif a.status == 'Late' %}<span class="badge badge-yellow">Late</span>
-                {% else %}<span class="badge badge-red">Absent</span>{% endif %}</td>
-          </tr>
-          {% else %}
-          <tr><td colspan="3" class="empty">No attendance yet.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+  {# ✅ TINANGGAL NA ANG MY ATTENDANCE CARD DITO #}
 </section>
 
 {# ═══════════════ ACCOUNT ═══════════════ #}
@@ -340,8 +319,6 @@
   </div>
 </section>
 
-
-
 {% endblock %}
 
 {% block scripts %}
@@ -398,9 +375,6 @@ document.querySelectorAll('.stat.clickable').forEach(function (card) {
     var id = btn.getAttribute('data-study-id');
     window.location.href = '/student/activity/' + id;
   });
-
-
-
 
 })();
 </script>

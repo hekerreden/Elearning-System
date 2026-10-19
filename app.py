@@ -59,7 +59,6 @@ import routes_admin_extra
 import routes_studies
 import routes_student_activity
 import routes_quiz
-import routes_attendance
 import routes_misc
 import routes_account
 
@@ -74,8 +73,8 @@ routes_admin_extra.register(app)
 routes_studies.register(app)
 routes_student_activity.register(app)
 routes_quiz.register(app)
-routes_attendance.register(app)
 routes_misc.register(app)
+# ✅ TINANGGAL: routes_attendance.register(app)
 
 
 # ═══════════════════════════════════════════════════════════════
