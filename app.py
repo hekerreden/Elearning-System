@@ -130,7 +130,7 @@ def seed_defaults():
 
 
 # ═══════════════════════════════════════════════════════════════
-# MONGODB INITIALIZATION
+# MONGODB INITIALIZATIONS
 # ═══════════════════════════════════════════════════════════════
 import db
 from storage import load_from_mongo, save_to_mongo

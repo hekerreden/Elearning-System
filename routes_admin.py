@@ -256,3 +256,64 @@ def register(app):
             "username": target.username,
             "full_name": target.full_name
         })
+        
+    # ═══════════════════════════════════════════════════════════
+    # ADMIN: UPDATE USERNAME / FULL NAME OF A USER
+    # ═══════════════════════════════════════════════════════════
+    @app.route("/api/admin/users/<uid>/update_profile", methods=["POST"])
+    @role_required("SuperAdmin")
+    def admin_update_user_profile(uid):
+        target = find_user_by_id(uid)
+        if not target:
+            return jsonify({"ok": False, "error": "User not found"}), 404
+            
+        if target.role == "SuperAdmin":
+            return jsonify({"ok": False, "error": "Cannot edit another SuperAdmin."}), 403
+
+        field = (request.form.get("field") or "").strip()
+        value = (request.form.get("value") or "").strip()
+
+        # ─── FULL NAME ───
+        if field == "full_name":
+            if len(value) < 2:
+                return jsonify({"ok": False, "error": "Name too short."}), 400
+            
+            target.full_name = value
+            notify(target.id, "✏️ Full Name Updated by Admin", 
+                   f"Your full name was updated to \"{value}\" by an admin.", 
+                   kind="info")
+            
+            try: save_to_mongo()
+            except: pass
+            return jsonify({"ok": True, "message": f"Full name updated to {value}."})
+
+        # ─── USERNAME ───
+        elif field == "username":
+            import re  # Siguraduhing may import re
+            if len(value) < 3 or len(value) > 30:
+                return jsonify({"ok": False, "error": "Username must be 3-30 characters."}), 400
+            if not re.match(r"^[a-zA-Z0-9_.\-]+$", value):
+                return jsonify({"ok": False, "error": "Invalid characters."}), 400
+
+            for other in users:
+                if other.id != target.id and other.username.lower() == value.lower():
+                    return jsonify({"ok": False, "error": "Username already taken."}), 409
+
+            old_username = target.username
+            
+            # I-save sa history para makapag-login pa rin gamit ang luma
+            if not hasattr(target, 'username_history') or target.username_history is None:
+                target.username_history = []
+            target.username_history.append(old_username)
+            
+            target.username = value
+            
+            notify(target.id, "✏️ Username Changed by Admin", 
+                   f"Your username was changed by an admin from @{old_username} to @{value}.", 
+                   kind="info")
+            
+            try: save_to_mongo()
+            except: pass
+            return jsonify({"ok": True, "message": f"Username updated to @{value}."})
+            
+        return jsonify({"ok": False, "error": "Unknown field"}), 400
