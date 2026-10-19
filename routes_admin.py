@@ -7,76 +7,9 @@ from storage import users, studies, quiz_results, attendance, connections, save_
 from helpers import (current_user, find_user_by_id, role_home,
                      notify, now_str, now_dt)
 from decorators import role_required
-import re
 
 def register(app):
 
-    # ═══════════════════════════════════════════════════════════
-    # ✅ BAGONG FEATURE: ADMIN CHANGE USERNAME / FULL NAME
-    # ═══════════════════════════════════════════════════════════
-    @app.route("/api/admin/users/<uid>/update_profile", methods=["POST"])
-    @role_required("SuperAdmin")
-    def admin_update_user_profile(uid):
-        admin = current_user()
-        target = find_user_by_id(uid)
-        if not target:
-            return jsonify({"ok": False, "error": "User not found"}), 404
-            
-        if target.role == "SuperAdmin":
-            return jsonify({"ok": False, "error": "Cannot edit another SuperAdmin."}), 403
-
-        field = (request.form.get("field") or "").strip()
-        value = (request.form.get("value") or "").strip()
-
-        # ─── FULL NAME ───
-        if field == "full_name":
-            if len(value) < 2:
-                return jsonify({"ok": False, "error": "Name too short."}), 400
-            
-            old_name = target.full_name
-            target.full_name = value
-            
-            notify(target.id, "✏️ Full Name Updated by Admin", 
-                   f"Your full name was updated to \"{value}\" by an admin.", 
-                   kind="info")
-            
-            try: save_to_mongo()
-            except: pass
-            return jsonify({"ok": True, "message": f"Full name updated to {value}."})
-
-        # ─── USERNAME ───
-        elif field == "username":
-            if len(value) < 3 or len(value) > 30:
-                return jsonify({"ok": False, "error": "Username must be 3-30 characters."}), 400
-            if not re.match(r"^[a-zA-Z0-9_.\-]+$", value):
-                return jsonify({"ok": False, "error": "Invalid characters."}), 400
-
-            for other in users:
-                if other.id != target.id and other.username.lower() == value.lower():
-                    return jsonify({"ok": False, "error": "Username already taken."}), 409
-
-            old_username = target.username
-            
-            # ✅ I-save sa history para makapag-login pa rin gamit ang luma
-            if not hasattr(target, 'username_history') or target.username_history is None:
-                target.username_history = []
-            target.username_history.append(old_username)
-            
-            target.username = value
-            
-            notify(target.id, "✏️ Username Changed by Admin", 
-                   f"Your username was changed by an admin from @{old_username} to @{value}. You can still use your old username to log in.", 
-                   kind="info")
-            
-            try: save_to_mongo()
-            except: pass
-            return jsonify({"ok": True, "message": f"Username updated to @{value}."})
-            
-        return jsonify({"ok": False, "error": "Unknown field"}), 400
-
-    # ═══════════════════════════════════════════════════════════
-    # EXISTING ROUTES
-    # ═══════════════════════════════════════════════════════════
     @app.route("/api/admin/delete/<uid>/flag", methods=["POST"])
     @role_required("SuperAdmin")
     def admin_flag_user(uid):
@@ -127,6 +60,11 @@ def register(app):
         notify(admin.id, "Deletion Scheduled",
                f"You flagged {target.full_name} (@{target.username}) for deletion in {unit_label}.",
                link="/super-admin#deletes", kind="info")
+        
+        # ✅ SAVE SA DB
+        try: save_to_mongo()
+        except Exception as e: print(f"⚠️ Save failed: {e}")
+
         flash(f"Deletion scheduled for {target.full_name} in {unit_label}.", "success")
         return redirect(url_for("super_admin_page")+"#deletes")
 
@@ -148,6 +86,10 @@ def register(app):
         notify(u.id, "Appeal Submitted",
                "Your appeal has been sent to the Super Admin for review.",
                link=f"/{u.role.lower()}#account", kind="info")
+        
+        try: save_to_mongo()
+        except: pass
+        
         flash("Appeal submitted. Super Admin will review.", "success")
         return redirect(url_for("dashboard")+"#account")
 
@@ -162,6 +104,10 @@ def register(app):
         u.delete_requested_at = None
         u.delete_grace_until = None
         u.delete_reason = ""
+        
+        try: save_to_mongo()
+        except: pass
+        
         flash("Account deletion cancelled. Welcome back!", "success")
         return redirect(url_for("dashboard")+"#account")
 
@@ -175,6 +121,11 @@ def register(app):
         target.status = "deleted"
         target.username = f"deleted_{target.id}"
         notify(target.id, "Account Deleted", "Your account has been deleted.", kind="info")
+        
+        # ✅ SAVE SA DB
+        try: save_to_mongo()
+        except: pass
+        
         flash(f"Deleted {target.full_name}.", "success")
         return redirect(url_for("super_admin_page")+"#deletes")
 
@@ -192,6 +143,10 @@ def register(app):
         notify(target.id, "Deletion Cancelled",
                "Super Admin rejected the deletion. Your account is active.",
                link=f"/{target.role.lower()}#account", kind="info")
+        
+        try: save_to_mongo()
+        except: pass
+        
         flash(f"Restored {target.full_name}.", "success")
         return redirect(url_for("super_admin_page")+"#deletes")
 
@@ -205,12 +160,19 @@ def register(app):
         if target.role == "SuperAdmin":
             flash("Cannot delete Super Admin.", "error")
             return redirect(url_for("super_admin_page"))
+            
+        # ✅ Burahin sa memory
         users.remove(target)
         studies[:] = [s for s in studies if s.get("teacher_id") != uid]
         quiz_results[:] = [r for r in quiz_results if r["student_id"] != uid]
         attendance[:] = [a for a in attendance if a["student_id"] != uid]
         connections[:] = [c for c in connections
                           if c["student_id"] != uid and c["teacher_id"] != uid]
+                          
+        # ✅ SAVE SA DB (Para tuluyang mabura sa MongoDB)
+        try: save_to_mongo()
+        except: pass
+        
         flash(f"User '{target.username}' permanently deleted.", "success")
         return redirect(url_for("super_admin_page")+"#delete")
 
@@ -241,6 +203,9 @@ def register(app):
                "Your password was reset. To view your new temporary password, "
                "log in using your OLD password and username.",
                link=f"/{target.role.lower()}#account", kind="reset")
+               
+        try: save_to_mongo()
+        except: pass
 
         flash(f"✅ Password reset for {target.full_name}. "
               f"User must log in with old password to view temp password.",
@@ -269,6 +234,10 @@ def register(app):
                "Your password was reset. Log in with your OLD password "
                "to view your temporary password on the login page.",
                link=f"/{target.role.lower()}#account", kind="reset")
+               
+        try: save_to_mongo()
+        except: pass
+               
         return jsonify({
             "ok": True,
             "username": target.username,
