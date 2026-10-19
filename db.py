@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """MongoDB connection and persistence."""
 import os
-from pymongo import MongoClient
+from pymongo import MongoClient, ReplaceOne, DeleteMany
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
 MONGO_URI = os.environ.get("MONGO_URI", "")
@@ -13,14 +13,12 @@ _is_connected = False
 
 
 def init_db():
-    """Initialize MongoDB connection. Call this on app startup."""
     global _client, _db, _is_connected
     if not MONGO_URI:
         print("⚠️  MONGO_URI not set — running WITHOUT persistence!")
         return False
     try:
         _client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-        # Test connection
         _client.admin.command("ping")
         _db = _client[MONGO_DB]
         _is_connected = True
@@ -40,15 +38,11 @@ def is_connected():
     return _is_connected
 
 
-# ═══════════════════════════════════════════════════════════════
-# USER SERIALIZATION
-# ═══════════════════════════════════════════════════════════════
 def user_to_doc(user):
-    """Convert User object → MongoDB document."""
     return {
         "id": user.id,
         "username": user.username,
-        "username_history": getattr(user, 'username_history', []),  # ✅ IDAGDAG
+        "username_history": getattr(user, 'username_history', []),
         "role": user.role,
         "full_name": user.full_name,
         "status": user.status,
@@ -61,49 +55,24 @@ def user_to_doc(user):
         "old_password_hash": user.old_password_hash,
         "reset_by": user.reset_by,
         "reset_at": user.reset_at,
-        # Access mangled private name
         "_password_hash": getattr(user, "_User__password_hash", None),
     }
 
 
 def doc_to_user(doc):
-    """Convert MongoDB document → User object."""
-    from models import SuperAdmin, Teacher, Student
-
+    from models import SuperAdmin, Teacher, Student, User
     role = doc.get("role", "User")
     password_hash = doc.get("_password_hash")
 
     if role == "SuperAdmin":
-        user = SuperAdmin(
-            username=doc.get("username", ""),
-            password_hash=password_hash,
-            full_name=doc.get("full_name", "Super Admin"),
-        )
+        user = SuperAdmin(username=doc.get("username", ""), password_hash=password_hash, full_name=doc.get("full_name", "Super Admin"))
     elif role == "Teacher":
-        user = Teacher(
-            username=doc.get("username", ""),
-            password_hash=password_hash,
-            full_name=doc.get("full_name"),
-            status=doc.get("status", "active"),
-        )
+        user = Teacher(username=doc.get("username", ""), password_hash=password_hash, full_name=doc.get("full_name"), status=doc.get("status", "active"))
     elif role == "Student":
-        user = Student(
-            username=doc.get("username", ""),
-            password_hash=password_hash,
-            full_name=doc.get("full_name"),
-            status=doc.get("status", "active"),
-        )
+        user = Student(username=doc.get("username", ""), password_hash=password_hash, full_name=doc.get("full_name"), status=doc.get("status", "active"))
     else:
-        from models import User
-        user = User(
-            username=doc.get("username", ""),
-            password_hash=password_hash,
-            role=role,
-            full_name=doc.get("full_name"),
-            status=doc.get("status", "active"),
-        )
+        user = User(username=doc.get("username", ""), password_hash=password_hash, role=role, full_name=doc.get("full_name"), status=doc.get("status", "active"))
 
-    # Overwrite generated fields
     user.id = doc.get("id", user.id)
     user.username_history = doc.get("username_history") or []
     user.created_at = doc.get("created_at", user.created_at)
@@ -115,118 +84,79 @@ def doc_to_user(doc):
     user.old_password_hash = doc.get("old_password_hash")
     user.reset_by = doc.get("reset_by")
     user.reset_at = doc.get("reset_at")
-
     return user
 
 
-# ═══════════════════════════════════════════════════════════════
-# LOAD FROM MONGODB
-# ═══════════════════════════════════════════════════════════════
 def load_all(users, studies, quiz_results, attendance, notifications, connections):
-    """Load all collections from MongoDB into in-memory lists."""
-    if not _is_connected:
-        print("⚠️  Skipping load — not connected")
-        return
-
-    # Users
+    if not _is_connected: return
     users.clear()
     for doc in _db["users"].find({}, {"_id": 0}):
-        try:
-            users.append(doc_to_user(doc))
-        except Exception as e:
-            print(f"⚠️  Failed to load user: {e}")
-    print(f"   Loaded {len(users)} users")
-
-    # Studies
-    studies.clear()
-    for doc in _db["studies"].find({}, {"_id": 0}):
-        studies.append(doc)
-    print(f"   Loaded {len(studies)} studies")
-
-    # Quiz results
-    quiz_results.clear()
-    for doc in _db["quiz_results"].find({}, {"_id": 0}):
-        quiz_results.append(doc)
-    print(f"   Loaded {len(quiz_results)} quiz results")
-
-    # Attendance
-    attendance.clear()
-    for doc in _db["attendance"].find({}, {"_id": 0}):
-        attendance.append(doc)
-    print(f"   Loaded {len(attendance)} attendance records")
-
-    # Notifications
-    notifications.clear()
-    for doc in _db["notifications"].find({}, {"_id": 0}):
-        notifications.append(doc)
-    print(f"   Loaded {len(notifications)} notifications")
-
-    # Connections
-    connections.clear()
-    for doc in _db["connections"].find({}, {"_id": 0}):
-        connections.append(doc)
-    print(f"   Loaded {len(connections)} connections")
+        try: users.append(doc_to_user(doc))
+        except Exception as e: pass
+    studies.clear(); studies.extend(list(_db["studies"].find({}, {"_id": 0})))
+    quiz_results.clear(); quiz_results.extend(list(_db["quiz_results"].find({}, {"_id": 0})))
+    attendance.clear(); attendance.extend(list(_db["attendance"].find({}, {"_id": 0})))
+    notifications.clear(); notifications.extend(list(_db["notifications"].find({}, {"_id": 0})))
+    connections.clear(); connections.extend(list(_db["connections"].find({}, {"_id": 0})))
 
 
-# ═══════════════════════════════════════════════════════════════
-# SAVE TO MONGODB
-# ═══════════════════════════════════════════════════════════════
 def _clean_doc(doc):
-    """Remove problematic keys and ensure JSON-serializable."""
-    if not isinstance(doc, dict):
-        return doc
+    if not isinstance(doc, dict): return doc
     return {k: v for k, v in doc.items() if k != "_id"}
 
 
 def save_all(users, studies, quiz_results, attendance, notifications, connections):
-    """Save all in-memory data back to MongoDB. Safe Upsert (No Overwrite)."""
-    if not _is_connected:
-        return
+    """✅ OPTIMIZED: Gumagamit ng bulk_write para isang bagsakan lang ang save."""
+    if not _is_connected: return
 
     try:
-        # ─── USERS ───
-        coll = _db["users"]
+        # 1. USERS
+        ops = []
         current_ids = [u.id for u in users]
-        # Buburahin lang kung wala na sa RAM (meaning, dinelete sa system)
-        coll.delete_many({"id": {"$nin": current_ids}})
-        # I-update kung existing, i-insert kung bago
+        ops.append(DeleteMany({"id": {"$nin": current_ids}}))
         for u in users:
-            coll.replace_one({"id": u.id}, user_to_doc(u), upsert=True)
+            ops.append(ReplaceOne({"id": u.id}, user_to_doc(u), upsert=True))
+        if ops: _db["users"].bulk_write(ops, ordered=False)
 
-        # ─── STUDIES ───
-        coll = _db["studies"]
+        # 2. STUDIES
+        ops = []
         current_ids = [s["id"] for s in studies]
-        coll.delete_many({"id": {"$nin": current_ids}})
+        ops.append(DeleteMany({"id": {"$nin": current_ids}}))
         for s in studies:
-            coll.replace_one({"id": s["id"]}, _clean_doc(s), upsert=True)
+            ops.append(ReplaceOne({"id": s["id"]}, _clean_doc(s), upsert=True))
+        if ops: _db["studies"].bulk_write(ops, ordered=False)
 
-        # ─── QUIZ RESULTS ───
-        coll = _db["quiz_results"]
+        # 3. QUIZ RESULTS
+        ops = []
         current_ids = [r["id"] for r in quiz_results]
-        coll.delete_many({"id": {"$nin": current_ids}})
+        ops.append(DeleteMany({"id": {"$nin": current_ids}}))
         for r in quiz_results:
-            coll.replace_one({"id": r["id"]}, _clean_doc(r), upsert=True)
+            ops.append(ReplaceOne({"id": r["id"]}, _clean_doc(r), upsert=True))
+        if ops: _db["quiz_results"].bulk_write(ops, ordered=False)
 
-        # ─── ATTENDANCE ───
-        coll = _db["attendance"]
+        # 4. ATTENDANCE
+        ops = []
         current_ids = [a["id"] for a in attendance]
-        coll.delete_many({"id": {"$nin": current_ids}})
+        ops.append(DeleteMany({"id": {"$nin": current_ids}}))
         for a in attendance:
-            coll.replace_one({"id": a["id"]}, _clean_doc(a), upsert=True)
+            ops.append(ReplaceOne({"id": a["id"]}, _clean_doc(a), upsert=True))
+        if ops: _db["attendance"].bulk_write(ops, ordered=False)
 
-        # ─── NOTIFICATIONS ───
-        coll = _db["notifications"]
+        # 5. NOTIFICATIONS
+        ops = []
         current_ids = [n["id"] for n in notifications]
-        coll.delete_many({"id": {"$nin": current_ids}})
+        ops.append(DeleteMany({"id": {"$nin": current_ids}}))
         for n in notifications:
-            coll.replace_one({"id": n["id"]}, _clean_doc(n), upsert=True)
+            ops.append(ReplaceOne({"id": n["id"]}, _clean_doc(n), upsert=True))
+        if ops: _db["notifications"].bulk_write(ops, ordered=False)
 
-        # ─── CONNECTIONS ───
-        coll = _db["connections"]
+        # 6. CONNECTIONS
+        ops = []
         current_ids = [c["id"] for c in connections]
-        coll.delete_many({"id": {"$nin": current_ids}})
+        ops.append(DeleteMany({"id": {"$nin": current_ids}}))
         for c in connections:
-            coll.replace_one({"id": c["id"]}, _clean_doc(c), upsert=True)
+            ops.append(ReplaceOne({"id": c["id"]}, _clean_doc(c), upsert=True))
+        if ops: _db["connections"].bulk_write(ops, ordered=False)
 
     except Exception as e:
         print(f"❌ Save to MongoDB failed: {e}")

@@ -154,19 +154,6 @@ else:
     seed_defaults()
 
 
-# ═══════════════════════════════════════════════════════════════
-# AUTO-SAVE AFTER MUTATIONS
-# ═══════════════════════════════════════════════════════════════
-@app.after_request
-def persist_after_mutation(response):
-    """Save to MongoDB after every POST request (mutations only)."""
-    if request.method == "POST" and db.is_connected():
-        try:
-            save_to_mongo()
-        except Exception as e:
-            print(f"⚠️  Auto-save failed: {e}")
-    return response
-
 
 # ═══════════════════════════════════════════════════════════════
 # ERROR HANDLERS
