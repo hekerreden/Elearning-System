@@ -293,12 +293,14 @@ def register(app):
         if page_type == "identification":
             page["correct_answer"] = request.form.get("correct_answer", "").strip()
         elif page_type == "multiple_choice":
-            n = study.get("mc_options", 4)
+            # ✅ FIX: Laging 4 choices para hindi mawala ang tinype ng user
+            n = 4 
             page["choices"] = [request.form.get(f"choice_{i}", "").strip() for i in range(n)]
             try:
                 page["correct_index"] = int(request.form.get("correct_index", 0))
             except ValueError:
                 page["correct_index"] = 0
+                
         elif page_type == "true_false":
             val = request.form.get("correct_bool", "true")
             page["correct_bool"] = (val == "true")
