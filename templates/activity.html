@@ -128,6 +128,11 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
   transition:border-color .15s,box-shadow .15s;
   -webkit-tap-highlight-color:transparent;
 }
+.cs-trigger:disabled, .cs-trigger.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #151517;
+}
 .cs-trigger:hover{border-color:#555}
 .cs-trigger:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,119,242,.18)}
 .cs-trigger.open{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,119,242,.18);}
@@ -165,7 +170,7 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
 .cs-option.focused:not(.disabled){background:rgba(24,119,242,.14)}
 .cs-option.selected{background:rgba(24,119,242,.18);color:#fff;font-weight:600;}
 .cs-option.selected::after{content:'✓';color:var(--blue-hover);font-weight:700;flex-shrink:0;}
-.cs-option.disabled { opacity: 0.4; cursor: not-allowed; background: transparent !important; }
+.cs-option.disabled { opacity: 0.3; cursor: not-allowed; background: transparent !important; }
 .cs-option.disabled::after { content: ''; }
 select[data-custom]{display:none !important}
 
@@ -201,7 +206,7 @@ select[data-custom]{display:none !important}
   flex: 1;
 }
 .flow-order {
-  width: 100px !important;
+  width: 120px !important; /* Pinalapad para magkasya ang "Select..." */
   padding: 4px 8px !important;
 }
 .flow-config {
@@ -334,10 +339,10 @@ select[data-custom]{display:none !important}
               </select>
             </div>
             <div class="flow-config">
-              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
-              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="30"></label>
-              <label>Score <input type="number" class="flow-score" min="0" value="1"></label>
-              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+              <label>Pages <input type="number" class="flow-count" min="1" value="1" oninput="fixLeadingZero(this)"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="30" oninput="fixLeadingZero(this)"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="1" oninput="fixLeadingZero(this)"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0" oninput="fixLeadingZero(this)"></label>
             </div>
           </div>
 
@@ -353,10 +358,10 @@ select[data-custom]{display:none !important}
               </select>
             </div>
             <div class="flow-config">
-              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
-              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="30"></label>
-              <label>Score <input type="number" class="flow-score" min="0" value="1"></label>
-              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+              <label>Pages <input type="number" class="flow-count" min="1" value="1" oninput="fixLeadingZero(this)"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="30" oninput="fixLeadingZero(this)"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="1" oninput="fixLeadingZero(this)"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0" oninput="fixLeadingZero(this)"></label>
             </div>
           </div>
 
@@ -372,10 +377,10 @@ select[data-custom]{display:none !important}
               </select>
             </div>
             <div class="flow-config">
-              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
-              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="60"></label>
-              <label>Score <input type="number" class="flow-score" min="0" value="5"></label>
-              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+              <label>Pages <input type="number" class="flow-count" min="1" value="1" oninput="fixLeadingZero(this)"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="60" oninput="fixLeadingZero(this)"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="5" oninput="fixLeadingZero(this)"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0" oninput="fixLeadingZero(this)"></label>
             </div>
           </div>
 
@@ -391,10 +396,10 @@ select[data-custom]{display:none !important}
               </select>
             </div>
             <div class="flow-config">
-              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
-              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="15"></label>
-              <label>Score <input type="number" class="flow-score" min="0" value="1"></label>
-              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+              <label>Pages <input type="number" class="flow-count" min="1" value="1" oninput="fixLeadingZero(this)"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="15" oninput="fixLeadingZero(this)"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="1" oninput="fixLeadingZero(this)"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0" oninput="fixLeadingZero(this)"></label>
             </div>
           </div>
 
@@ -410,10 +415,10 @@ select[data-custom]{display:none !important}
               </select>
             </div>
             <div class="flow-config">
-              <label>Pages <input type="number" class="flow-count" min="1" value="1"></label>
-              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="120"></label>
-              <label>Score <input type="number" class="flow-score" min="0" value="10"></label>
-              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0"></label>
+              <label>Pages <input type="number" class="flow-count" min="1" value="1" oninput="fixLeadingZero(this)"></label>
+              <label>Timer (s) <input type="number" class="flow-timer" min="1" value="120" oninput="fixLeadingZero(this)"></label>
+              <label>Score <input type="number" class="flow-score" min="0" value="10" oninput="fixLeadingZero(this)"></label>
+              <label>Penalty <input type="number" class="flow-penalty" min="0" value="0" oninput="fixLeadingZero(this)"></label>
             </div>
           </div>
         </div>
@@ -660,6 +665,13 @@ var currentStudyId = "{{ study.id }}";
 var currentPageIdx = {{ page_idx }};
 var currentPageType = "{{ study.pages[page_idx].type if page_idx < study.pages|length else ns.type }}";
 
+function fixLeadingZero(input) {
+  // ✅ Mas solid na logic para mawala ang 03
+  var val = input.value;
+  if (val.length > 1 && val.startsWith('0')) {
+    input.value = parseInt(val, 10);
+  }
+}
 async function publishStudy() {
   var btn = document.getElementById('publishBtn');
   var origText = btn.innerHTML;
@@ -796,11 +808,11 @@ function updateFlowOrders() {
       if (isActive && isTakenByOther) {
         opt.disabled = true;
         if (!opt.textContent.includes('(Taken)')) {
-          opt.textContent += ' (Taken)';
+          opt.textContent = opt.textContent.replace('(Taken)', '').trim() + ' (Taken)';
         }
       } else {
         opt.disabled = false;
-        opt.textContent = opt.textContent.replace(' (Taken)', '');
+        opt.textContent = opt.textContent.replace(' (Taken)', '').trim();
       }
     });
 
@@ -811,12 +823,19 @@ function updateFlowOrders() {
 
 function toggleFlowBlock(checkbox) {
   var block = checkbox.closest('.flow-block');
+  var select = block.querySelector('.flow-order');
+  var trigger = block.querySelector('.cs-trigger'); // Kunin ang custom trigger
+  
   if (checkbox.checked) {
     block.classList.add('active');
+    if (select) select.disabled = false; // Enable
+    if (trigger) trigger.disabled = false; // Enable custom UI
   } else {
     block.classList.remove('active');
-    // Optional: Reset to empty when unchecked? Yes, para malinis.
-    block.querySelector('.flow-order').value = ''; 
+    select.value = "";
+    if (select) select.disabled = true; // Disable
+    if (trigger) trigger.disabled = true; // Disable custom UI
+    if (select._csUpdate) select._csUpdate(); // I-refresh pabalik sa "Select..."
   }
   updateFlowOrders();
 }
@@ -847,6 +866,15 @@ try {
       defaultBlock.querySelector('.flow-order').value = '1'; // Set default to 1st
     }
   }
+  document.querySelectorAll('.flow-block').forEach(function(b) {
+    var isChecked = b.querySelector('.flow-enable').checked;
+    var sel = b.querySelector('.flow-order');
+    var trg = b.querySelector('.cs-trigger');
+    if (!isChecked) {
+      if (sel) sel.disabled = true;
+      if (trg) trg.disabled = true;
+    }
+  });
   updateFlowOrders();
 } catch (e) { console.error(e); }
 
@@ -1033,7 +1061,7 @@ function convertSelects(root) {
       div.addEventListener('pointerdown', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        if (opt.disabled) return;
+        if (opt.disabled) return; // Wag hayaang mapindot
         doSelect(i);
         doClose();
       });
@@ -1043,7 +1071,7 @@ function convertSelects(root) {
     
     function doSelect(idx) {
       if (idx < 0 || idx >= sel.options.length) return;
-      if (sel.options[idx].disabled) return;
+      if (sel.options[idx].disabled) return; // Double check
       sel.value = sel.options[idx].value;
       sel.dispatchEvent(new Event('change', { bubbles: true }));
       refreshValue();
@@ -1056,8 +1084,8 @@ function convertSelects(root) {
       options.forEach(function(o, i) {
         var opt = sel.options[i];
         o.classList.toggle('selected', opt.value === sel.value);
-        o.classList.toggle('disabled', opt.disabled);
-        o.textContent = opt.textContent; // I-update ang text
+        o.classList.toggle('disabled', opt.disabled); // ✅ Add class para sa css
+        o.textContent = opt.textContent; // I-update text
       });
     }
     
@@ -1078,6 +1106,7 @@ function convertSelects(root) {
     trigger.addEventListener('pointerdown', function(e) {
       e.preventDefault();
       e.stopPropagation();
+      if (sel.disabled) return;
       if (menuOpen) doClose();
       else doOpen();
     });
@@ -1104,6 +1133,7 @@ function convertSelects(root) {
     sel.addEventListener('change', refreshValue);
     sel._csUpdate = refreshValue;
     refreshValue();
+    if (sel.disabled && trigger) trigger.disabled = true;
   });
 }
 
