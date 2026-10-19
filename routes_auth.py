@@ -2,9 +2,8 @@
 """Auth routes: login, signup, logout, dashboard, system-console."""
 import re
 from flask import render_template, request, redirect, url_for, session, flash
-from storage import users
-from helpers import find_user_by_username, find_user_by_id, notify
-from helpers import current_user, get_login_candidates
+from storage import users,save_to_mongo
+from helpers import find_user_by_username, find_user_by_id, notify,get_login_candidates, role_home,current_user
 from models import SuperAdmin, Teacher, Student
 
 
@@ -13,94 +12,58 @@ USERNAME_RE = re.compile(r"^[a-zA-Z0-9_.\-]{3,30}$")
 
 def register(app):
 
-    @app.route("/") 
-    def index():
-        if current_user():
-            return redirect(url_for("dashboard"))
-        return redirect(url_for("login"))
-
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if request.method == "POST":
-            username = request.form.get("username", "").strip()
+            username_input = request.form.get("username", "").strip()
             password = request.form.get("password", "")
 
-            if not username or not password:
-                flash("Username and password required.", "error")
-                return redirect(url_for("login"))
-
-            # ✅ 1. HANAPIN SA LAHAT NG CANDIDATES
-            candidates = get_login_candidates(username)
-            user = None
-            for c in candidates:
-                if c.check_password(password):
-                    user = c
-                    break
-
-            # ✅ 2. KUNG WALANG MATCH SA PASSWORD
-            if not user:
-                flash("Invalid username or password.", "error")
-                return redirect(url_for("login"))
-
-            # ✅ 3. I-CHECK KUNG LUMA ANG USERNAME
-            used_old_username = (user.username.lower() != username.lower())
-
-            # Check temp password
-            if user and user.reset_pending:
-                if user.check_old_password(password):
-                    return render_template(
-                        "login.html",
-                        show_temp=True,
-                        temp_password=user.temp_password,
-                        temp_username=user.username,
-                        temp_full_name=user.full_name,
-                    )
-                if password == user.temp_password:
-                    if user.status == "deleted":
-                        flash("This account has been deleted.", "error")
-                        return redirect(url_for("login"))
-                    session.clear()
-                    session["user_id"] = user.id
-                    session["role"] = user.role
-                    session["force_password_change"] = True
-                    session["current_temp_password"] = password
-                    flash(
-                        "🔓 Logged in with temporary password. "
-                        "Please change it in Account Settings.",
-                        "warning"
-                    )
-                    return redirect(url_for("dashboard"))
-                flash("Invalid username or password.", "error")
-                return redirect(url_for("login"))
-
-            # Check deleted status bago lahat
-            if user.status == "deleted":
-                flash("This account has been deleted.", "error")
-                return redirect(url_for("login"))
-
-            if user.role == "SuperAdmin":
-                flash("This account must use the system console.", "error")
-                return redirect(url_for("login"))
-
-            if user.role not in ("Teacher", "Student"):
-                flash("Invalid account role.", "error")
-                return redirect(url_for("login"))
-
-            # Session regeneration (anti-fixation)
-            session.clear()
-            session["user_id"] = user.id
-            session["role"] = user.role
+            # 1. Hanapin ang user (kasama ang mga lumang username sa history)
+            candidates = get_login_candidates(username_input)
             
-            # ✅ 4. MAG-FLASH NG WARNING KUNG LUMA ANG USERNAME
-            if used_old_username:
-                flash(f"👋 Welcome back! Your username was recently changed. Please use <b>@{user.username}</b> next time.", "warning")
+            if not candidates:
+                flash("Invalid username or password.", "error")
+                return render_template("login.html")
+
+            # 2. Kunin ang tamang user object
+            user = candidates[0]
+
+            # 3. CHECK KUNG TAMA ANG PASSWORD (Current o Temp)
+            if user.check_password(password):
+                # ✅ TAMA: Papasukin siya
+                session["user_id"] = user.id
+                
+                # Check kung temp password pa lang ang gamit
+                if getattr(user, "reset_pending", False):
+                    session["force_password_change"] = True
+                    session["current_temp_password"] = user.temp_password
+                    return redirect(url_for("dashboard"))
+                
+                # Check kung lumang username ang ginamit
+                if user.username.lower() != username_input.lower():
+                    flash(f"Welcome back! Note: You logged in using an old username. Your current username is @{user.username}.", "info")
+
+                return redirect(url_for("dashboard"))
+
+            # 4. CHECK KUNG LUMANG PASSWORD ANG TINYPE
+            elif user.check_old_password(password) and getattr(user, "temp_password", None):
+                # ✅ NAG-RESET SI ADMIN: Ipakita ang modal
+                return render_template(
+                    "login.html",
+                    show_temp=True,
+                    temp_username=user.username,
+                    temp_password=user.temp_password,
+                    temp_full_name=user.full_name
+                )
+
+            # 5. MALI TALAGA
             else:
-                flash(f"Welcome back, {user.full_name}!", "success")
+                flash("Invalid username or password.", "error")
+                return render_template("login.html")
 
-            return redirect(url_for("dashboard"))
-
+        # GET Request
         return render_template("login.html")
-
+        
     @app.route("/system-console", methods=["GET", "POST"])
     def super_admin_login():
         if request.method == "POST":
