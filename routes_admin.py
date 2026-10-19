@@ -73,23 +73,36 @@ def register(app):
     def appeal_delete():
         u = current_user()
         message = request.form.get("message", "").strip()
+        wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
         if u.status != "pending_delete":
+            if wants_json: return jsonify({"ok": False, "error": "No deletion to appeal."}), 400
             flash("No deletion to appeal.", "error")
             return redirect(url_for("dashboard"))
+
         u.status = "appealed"
+        u.appeal_message = message
+        u.appeal_at = now_str() # I-save ang oras
+        
+        # Notify Admins
         for x in users:
             if x.role == "SuperAdmin":
                 notify(x.id, "📩 Appeal Received",
                        f"{u.full_name} (@{u.username}) appealed their deletion. "
                        f"Message: {message[:120]}",
                        link="/super-admin#deletes", kind="appeal")
-        notify(u.id, "Appeal Submitted",
-               "Your appeal has been sent to the Super Admin for review.",
-               link=f"/{u.role.lower()}#account", kind="info")
-        
+                       
+        # Notify User (Success Notification)
+        notify(u.id, "✅ Appeal Submitted Successfully",
+               "Your appeal has been sent to the admin. Click to view details.",
+               link=f"/{u.role.lower()}#account", kind="appeal_success")
+               
         try: save_to_mongo()
         except: pass
         
+        if wants_json:
+            return jsonify({"ok": True, "message": "Appeal submitted successfully!"})
+
         flash("Appeal submitted. Super Admin will review.", "success")
         return redirect(url_for("dashboard")+"#account")
 

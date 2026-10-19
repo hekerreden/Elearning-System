@@ -131,8 +131,8 @@ def register(app):
             except Exception as e: print(f"⚠️ Save failed: {e}")
 
             if wants_json:
-                return jsonify({"ok": True, "message": f"Username updated to @{value}."})
-            flash(f"Username updated to @{value}.", "success")
+                return jsonify({"ok": True, "message": f"Username Updated to @{value}."})
+            flash(f"Username Updated to @{value}.", "success")
             return redirect(url_for(role_home(u.role)) + "#account")
 
         return _err("Unknown field.")

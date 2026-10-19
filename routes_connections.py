@@ -135,5 +135,5 @@ def register(app):
                    f"{actor.full_name} declined your connection request.",
                    link=f"/{other.role.lower()}#connect",
                    kind="connection_rejected")
-        flash("Request rejected.", "success")
+        flash("Request Rejected.", "success")
         return redirect(url_for(role_home(actor.role))+"#connect")

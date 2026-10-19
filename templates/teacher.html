@@ -345,9 +345,10 @@
     {% elif user.status == 'appealed' %}
     <div class="card mt2" style="border-left:3px solid #3b82f6;background:rgba(24,119,242,.06);">
       <h3>📩 Appeal Under Review</h3>
-      <p class="muted small mt1">
-        The Super Admin is reviewing your appeal. Please wait for a response.
-      </p>
+      <p class="muted small mt1">The Super Admin is reviewing your appeal. Please wait for a response.</p>
+      <button type="button" class="btn btn-blue btn-sm mt2" onclick="openAppealModal('{{ user.appeal_message|replace("'", "\\'") }}', '{{ user.appeal_at }}')">
+        View My Appeal
+      </button>
     </div>
     {% endif %}
   </div>

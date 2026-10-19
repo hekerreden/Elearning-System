@@ -1185,6 +1185,44 @@ select[data-custom]{display:none !important}
     </form>
   </div>
 </div>
+
+<!-- ================= APPEAL MODAL ================= -->
+<div class="modal-backdrop sub-modal" id="appealModal">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>📩 Submit Appeal</h3>
+      <button class="icon-btn" type="button" data-close>×</button>
+    </div>
+    
+    <div id="appealFormContainer">
+      <p class="muted small mb1">
+        Your account is flagged for deletion. Please explain why your account should not be deleted.
+      </p>
+      <form id="appealForm" class="form">
+        <label>Your Message *
+          <textarea name="message" required placeholder="I believe my account was flagged by mistake because..."></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+          <button type="submit" class="btn btn-blue" id="appealSubmitBtn">Submit Appeal</button>
+        </div>
+      </form>
+    </div>
+    
+    <div id="appealSuccessContainer" style="display:none;">
+      <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4);padding:16px;border-radius:8px;">
+        <p style="margin:0 0 10px;font-size:.9rem;color:#86efac;font-weight:600;">✅ Appeal Submitted</p>
+        <p style="margin:0;font-size:.85rem;color:var(--muted);">Your appeal has been sent to the admin.</p>
+        <hr style="border-color:rgba(34,197,94,.3);margin:12px 0;">
+        <p style="margin:0;font-size:.85rem;color:#fff;"><b>Your Message:</b><br><span id="appealViewMessage" style="color:var(--text-dim);"></span></p>
+        <p style="margin:8px 0 0;font-size:.8rem;color:var(--text-dim);"><b>Submitted At:</b> <span id="appealViewTime"></span></p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-green" data-close>Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endif %}
 
 <script>
@@ -1543,18 +1581,16 @@ select[data-custom]{display:none !important}
       // Bind Click Event sa Bawat Notification Item (Navigation)
       notifList.querySelectorAll('.notif-item').forEach(function(el) {
         el.addEventListener('click', function(ev) {
-          // Huwag i-trigger kung pumindot sa 3-dot menu o sa loob ng menu
           if (ev.target.closest('.notif-actions')) return;
           
           var nid = el.getAttribute('data-nid');
           var link = el.getAttribute('data-link');
+          var title = el.querySelector('b').textContent;
           
           // Auto mark as read
           if (el.classList.contains('unread')) {
             el.classList.remove('unread');
             fetch('/api/notifications/' + nid + '/read', { method: 'POST' });
-            
-            // Check kung may natitirang unread para sa pulang dot
             var stillUnread = notifList.querySelectorAll('.notif-item.unread').length;
             var notifDot = document.getElementById('notifDot');
             if (notifDot) {
@@ -1563,10 +1599,23 @@ select[data-custom]{display:none !important}
             }
           }
           
-          // Close panel
           document.getElementById('notifPanel').classList.remove('active');
           
-          // Navigate
+          // ✅ CHECK KUNG APPEAL NOTIFICATION
+          if (title.includes('Account Deletion Notice')) {
+            // Ipakita ang form (walang laman na message)
+            window.openAppealModal(null, null);
+            return;
+          }
+          if (title.includes('Appeal Submitted Successfully')) {
+            // Ipakita ang success view (kunin ang message at time galing sa session o UI)
+            // Dahil nasa backend na, pwede nating i-refresh na lang or ipakita yung latest state
+            // Simpleng workaround: Ipakita ang modal at hayaan ang user mag-refresh
+            showAlert("Your appeal is currently under review.", { title: "📩 Appeal Status" });
+            return;
+          }
+          
+          // Normal navigation
           if (link) {
             var parts = link.split('#');
             var linkPath = parts[0] || '';
@@ -1574,7 +1623,6 @@ select[data-custom]{display:none !important}
             var currentPath = window.location.pathname;
             
             if (linkPath === currentPath && linkHash) {
-              // Kung parehong page, smooth scroll or tab switch
               if (window.location.hash === '#' + linkHash) {
                 var targetNav = document.querySelector('.adminnav[data-section="' + linkHash + '"]');
                 if (targetNav) targetNav.click();
@@ -1582,7 +1630,6 @@ select[data-custom]{display:none !important}
                 window.location.hash = linkHash;
               }
             } else {
-              // Kung ibang page, redirect
               window.location.href = link;
             }
           }
@@ -1918,8 +1965,26 @@ select[data-custom]{display:none !important}
       } else {
         errBox.textContent = '❌ ' + (data.error || 'Something went wrong.');
         errBox.style.display = 'block';
+        
         var curField = cpForm.querySelector('input[name="current"]');
-        if (curField) { curField.value = ''; curField.focus(); }
+        var newField = cpForm.querySelector('input[name="new"]');
+        var confField = cpForm.querySelector('input[name="confirm"]');
+        
+        // ✅ KUNG PAREHO ANG CURRENT AT NEW PASSWORD: Burahin ang New at Confirm, iwanan ang Current
+        if (data.error && data.error.includes("different from current")) {
+          if (newField) newField.value = '';
+          if (confField) confField.value = '';
+          if (newField) newField.focus();
+        } 
+        // ✅ KUNG MALI ANG CURRENT PASSWORD: Burahin ang Current
+        else if (data.error && data.error.includes("Current password is incorrect")) {
+          if (curField) { curField.value = ''; curField.focus(); }
+        }
+        // ✅ KUNG IBA PANG ERROR (tulad ng masyadong maikli): Focus lang sa New
+        else {
+          if (newField) newField.focus();
+        }
+      }
       }
     })
     .catch(function (err) {
@@ -2492,6 +2557,62 @@ select[data-custom]{display:none !important}
   });
 
   window.convertSelects = convertSelects;
+  
+    // ═══ APPEAL MODAL LOGIC ═══
+  window.openAppealModal = function(message, time) {
+    var formContainer = document.getElementById('appealFormContainer');
+    var successContainer = document.getElementById('appealSuccessContainer');
+    
+    if (message) {
+      // May existing appeal na
+      formContainer.style.display = 'none';
+      successContainer.style.display = 'block';
+      document.getElementById('appealViewMessage').textContent = message;
+      document.getElementById('appealViewTime').textContent = time || 'Just now';
+    } else {
+      // Wala pa, ipakita ang form
+      formContainer.style.display = 'block';
+      successContainer.style.display = 'none';
+      document.getElementById('appealForm').reset();
+    }
+    window.openModal('appealModal');
+  };
+  
+  // I-handle ang submit ng appeal form via AJAX
+  document.addEventListener('submit', function(ev) {
+    if (ev.target.id !== 'appealForm') return;
+    ev.preventDefault();
+    
+    var btn = document.getElementById('appealSubmitBtn');
+    var origText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    
+    var fd = new FormData(ev.target);
+    
+    fetch('/api/account/appeal', {
+        method: 'POST',
+        body: fd,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          // Ipakita ang success view
+          var msg = ev.target.querySelector('textarea').value;
+          openAppealModal(msg, new Date().toLocaleString());
+          // I-reload ang notifications para lumabas ang success notification
+          setTimeout(function() { loadNotifications(); }, 500);
+        } else {
+          showAlert(data.error || 'Failed to submit appeal.', { danger: true });
+        }
+      })
+      .catch(err => showAlert('Network error.', { danger: true }))
+      .finally(() => {
+        btn.disabled = false;
+        btn.textContent = origText;
+      });
+  });
 
 })();
 

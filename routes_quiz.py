@@ -214,7 +214,7 @@ def register(app):
         try:
             new_score = int(request.form.get("score", result["score"]))
         except ValueError:
-            flash("Number required.", "error")
+            flash("Number Required.", "error")
             return redirect(url_for("teacher_page"))
             
         result["score"] = new_score

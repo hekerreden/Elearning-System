@@ -27,6 +27,8 @@ class User:
         self.old_password_hash = None
         self.reset_by = None
         self.reset_at = None
+        self.appeal_message = None
+        self.appeal_at = None
 
     def check_password(self, p):
         return verify_password(p, self.__password_hash)

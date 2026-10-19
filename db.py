@@ -55,6 +55,8 @@ def user_to_doc(user):
         "old_password_hash": user.old_password_hash,
         "reset_by": user.reset_by,
         "reset_at": user.reset_at,
+        "appeal_message": getattr(user, 'appeal_message', None),
+        "appeal_at": getattr(user, 'appeal_at', None),
         "_password_hash": getattr(user, "_User__password_hash", None),
     }
 
@@ -84,6 +86,8 @@ def doc_to_user(doc):
     user.old_password_hash = doc.get("old_password_hash")
     user.reset_by = doc.get("reset_by")
     user.reset_at = doc.get("reset_at")
+    user.appeal_message = doc.get("appeal_message")
+    user.appeal_at = doc.get("appeal_at")
     return user
 
 
