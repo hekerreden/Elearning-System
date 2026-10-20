@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>{{ study.title }}</title>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -32,6 +31,7 @@ input[type=text],textarea,select{
   font-size:.9rem;font-family:inherit;outline:none;transition:.15s}
 input:focus,textarea:focus,select:focus{border-color:var(--blue);
   box-shadow:0 0 0 3px rgba(24,119,242,.18)}
+textarea{resize:vertical;min-height:70px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
   border:none;border-radius:6px;padding:9px 16px;font-size:.86rem;
   font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;
@@ -39,13 +39,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
 .btn-blue{background:var(--blue)}.btn-green{background:var(--green)}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
 .btn-block{width:100%}
-.tag{display:inline-block;background:#151517;border:1px solid var(--border);
-  border-radius:999px;padding:2px 10px;font-size:.72rem;color:var(--text-dim)}
-.pill-row{display:flex;gap:6px;flex-wrap:wrap}
 .muted{color:var(--muted)}.small{font-size:.8rem}
-.row-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-
-/* Timer Box */
 .timer-box{text-align:center;padding:12px 16px;border-radius:10px;
   background:rgba(24,119,242,.08);border:1px solid rgba(24,119,242,.3);
   min-width: 120px;}
@@ -54,33 +48,6 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
 .timer{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;
   color:var(--blue-hover)}
 .timer.done{color:#4ade80}
-
-/* 🖥️ CAMERA OVERLAY (Moved to Bottom-Right) */
-#camera-overlay {
-  position:fixed; bottom:20px; right:20px;
-  width:110px; height:85px; background:#000;
-  border:2px solid var(--red); border-radius:8px;
-  z-index:9998; overflow:hidden; display:none;
-  box-shadow:0 4px 12px rgba(0,0,0,0.5);
-}
-#webcam { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
-.proctor-badge { position:absolute; bottom:0; left:0; right:0;
-  background:rgba(239,68,68,0.9); color:#fff; font-size:9px;
-  text-align:center; font-weight:bold; padding:2px;}
-
-/* STATE OVERLAYS */
-.full-screen-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.9);
-  z-index:100000; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; text-align:center;
-  padding:24px; backdrop-filter:blur(5px);
-}
-.full-screen-overlay h1 { font-size:1.8rem; margin-bottom:10px; color:#fff; }
-.full-screen-overlay p { color:var(--muted); font-size:1rem; max-width:400px; margin-bottom:20px; }
-.overlay-icon { font-size:4rem; margin-bottom:15px; animation:pop 0.5s ease; }
-@keyframes pop { 0% { transform: scale(0.5); opacity:0; } 100% { transform: scale(1); opacity:1; } }
-
-/* Choices */
 .choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .choice-row{display:flex;gap:8px;align-items:center}
 .choice-letter{width:32px;height:32px;background:#151517;
@@ -91,29 +58,25 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
 .tf-row{display:flex;gap:16px;margin-top:8px}
 .tf-row label{flex-direction:row;align-items:center;text-transform:none;
   font-size:.95rem;font-weight:500;gap:8px;margin:0;color:var(--text)}
+
+/* Start Overlay */
+.start-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.95);
+  z-index:100000; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; padding:24px;
+}
+.start-overlay h1 { font-size:1.8rem; margin-bottom:10px; color:#fff; }
+.start-overlay p { color:var(--muted); font-size:1rem; max-width:400px; margin-bottom:20px; }
 </style>
 </head>
 <body>
 
-<!-- ═══════════════ ENVIRONMENT CHECK OVERLAY ═══════════════ -->
-<div id="envCheckOverlay" class="full-screen-overlay">
-  <div class="overlay-icon" id="envIcon">📷</div>
-  <h1 id="envTitle">Camera Check</h1>
-  <p id="envMsg">Initializing camera... Please ensure you are in a well-lit room.</p>
-  <div id="envLoader" style="width:40px;height:40px;border:4px solid rgba(255,255,255,0.1);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;display:block;"></div>
-</div>
-
-<!-- ═══════════════ COUNTDOWN OVERLAY ═══════════════ -->
-<div id="countdownOverlay" class="full-screen-overlay" style="display:none;">
-  <h1 style="font-size:6rem; color:var(--blue-hover);" id="countdownText">3</h1>
-  <p>Get Ready!</p>
-</div>
-
-<!-- ═══════════════ RANDOM CHALLENGE OVERLAY ═══════════════ -->
-<div id="challengeOverlay" class="full-screen-overlay" style="display:none;">
-  <div class="overlay-icon" id="challengeIcon">👀</div>
-  <h1 id="challengeTitle">Liveness Check</h1>
-  <p id="challengeMsg">Look Left to proceed...</p>
+<!-- ═══════════════ START OVERLAY ═══════════════ -->
+<div class="start-overlay" id="startOverlay">
+  <div style="font-size:4rem; margin-bottom:15px;">🛡️</div>
+  <h1>Proctoring Enabled</h1>
+  <p>This quiz monitors <b>tab switching</b> and <b>window focus</b>. Leaving the quiz area will be recorded as a violation.</p>
+  <button type="button" class="btn btn-blue" id="startQuizBtn" style="padding: 12px 24px; font-size: 1rem;">I Understand, Start Quiz</button>
 </div>
 
 <!-- ═══════════════ QUIZ CONTENT ═══════════════ -->
@@ -141,10 +104,40 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
   </div>
 </div>
 
-<!-- CAMERA OVERLAY -->
-<div id="camera-overlay">
-  <video id="webcam" autoplay playsinline muted></video>
-  <div class="proctor-badge">PROCTORED</div>
+<!-- ═══════════════ RESULT PHASE ═══════════════ -->
+<div class="wrap" id="resultWrap" style="display:none;">
+  <div class="card" style="text-align:center;">
+    <h1>🎉 Quiz Submitted!</h1>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px;max-width:640px;margin:1rem auto 0;">
+      <div class="card" style="margin:0;text-align:center;">
+        <div class="timer-label">Score</div>
+        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rScore">0</div>
+      </div>
+      <div class="card" style="margin:0;text-align:center;">
+        <div class="timer-label">Correct</div>
+        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rCorrect">0/0</div>
+      </div>
+      <div class="card" style="margin:0;text-align:center;">
+        <div class="timer-label">Medal</div>
+        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rMedal">—</div>
+      </div>
+    </div>
+    <p class="muted small" id="rNote" style="display:none;margin-top:14px;">
+      📌 May mga essay / file upload items na kailangan i-grade ng teacher. Hintayin ang update.
+    </p>
+  </div>
+
+  <div class="card" id="violationSummary" style="display:none; border-color:var(--red);">
+    <div class="card-title">
+      <h2 style="color:var(--red);">🚨 Proctoring Logs</h2>
+    </div>
+    <p class="muted small">Ang mga sumusunod ay na-detect ng system habang nagsasagot ka:</p>
+    <div id="studentViolationList" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;"></div>
+  </div>
+
+  <div style="text-align:center;margin-top:1.5rem;">
+    <a class="btn btn-blue" href="/student#studies">← Back to Dashboard</a>
+  </div>
 </div>
 
 <!-- ACTIVITY DATA -->
@@ -157,13 +150,10 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
   var data      = JSON.parse(document.getElementById('activityData').textContent);
   var pages     = data.pages || [];
   var qType     = data.type || 'identification';
-  var hasPPT    = !!data.has_ppt && (data.slides||[]).length > 0;
-  var studySecs = data.study_timer || 0;
   var qSecs     = data.question_timer || 30;
-  var maxBack   = data.max_back || 0;
 
   var state = {
-    phase: 'idle', // idle, env_check, ready, countdown, quiz, challenge, submitted
+    phase: 'start', // start, quiz, submitted
     qIdx: 0,
     answers: new Array(pages.length).fill(null),
     startedAt: Date.now(),
@@ -172,37 +162,21 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
     qInterval: null
   };
 
+  var quizActive = false;
   var lastViolationTime = 0;
-  var lookingAwayTime = 0;
-  var lastBlinkTime = Date.now();
-  var challengeActive = false;
-  var currentChallenge = null;
-  var blinkCount = 0;
-  var faceMesh = null;
+  var blurGuard = false;
 
   /* ═══════════════════════════════════════════════════════════
-     UI & STATE MANAGEMENT
+     BROWSER VIOLATION DETECTION
      ═══════════════════════════════════════════════════════════ */
-  function setOverlay(id, show) {
-    var el = document.getElementById(id);
-    if(el) el.style.display = show ? 'flex' : 'none';
-  }
-  function updateEnvStatus(title, msg, icon, isLoading) {
-    document.getElementById('envTitle').innerText = title;
-    document.getElementById('envMsg').innerText = msg;
-    document.getElementById('envIcon').innerText = icon;
-    document.getElementById('envLoader').style.display = isLoading ? 'block' : 'none';
-  }
-
-  /* ═══════════════════════════════════════════════════════════
-     LOGGING VIOLATIONS
-     ═══════════════════════════════════════════════════════════ */
-  function logViolation(type, source) {
-    if (state.phase === 'submitted') return;
+  function logViolation(type) {
+    if (!quizActive || state.phase === 'submitted') return;
+    
     var now = Date.now();
-    if (now - lastViolationTime < 3000) return;
+    if (now - lastViolationTime < 2000) return; // 2 sec throttle
     lastViolationTime = now;
 
+    // Visual Warning
     var warning = document.createElement('div');
     warning.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:12px 24px;border-radius:8px;z-index:100001;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.5);animation:slideIn .3s ease;';
     warning.textContent = '⚠️ WARNING: ' + type.replace(/_/g, ' ');
@@ -212,224 +186,56 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
     fetch('/api/violation/start', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ study_id: data.id, type: type, source: source })
+      body: JSON.stringify({ study_id: data.id, type: type, source: 'browser' })
     }).catch(function(){});
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     MEDIAPIPE AI (Environment Check & Proctoring)
-     ═══════════════════════════════════════════════════════════ */
-  async function initCamera() {
-    try {
-      var stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-      var video = document.getElementById('webcam');
-      video.srcObject = stream;
-      video.play();
-      document.getElementById('camera-overlay').style.display = 'block';
-      
-      // Start environment check
-      state.phase = 'env_check';
-      startMediaPipe(video);
-    } catch (err) {
-      updateEnvStatus('Camera Denied', 'You cannot take this quiz without camera access.', '❌', false);
-      logViolation('CAMERA_DENIED', 'camera');
+  // 1. Tab Switch Detection
+  document.addEventListener('visibilitychange', function() {
+    if (!quizActive) return;
+    if (document.hidden) {
+      blurGuard = true;
+      logViolation('TAB_SWITCHED');
+      setTimeout(function() { blurGuard = false; }, 500);
     }
-  }
+  });
 
-  function startMediaPipe(videoEl) {
-    faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
-    faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: 0.5 });
-    
-    faceMesh.onResults(function(results) {
-      if (state.phase === 'submitted') return;
-      
-      var hasFace = results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0;
-      
-      // --- ENVIRONMENT CHECK LOGIC ---
-      if (state.phase === 'env_check') {
-        if (!hasFace) {
-          updateEnvStatus('Face Not Detected', 'Please position your face in the camera.', '👤', false);
-          return;
-        }
-        
-        var landmarks = results.multiFaceLandmarks[0];
-        var leftEye = landmarks[33];
-        var rightEye = landmarks[263];
-        var nose = landmarks[1];
-        
-        // Check Face Distance
-        var faceWidth = Math.abs(rightEye.x - leftEye.x);
-        if (faceWidth > 0.4) {
-          updateEnvStatus('Too Close', 'Please move your face further from the screen.', '📏', false);
-          return;
-        }
-        if (faceWidth < 0.1) {
-          updateEnvStatus('Too Far', 'Please move closer to the camera.', '🔍', false);
-          return;
-        }
+  // 2. Window Blur (Minimize / Click outside)
+  window.addEventListener('blur', function() {
+    if (!quizActive || blurGuard) return;
+    logViolation('WINDOW_BLURRED');
+  });
 
-        // Check Lighting (Simple Canvas check)
-        var canvas = document.createElement('canvas');
-        canvas.width = 100; canvas.height = 100;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(videoEl, 0, 0, 100, 100);
-        var imgData = ctx.getImageData(0,0,100,100).data;
-        var brightness = 0;
-        for(var i=0; i<imgData.length; i+=4) {
-            brightness += (imgData[i] + imgData[i+1] + imgData[i+2]) / 3;
-        }
-        brightness = brightness / (imgData.length / 4);
-        
-        if (brightness < 40) {
-          updateEnvStatus('Too Dark', 'Please turn on the lights or move to a well-lit area.', '💡', false);
-          return;
-        }
-
-        // All checks passed!
-        updateEnvStatus('Environment OK', 'Show a 👍 sign to proceed!', '👍', false);
-        state.phase = 'ready';
-        return;
-      }
-
-      // --- READY LOGIC (Waiting for user action to proceed) ---
-      if (state.phase === 'ready') {
-         // We just wait for the user to click the button we will provide
-         // Or we can just check if there is a face
-         return;
-      }
-
-      // --- CHALLENGE LOGIC ---
-      if (state.phase === 'challenge') {
-         if (!hasFace) {
-             document.getElementById('challengeMsg').innerText = "Face not detected! Please look at the camera.";
-             return;
-         }
-         var l = results.multiFaceLandmarks[0];
-         var nose = l[1];
-         var leftEye = l[33];
-         var rightEye = l[263];
-         var leftDist = Math.abs(nose.x - leftEye.x);
-         var rightDist = Math.abs(rightEye.x - nose.x);
-         var ratio = leftDist / rightDist;
-         
-         // Blink detection
-         var leftEyeOpen = Math.abs(l[159].y - l[145].y);
-         var rightEyeOpen = Math.abs(l[386].y - l[374].y);
-         var isBlinking = (leftEyeOpen < 0.01 && rightEyeOpen < 0.01);
-
-         var passed = false;
-
-         if (currentChallenge === 'LOOK_LEFT' && (ratio > 1.5 || ratio < 0.6)) passed = true;
-         if (currentChallenge === 'LOOK_RIGHT' && (ratio > 1.5 || ratio < 0.6)) passed = true; // Simplified logic
-         if (currentChallenge === 'LOOK_UP' && (nose.y < 0.4)) passed = true;
-         if (currentChallenge === 'LOOK_DOWN' && (nose.y > 0.6)) passed = true;
-         if (currentChallenge === 'BLINK_1' && isBlinking) {
-             blinkCount++;
-             if (blinkCount >= 1) passed = true;
-         }
-         if (currentChallenge === 'BLINK_2' && isBlinking) {
-             blinkCount++;
-             if (blinkCount >= 2) passed = true;
-         }
-
-         if (passed) {
-             document.getElementById('challengeTitle').innerText = "✅ Passed!";
-             document.getElementById('challengeMsg').innerText = "Proceeding to next question...";
-             document.getElementById('challengeIcon').innerText = "🎉";
-             setTimeout(function() {
-                 setOverlay('challengeOverlay', false);
-                 startQuestion();
-             }, 1000);
-         }
-         return;
-      }
-
-      // --- QUIZ LOGIC (Proctoring while answering) ---
-      if (state.phase === 'quiz') {
-        if (!hasFace) {
-           if (lookingAwayTime === 0) lookingAwayTime = Date.now();
-           else if (Date.now() - lookingAwayTime > 3000) {
-              logViolation('NO_FACE', 'camera');
-              lookingAwayTime = 0;
-           }
-        } else {
-           lookingAwayTime = 0;
-           var l = results.multiFaceLandmarks[0];
-           var nose = l[1];
-           var leftEye = l[33];
-           var rightEye = l[263];
-           var ratio = Math.abs(nose.x - leftEye.x) / Math.abs(rightEye.x - nose.x);
-           
-           if (ratio > 1.8 || ratio < 0.5) {
-              if (lookingAwayTime === 0) lookingAwayTime = Date.now();
-              else if (Date.now() - lookingAwayTime > 2000) {
-                 logViolation('LOOKED_SIDE', 'camera');
-                 lookingAwayTime = 0;
-              }
-           } else { lookingAwayTime = 0; }
-        }
-      }
-    });
-
-    async function processVideo() {
-      if (faceMesh && videoEl.readyState >= 2) {
-        await faceMesh.send({image: videoEl});
-      }
-      requestAnimationFrame(processVideo);
+  // 3. Close / Leave Website
+  window.addEventListener('pagehide', function() {
+    if (quizActive) {
+      // Use sendBeacon for reliable logging when leaving
+      var payload = JSON.stringify({ study_id: data.id, type: 'PAGE_LEFT', source: 'browser' });
+      navigator.sendBeacon('/api/violation/start', new Blob([payload], {type: 'application/json'}));
     }
-    processVideo();
-  }
+  });
+
+  window.addEventListener('beforeunload', function(e) {
+    if (quizActive) {
+      e.preventDefault();
+      e.returnValue = 'Sigurado ka bang gusto mong umalis? Ma-i-record ito bilang violation.';
+      return e.returnValue;
+    }
+  });
 
   /* ═══════════════════════════════════════════════════════════
      QUIZ FLOW LOGIC
      ═══════════════════════════════════════════════════════════ */
-  function startCountdown() {
-    setOverlay('envCheckOverlay', false);
-    state.phase = 'countdown';
-    setOverlay('countdownOverlay', true);
-    var n = 3;
-    document.getElementById('countdownText').innerText = n;
-    var timer = setInterval(function(){
-       n--;
-       if(n > 0) {
-           document.getElementById('countdownText').innerText = n;
-       } else {
-           clearInterval(timer);
-           document.getElementById('countdownText').innerText = "GO!";
-           setTimeout(function(){
-               setOverlay('countdownOverlay', false);
-               document.getElementById('quizWrap').style.display = 'block';
-               startQuestion();
-           }, 800);
-       }
-    }, 1000);
-  }
-
-  function startChallenge() {
-    state.phase = 'challenge';
-    challengeActive = true;
-    blinkCount = 0;
-    
-    var challenges = ['LOOK_LEFT', 'LOOK_RIGHT', 'LOOK_UP', 'LOOK_DOWN', 'BLINK_1', 'BLINK_2'];
-    currentChallenge = challenges[Math.floor(Math.random() * challenges.length)];
-    
-    var msg = "";
-    var icon = "👀";
-    if(currentChallenge === 'LOOK_LEFT') { msg = "Look to your LEFT 👈"; }
-    if(currentChallenge === 'LOOK_RIGHT') { msg = "Look to your RIGHT 👉"; }
-    if(currentChallenge === 'LOOK_UP') { msg = "Look UP 👆"; }
-    if(currentChallenge === 'LOOK_DOWN') { msg = "Look DOWN 👇"; }
-    if(currentChallenge === 'BLINK_1') { msg = "Blink 1 time 👁️"; }
-    if(currentChallenge === 'BLINK_2') { msg = "Blink 2 times 👁️👁️"; }
-
-    document.getElementById('challengeTitle').innerText = "Liveness Check";
-    document.getElementById('challengeMsg').innerText = msg;
-    document.getElementById('challengeIcon').innerText = icon;
-    setOverlay('challengeOverlay', true);
-  }
+  document.getElementById('startQuizBtn').addEventListener('click', function() {
+    document.getElementById('startOverlay').style.display = 'none';
+    document.getElementById('quizWrap').style.display = 'block';
+    state.phase = 'quiz';
+    quizActive = true;
+    state.startedAt = Date.now();
+    startQuestion();
+  });
 
   function startQuestion() {
-    state.phase = 'quiz';
     if (state.qIdx >= pages.length) {
       submitAll();
       return;
@@ -459,10 +265,11 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
         clearInterval(state.qInterval);
         t.textContent = '00:00'; t.classList.add('done');
         captureAnswer();
-        // Timer ends -> Next page or Challenge
+        
+        // Auto-advance to next question or submit
         if (state.qIdx < pages.length - 1) {
             state.qIdx++;
-            startChallenge();
+            startQuestion();
         } else {
             submitAll();
         }
@@ -583,6 +390,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
     if(state.submitting) return;
     state.submitting = true;
     state.phase = 'submitted';
+    quizActive = false; // Disable violation logging
     clearInterval(state.qInterval);
     captureAnswer();
     
@@ -614,7 +422,9 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
         state.submitting = false;
         return;
       }
-      window.location.href = '/student?submitted=1'; 
+      document.getElementById('quizWrap').style.display = 'none';
+      document.getElementById('resultWrap').style.display = 'block';
+      showResult(res);
     })
     .catch(err => {
       alert('Network error. Please check your internet.');
@@ -622,15 +432,496 @@ input:focus,textarea:focus,select:focus{border-color:var(--blue);
     });
   }
 
-  // Button to start the quiz after env check
-  document.getElementById('envCheckOverlay').addEventListener('click', function() {
-      if (state.phase === 'ready') {
-          startCountdown();
-      }
+  function showResult(res) {
+    document.getElementById('rScore').textContent = res.score;
+    document.getElementById('rCorrect').textContent = res.correct_count + '/' + res.total;
+    document.getElementById('rMedal').innerHTML = res.medal ? '<span class="medal medal-' + res.medal + '">' + res.medal + '</span>' : '—';
+    if(res.has_manual) document.getElementById('rNote').style.display = 'block';
+    
+    var vSummary = document.getElementById('violationSummary');
+    var vList = document.getElementById('studentViolationList');
+    if (res.violations && res.violations.length > 0) {
+      vSummary.style.display = 'block';
+      vList.innerHTML = res.violations.map(function(v) {
+        return '<div style="padding:8px 12px; border-radius:6px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#fca5a5; font-size:0.85rem;">' +
+               '⚠️ ' + v.type.replace(/_/g, ' ') + ' <span class="muted" style="float:right; font-size:0.75rem;">' + v.time + '</span>' +
+               '</div>';
+      }).join('');
+    } else {
+      vSummary.style.display = 'none';
+    }
+  }
+
+  // Check if no questions
+  window.addEventListener('load', function() {
+    if(!pages.length) {
+      document.body.innerHTML = '<div class="card" style="margin:2rem;"><h2>⚠️ No questions.</h2></div>';
+    }
   });
 
-  // Start on load
-  window.addEventListener('load', initCamera);
+})();
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>{{ study.title }}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#1e1e1e;--card:#2d2d30;--border:#3a3a3a;--text:#e0e0e0;
+  --text-dim:#999;--muted:#ccc;--blue:#1877f2;--blue-hover:#2d88ff;
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;
+}
+body{background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,sans-serif;font-size:14px;
+  line-height:1.55;min-height:100vh;padding:24px 16px;
+  -webkit-font-smoothing:antialiased;}
+h1{font-size:1.4rem;color:#fff;font-weight:600}
+h2{font-size:1.1rem;color:#fff;font-weight:600;margin-bottom:.35rem}
+.wrap{max-width:900px;margin:0 auto;}
+.card{background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:16px 18px;margin-bottom:16px}
+.card-title{display:flex;justify-content:space-between;align-items:center;
+  gap:10px;margin-bottom:12px;flex-wrap:wrap}
+label{display:flex;flex-direction:column;gap:4px;
+  font-size:.78rem;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
+input[type=text],textarea,select{
+  width:100%;padding:10px 12px;border-radius:6px;
+  border:1px solid var(--border);background:#151517;color:var(--text);
+  font-size:.9rem;font-family:inherit;outline:none;transition:.15s}
+input:focus,textarea:focus,select:focus{border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(24,119,242,.18)}
+textarea{resize:vertical;min-height:70px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
+  border:none;border-radius:6px;padding:9px 16px;font-size:.86rem;
+  font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;
+  color:#fff;text-decoration:none}
+.btn-blue{background:var(--blue)}.btn-green{background:var(--green)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-block{width:100%}
+.muted{color:var(--muted)}.small{font-size:.8rem}
+.timer-box{text-align:center;padding:12px 16px;border-radius:10px;
+  background:rgba(24,119,242,.08);border:1px solid rgba(24,119,242,.3);
+  min-width: 120px;}
+.timer-label{font-size:.7rem;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--text-dim);font-weight:700}
+.timer{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;
+  color:var(--blue-hover)}
+.timer.done{color:#4ade80}
+.choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.choice-row{display:flex;gap:8px;align-items:center}
+.choice-letter{width:32px;height:32px;background:#151517;
+  border:1px solid var(--border);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:var(--text-dim);flex-shrink:0}
+.choice-row input[type=radio]{width:20px;height:20px;flex-shrink:0}
+.tf-row{display:flex;gap:16px;margin-top:8px}
+.tf-row label{flex-direction:row;align-items:center;text-transform:none;
+  font-size:.95rem;font-weight:500;gap:8px;margin:0;color:var(--text)}
+
+/* Start Overlay */
+.start-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.95);
+  z-index:100000; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center; padding:24px;
+}
+.start-overlay h1 { font-size:1.8rem; margin-bottom:10px; color:#fff; }
+.start-overlay p { color:var(--muted); font-size:1rem; max-width:400px; margin-bottom:20px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ START OVERLAY ═══════════════ -->
+<div class="start-overlay" id="startOverlay">
+  <div style="font-size:4rem; margin-bottom:15px;">🛡️</div>
+  <h1>Proctoring Enabled</h1>
+  <p>This quiz monitors <b>tab switching</b> and <b>window focus</b>. Leaving the quiz area will be recorded as a violation.</p>
+  <button type="button" class="btn btn-blue" id="startQuizBtn" style="padding: 12px 24px; font-size: 1rem;">I Understand, Start Quiz</button>
+</div>
+
+<!-- ═══════════════ QUIZ CONTENT ═══════════════ -->
+<div class="wrap" id="quizWrap" style="display:none;">
+  
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title" style="margin-bottom:0;">
+      <div>
+        <h1 id="qHeader">Question 1 / X</h1>
+        <p class="muted small" id="qDirection" style="margin-top:6px;"></p>
+      </div>
+      <div class="timer-box">
+        <div class="timer-label">Time Left</div>
+        <div class="timer" id="questionTimer">--:--</div>
+      </div>
+    </div>
+    <div style="margin-top:16px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+      <div id="progressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1877f2,#a855f7);transition:width .3s;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p id="qText" style="font-size:1.15rem;min-height:3rem;margin-bottom:1rem;"></p>
+    <div id="answerArea"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ RESULT PHASE ═══════════════ -->
+<div class="wrap" id="resultWrap" style="display:none;">
+  <div class="card" style="text-align:center;">
+    <h1>🎉 Quiz Submitted!</h1>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px;max-width:640px;margin:1rem auto 0;">
+      <div class="card" style="margin:0;text-align:center;">
+        <div class="timer-label">Score</div>
+        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rScore">0</div>
+      </div>
+      <div class="card" style="margin:0;text-align:center;">
+        <div class="timer-label">Correct</div>
+        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rCorrect">0/0</div>
+      </div>
+      <div class="card" style="margin:0;text-align:center;">
+        <div class="timer-label">Medal</div>
+        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rMedal">—</div>
+      </div>
+    </div>
+    <p class="muted small" id="rNote" style="display:none;margin-top:14px;">
+      📌 May mga essay / file upload items na kailangan i-grade ng teacher. Hintayin ang update.
+    </p>
+  </div>
+
+  <div class="card" id="violationSummary" style="display:none; border-color:var(--red);">
+    <div class="card-title">
+      <h2 style="color:var(--red);">🚨 Proctoring Logs</h2>
+    </div>
+    <p class="muted small">Ang mga sumusunod ay na-detect ng system habang nagsasagot ka:</p>
+    <div id="studentViolationList" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;"></div>
+  </div>
+
+  <div style="text-align:center;margin-top:1.5rem;">
+    <a class="btn btn-blue" href="/student#studies">← Back to Dashboard</a>
+  </div>
+</div>
+
+<!-- ACTIVITY DATA -->
+<script type="application/json" id="activityData">{{ study|tojson }}</script>
+
+<script>
+(function(){
+  'use strict';
+
+  var data      = JSON.parse(document.getElementById('activityData').textContent);
+  var pages     = data.pages || [];
+  var qType     = data.type || 'identification';
+  var qSecs     = data.question_timer || 30;
+
+  var state = {
+    phase: 'start', // start, quiz, submitted
+    qIdx: 0,
+    answers: new Array(pages.length).fill(null),
+    startedAt: Date.now(),
+    submitting: false,
+    qEndAt: 0,
+    qInterval: null
+  };
+
+  var quizActive = false;
+  var lastViolationTime = 0;
+  var blurGuard = false;
+
+  /* ═══════════════════════════════════════════════════════════
+     BROWSER VIOLATION DETECTION
+     ═══════════════════════════════════════════════════════════ */
+  function logViolation(type) {
+    if (!quizActive || state.phase === 'submitted') return;
+    
+    var now = Date.now();
+    if (now - lastViolationTime < 2000) return; // 2 sec throttle
+    lastViolationTime = now;
+
+    // Visual Warning
+    var warning = document.createElement('div');
+    warning.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:12px 24px;border-radius:8px;z-index:100001;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.5);animation:slideIn .3s ease;';
+    warning.textContent = '⚠️ WARNING: ' + type.replace(/_/g, ' ');
+    document.body.appendChild(warning);
+    setTimeout(function() { warning.remove(); }, 4000);
+
+    fetch('/api/violation/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ study_id: data.id, type: type, source: 'browser' })
+    }).catch(function(){});
+  }
+
+  // 1. Tab Switch Detection
+  document.addEventListener('visibilitychange', function() {
+    if (!quizActive) return;
+    if (document.hidden) {
+      blurGuard = true;
+      logViolation('TAB_SWITCHED');
+      setTimeout(function() { blurGuard = false; }, 500);
+    }
+  });
+
+  // 2. Window Blur (Minimize / Click outside)
+  window.addEventListener('blur', function() {
+    if (!quizActive || blurGuard) return;
+    logViolation('WINDOW_BLURRED');
+  });
+
+  // 3. Close / Leave Website
+  window.addEventListener('pagehide', function() {
+    if (quizActive) {
+      // Use sendBeacon for reliable logging when leaving
+      var payload = JSON.stringify({ study_id: data.id, type: 'PAGE_LEFT', source: 'browser' });
+      navigator.sendBeacon('/api/violation/start', new Blob([payload], {type: 'application/json'}));
+    }
+  });
+
+  window.addEventListener('beforeunload', function(e) {
+    if (quizActive) {
+      e.preventDefault();
+      e.returnValue = 'Sigurado ka bang gusto mong umalis? Ma-i-record ito bilang violation.';
+      return e.returnValue;
+    }
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     QUIZ FLOW LOGIC
+     ═══════════════════════════════════════════════════════════ */
+  document.getElementById('startQuizBtn').addEventListener('click', function() {
+    document.getElementById('startOverlay').style.display = 'none';
+    document.getElementById('quizWrap').style.display = 'block';
+    state.phase = 'quiz';
+    quizActive = true;
+    state.startedAt = Date.now();
+    startQuestion();
+  });
+
+  function startQuestion() {
+    if (state.qIdx >= pages.length) {
+      submitAll();
+      return;
+    }
+    
+    document.getElementById('qHeader').innerText = "Question " + (state.qIdx + 1) + " / " + pages.length;
+    document.getElementById('progressBar').style.width = ((state.qIdx + 1) / pages.length * 100) + '%';
+    document.getElementById('qDirection').innerText = data.direction || '';
+    
+    var p = pages[state.qIdx];
+    document.getElementById('qText').innerText = p.question || '';
+    
+    renderAnswerArea(p, state.answers[state.qIdx]);
+    startQuestionTimer(p.timer || qSecs);
+  }
+
+  function startQuestionTimer(secs) {
+    clearInterval(state.qInterval);
+    state.qEndAt = Date.now() + secs * 1000;
+    var t = document.getElementById('questionTimer');
+    t.classList.remove('done');
+    t.textContent = fmt(secs);
+    
+    state.qInterval = setInterval(function(){
+      var left = Math.ceil((state.qEndAt - Date.now())/1000);
+      if(left <= 0){
+        clearInterval(state.qInterval);
+        t.textContent = '00:00'; t.classList.add('done');
+        captureAnswer();
+        
+        // Auto-advance to next question or submit
+        if (state.qIdx < pages.length - 1) {
+            state.qIdx++;
+            startQuestion();
+        } else {
+            submitAll();
+        }
+        return;
+      }
+      t.textContent = fmt(left);
+    }, 200);
+  }
+
+  function renderAnswerArea(p, saved) {
+    var area = document.getElementById('answerArea');
+    area.innerHTML = '';
+    var pType = p.type || qType;
+
+    if(pType === 'identification'){
+      var inp = document.createElement('input');
+      inp.type = 'text'; inp.id = 'answerInput';
+      inp.placeholder = 'Type your answer…';
+      inp.value = saved || '';
+      area.appendChild(inp);
+    } else if(pType === 'multiple_choice'){
+      var letters = ['A','B','C','D'];
+      var wrap = document.createElement('div');
+      wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+      (p.choices || []).forEach(function(c, i){
+        var row = document.createElement('label');
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;' +
+          'border:1px solid var(--border);border-radius:8px;cursor:pointer;' +
+          'text-transform:none;font-size:.95rem;color:var(--text);font-weight:500;margin:0;';
+        var radio = document.createElement('input');
+        radio.type = 'radio'; radio.name = 'mc_answer'; radio.value = i;
+        radio.style.cssText = 'width:20px;height:20px;flex-shrink:0;';
+        if(saved === i) radio.checked = true;
+        var txt = document.createElement('b');
+        txt.textContent = letters[i] + '.';
+        txt.style.cssText = 'color:var(--blue-hover);margin-right:4px;';
+        var lbl = document.createElement('span');
+        lbl.textContent = c;
+        row.appendChild(radio); row.appendChild(txt); row.appendChild(lbl);
+        row.onclick = function(e){ if(e.target.tagName !== 'INPUT') radio.checked = true; };
+        wrap.appendChild(row);
+      });
+      area.appendChild(wrap);
+    } else if(pType === 'true_false'){
+      var twrap = document.createElement('div');
+      twrap.style.cssText = 'display:flex;gap:16px;flex-wrap:wrap;';
+      [['true','✓ True'],['false','✗ False']].forEach(function(pair){
+        var row = document.createElement('label');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 18px;' +
+          'border:1px solid var(--border);border-radius:8px;cursor:pointer;' +
+          'text-transform:none;font-size:1rem;color:var(--text);font-weight:600;margin:0;';
+        var radio = document.createElement('input');
+        radio.type = 'radio'; radio.name = 'tf_answer'; radio.value = pair[0];
+        radio.style.cssText = 'width:20px;height:20px;flex-shrink:0;';
+        if(saved === pair[0]) radio.checked = true;
+        row.appendChild(radio);
+        var lbl = document.createElement('span');
+        lbl.textContent = pair[1];
+        row.appendChild(lbl);
+        row.onclick = function(e){ if(e.target.tagName !== 'INPUT') radio.checked = true; };
+        twrap.appendChild(row);
+      });
+      area.appendChild(twrap);
+    } else if(pType === 'essay'){
+      var ta = document.createElement('textarea');
+      ta.id = 'answerInput'; ta.rows = 5;
+      ta.placeholder = 'Write your answer here…';
+      ta.value = saved || '';
+      area.appendChild(ta);
+    } else if(pType === 'file_upload'){
+      if(p.instruction){
+        var note = document.createElement('p');
+        note.className = 'muted small';
+        note.style.marginBottom = '10px';
+        note.textContent = '📎 ' + p.instruction;
+        area.appendChild(note);
+      }
+      var fileInp = document.createElement('input');
+      fileInp.type = 'file'; fileInp.id = 'answerFile';
+      fileInp.accept = '.pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png,.zip';
+      fileInp.style.cssText = 'padding:10px;border:1px dashed var(--border);border-radius:8px;width:100%;';
+      area.appendChild(fileInp);
+    }
+  }
+
+  function captureAnswer(){
+    var idx = state.qIdx;
+    var p = pages[idx] || {};
+    var pType = p.type || qType;
+
+    if(pType === 'identification' || pType === 'essay'){
+      var el = document.getElementById('answerInput');
+      if(el) state.answers[idx] = el.value.trim();
+    } else if(pType === 'multiple_choice'){
+      var checked = document.querySelector('input[name="mc_answer"]:checked');
+      state.answers[idx] = checked ? parseInt(checked.value) : null;
+    } else if(pType === 'true_false'){
+      var checked2 = document.querySelector('input[name="tf_answer"]:checked');
+      state.answers[idx] = checked2 ? checked2.value : null;
+    } else if(pType === 'file_upload'){
+      var f = document.getElementById('answerFile');
+      if (f && f.files && f.files[0]) {
+        state.answers[idx] = f.files[0];
+      } else if (state.answers[idx] === null || state.answers[idx] === undefined) {
+        state.answers[idx] = null;
+      }
+    }
+  }
+
+  function fmt(v){
+    v = Math.max(0, v|0);
+    var m=((v%3600)/60)|0, s=v%60;
+    function p(n){ return String(n).padStart(2,'0'); }
+    return p(m)+':'+p(s);
+  }
+
+  function submitAll(){
+    if(state.submitting) return;
+    state.submitting = true;
+    state.phase = 'submitted';
+    quizActive = false; // Disable violation logging
+    clearInterval(state.qInterval);
+    captureAnswer();
+    
+    var totalTime = Math.round((Date.now() - state.startedAt) / 1000);
+    var fd = new FormData();
+    fd.append('study_id', data.id);
+    fd.append('total_time', totalTime);
+
+    var meta = [];
+    state.answers.forEach(function(a, i){
+      if(a instanceof File){
+        fd.append('file_' + i, a);
+        meta.push({ idx: i, type: 'file', name: a.name });
+      } else {
+        meta.push({ idx: i, type: 'value', value: a });
+      }
+    });
+    fd.append('answers_meta', JSON.stringify(meta));
+
+    fetch('/api/quiz/submit', {
+      method:'POST',
+      credentials:'same-origin',
+      body: fd
+    })
+    .then(r => r.json())
+    .then(res => {
+      if(res.error) {
+        alert('❌ ' + res.error);
+        state.submitting = false;
+        return;
+      }
+      document.getElementById('quizWrap').style.display = 'none';
+      document.getElementById('resultWrap').style.display = 'block';
+      showResult(res);
+    })
+    .catch(err => {
+      alert('Network error. Please check your internet.');
+      state.submitting = false;
+    });
+  }
+
+  function showResult(res) {
+    document.getElementById('rScore').textContent = res.score;
+    document.getElementById('rCorrect').textContent = res.correct_count + '/' + res.total;
+    document.getElementById('rMedal').innerHTML = res.medal ? '<span class="medal medal-' + res.medal + '">' + res.medal + '</span>' : '—';
+    if(res.has_manual) document.getElementById('rNote').style.display = 'block';
+    
+    var vSummary = document.getElementById('violationSummary');
+    var vList = document.getElementById('studentViolationList');
+    if (res.violations && res.violations.length > 0) {
+      vSummary.style.display = 'block';
+      vList.innerHTML = res.violations.map(function(v) {
+        return '<div style="padding:8px 12px; border-radius:6px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#fca5a5; font-size:0.85rem;">' +
+               '⚠️ ' + v.type.replace(/_/g, ' ') + ' <span class="muted" style="float:right; font-size:0.75rem;">' + v.time + '</span>' +
+               '</div>';
+      }).join('');
+    } else {
+      vSummary.style.display = 'none';
+    }
+  }
+
+  // Check if no questions
+  window.addEventListener('load', function() {
+    if(!pages.length) {
+      document.body.innerHTML = '<div class="card" style="margin:2rem;"><h2>⚠️ No questions.</h2></div>';
+    }
+  });
 
 })();
 </script>
