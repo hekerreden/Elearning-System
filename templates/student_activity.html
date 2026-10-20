@@ -137,7 +137,6 @@ textarea{resize:vertical;min-height:70px}
     answers: new Array(pages.length).fill(null),
     startedAt: Date.now(),
     submitting: false,
-    qEndAt: 0,
     qInterval: null
   };
 
@@ -193,7 +192,7 @@ textarea{resize:vertical;min-height:70px}
   });
 
   /* ═══════════════════════════════════════════════════════════
-     QUIZ FLOW LOGIC
+     QUIZ FLOW LOGIC (REAL-TIME TIMER)
      ═══════════════════════════════════════════════════════════ */
   function startQuestion() {
     if (state.qIdx >= pages.length) {
@@ -215,19 +214,22 @@ textarea{resize:vertical;min-height:70px}
 
   function startQuestionTimer(secs) {
     clearInterval(state.qInterval);
-    state.qEndAt = Date.now() + secs * 1000;
+    
+    // ✅ GAMIT ANG Date.now() PARA TULOY-TULOY ANG ORAS KAHIT UMALIS SA TAB
+    var endTime = Date.now() + (secs * 1000);
     var t = document.getElementById('questionTimer');
     t.classList.remove('done');
     t.textContent = fmt(secs);
     
     state.qInterval = setInterval(function(){
-      var left = Math.ceil((state.qEndAt - Date.now())/1000);
-      if(left <= 0){
+      var remaining = Math.ceil((endTime - Date.now()) / 1000);
+      
+      if(remaining <= 0){
         clearInterval(state.qInterval);
         t.textContent = '00:00'; t.classList.add('done');
         captureAnswer();
         
-        // Auto-advance
+        // Auto-advance pag naubos ang oras
         if (state.qIdx < pages.length - 1) {
             state.qIdx++;
             startQuestion();
@@ -236,19 +238,19 @@ textarea{resize:vertical;min-height:70px}
         }
         return;
       }
-      t.textContent = fmt(left);
+      t.textContent = fmt(remaining);
     }, 200);
   }
 
   function renderAnswerArea(p, saved) {
     var area = document.getElementById('answerArea');
-    area.innerHTML = '';
+    area.innerHTML = ''; // Linisin muna bago mag-render
     var pType = p.type || qType;
 
     if(pType === 'identification'){
       var inp = document.createElement('input');
       inp.type = 'text'; inp.id = 'answerInput';
-      inp.placeholder = 'Type your answer…';
+      inp.placeholder = 'Type your answer here...';
       inp.value = saved || '';
       inp.oninput = function() { state.answers[state.qIdx] = inp.value.trim(); saveProgress(); };
       area.appendChild(inp);
@@ -300,7 +302,7 @@ textarea{resize:vertical;min-height:70px}
     } else if(pType === 'essay'){
       var ta = document.createElement('textarea');
       ta.id = 'answerInput'; ta.rows = 5;
-      ta.placeholder = 'Write your answer here…';
+      ta.placeholder = 'Write your answer here...';
       ta.value = saved || '';
       ta.oninput = function() { state.answers[state.qIdx] = ta.value.trim(); saveProgress(); };
       area.appendChild(ta);
