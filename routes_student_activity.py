@@ -70,14 +70,23 @@ def register(app):
 
         stype = study.get("type", "identification")
 
-        # ✅ FIX: Skip slides na walang laman
+        # ✅ FIX: I-pasa ang tamang type at timer ng BAWAT page
         safe_pages = []
         for p in study.get("pages", []):
-            sp = {"question": p.get("question", "")}
-            if stype == "multiple_choice":
+            page_type = p.get("type", stype)
+            page_timer = p.get("timer", study.get("question_timer") or 30)
+            
+            sp = {
+                "question": p.get("question", ""),
+                "type": page_type,  # ✅ IPASA ANG TYPE PARA LUMABAS ANG INPUT
+                "timer": page_timer
+            }
+            
+            if page_type == "multiple_choice":
                 sp["choices"] = list(p.get("choices", []))
-            elif stype == "file_upload":
+            elif page_type == "file_upload":
                 sp["instruction"] = p.get("instruction", "")
+                
             safe_pages.append(sp)
 
         safe_slides = []

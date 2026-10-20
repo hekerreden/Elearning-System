@@ -160,21 +160,14 @@ textarea{resize:vertical;min-height:70px}
     }).catch(function(){});
   }
 
-  // 1. Tab Switch / Minimize
   document.addEventListener('visibilitychange', function() {
-    if (document.hidden && quizActive) {
-      logViolation('TAB_SWITCHED');
-    }
+    if (document.hidden && quizActive) logViolation('TAB_SWITCHED');
   });
 
-  // 2. Window Blur (Click outside)
   window.addEventListener('blur', function() {
-    if (quizActive) {
-      logViolation('WINDOW_BLURRED');
-    }
+    if (quizActive) logViolation('WINDOW_BLURRED');
   });
 
-  // 3. Page Close / Leave
   window.addEventListener('pagehide', function() {
     if (quizActive) {
       var payload = JSON.stringify({ study_id: data.id, type: 'PAGE_LEFT', source: 'browser' });
@@ -182,7 +175,6 @@ textarea{resize:vertical;min-height:70px}
     }
   });
 
-  // 4. Standard Native Close Warning
   window.addEventListener('beforeunload', function(e) {
     if (quizActive) {
       e.preventDefault();
@@ -242,10 +234,18 @@ textarea{resize:vertical;min-height:70px}
     }, 200);
   }
 
+  // ✅ BULLETPROOF RENDER LOGIC: Laging may lalabas na input
   function renderAnswerArea(p, saved) {
     var area = document.getElementById('answerArea');
-    area.innerHTML = ''; // Linisin muna bago mag-render
+    area.innerHTML = ''; 
+    
+    // Fallback: Kung walang type, tignan ang properties. Kung wala talaga, gawing 'identification'
     var pType = p.type || qType;
+    if (!['identification', 'multiple_choice', 'true_false', 'essay', 'file_upload'].includes(pType)) {
+        if (p.choices && p.choices.length > 0) pType = 'multiple_choice';
+        else if (p.instruction) pType = 'file_upload';
+        else pType = 'identification'; // Default fallback
+    }
 
     if(pType === 'identification'){
       var inp = document.createElement('input');
@@ -258,7 +258,13 @@ textarea{resize:vertical;min-height:70px}
       var letters = ['A','B','C','D'];
       var wrap = document.createElement('div');
       wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
-      (p.choices || []).forEach(function(c, i){
+      
+      if (!p.choices || p.choices.length === 0) {
+          area.innerHTML = '<p class="muted" style="color:var(--yellow);">⚠️ Warning: No choices available for this question. Please contact your teacher.</p>';
+          return;
+      }
+
+      p.choices.forEach(function(c, i){
         var row = document.createElement('label');
         row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;' +
           'border:1px solid var(--border);border-radius:8px;cursor:pointer;' +
@@ -364,7 +370,7 @@ textarea{resize:vertical;min-height:70px}
   function submitAll(){
     if(state.submitting) return;
     state.submitting = true;
-    quizActive = false; // Disable logging
+    quizActive = false;
     clearInterval(state.qInterval);
     captureAnswer();
     localStorage.removeItem(autosaveKey);
