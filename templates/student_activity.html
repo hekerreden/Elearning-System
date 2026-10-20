@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>{{ study.title }}</title>
-<!-- ✅ MEDIAPIPE AI SCRIPT -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -27,108 +26,61 @@ h2{font-size:1.1rem;color:#fff;font-weight:600;margin-bottom:.35rem}
 label{display:flex;flex-direction:column;gap:4px;
   font-size:.78rem;font-weight:600;color:var(--muted);
   text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
-input[type=text],input[type=number],input[type=file],textarea,select{
+input[type=text],textarea,select{
   width:100%;padding:10px 12px;border-radius:6px;
   border:1px solid var(--border);background:#151517;color:var(--text);
   font-size:.9rem;font-family:inherit;outline:none;transition:.15s}
 input:focus,textarea:focus,select:focus{border-color:var(--blue);
   box-shadow:0 0 0 3px rgba(24,119,242,.18)}
-textarea{resize:vertical;min-height:70px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
   border:none;border-radius:6px;padding:9px 16px;font-size:.86rem;
   font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;
   color:#fff;text-decoration:none}
 .btn-blue{background:var(--blue)}.btn-green{background:var(--green)}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
-.btn-sm{padding:6px 12px;font-size:.8rem}
 .btn-block{width:100%}
 .tag{display:inline-block;background:#151517;border:1px solid var(--border);
   border-radius:999px;padding:2px 10px;font-size:.72rem;color:var(--text-dim)}
 .pill-row{display:flex;gap:6px;flex-wrap:wrap}
 .muted{color:var(--muted)}.small{font-size:.8rem}
 .row-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.row-between{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:16px}
-.timer-box{text-align:center;margin:16px 0;padding:16px;
-  border-radius:10px;background:rgba(24,119,242,.08);
-  border:1px solid rgba(24,119,242,.3)}
+
+/* Timer Box */
+.timer-box{text-align:center;padding:12px 16px;border-radius:10px;
+  background:rgba(24,119,242,.08);border:1px solid rgba(24,119,242,.3);
+  min-width: 120px;}
 .timer-label{font-size:.7rem;text-transform:uppercase;
   letter-spacing:.1em;color:var(--text-dim);font-weight:700}
-.timer{font-size:2.4rem;font-weight:700;font-variant-numeric:tabular-nums;
+.timer{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;
   color:var(--blue-hover)}
 .timer.done{color:#4ade80}
-.quiz-locked{text-align:center;padding:12px;border-radius:8px;
-  background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3);
-  color:#fde68a;font-weight:600;font-size:.85rem}
-.study-text{white-space:pre-wrap;background:#151517;
-  border:1px solid var(--border);border-radius:8px;padding:14px 16px;
-  line-height:1.7;max-height:340px;overflow-y:auto}
-.badge{display:inline-block;padding:2px 9px;border-radius:999px;
-  font-size:.68rem;font-weight:700;letter-spacing:.03em;
-  text-transform:uppercase}
-.badge-green{background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.35)}
-.badge-yellow{background:rgba(234,179,8,.15);color:#fde68a;border:1px solid rgba(234,179,8,.35)}
-.badge-red{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.35)}
-.medal{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.7rem;font-weight:700}
-.medal-Gold{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#422006}
-.medal-Silver{background:linear-gradient(135deg,#e2e8f0,#94a3b8);color:#1e293b}
-.medal-Bronze{background:linear-gradient(135deg,#d97706,#92400e);color:#fff7ed}
 
-/* ✖ CANCEL BUTTON */
-.cancel-btn{
-  background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.4);
-  color:#fca5a5; width:32px; height:32px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:1.2rem; cursor:pointer; transition:.2s; flex-shrink:0;
+/* 🖥️ CAMERA OVERLAY (Moved to Bottom-Right) */
+#camera-overlay {
+  position:fixed; bottom:20px; right:20px;
+  width:110px; height:85px; background:#000;
+  border:2px solid var(--red); border-radius:8px;
+  z-index:9998; overflow:hidden; display:none;
+  box-shadow:0 4px 12px rgba(0,0,0,0.5);
 }
-.cancel-btn:hover{background:var(--red); color:#fff;}
+#webcam { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+.proctor-badge { position:absolute; bottom:0; left:0; right:0;
+  background:rgba(239,68,68,0.9); color:#fff; font-size:9px;
+  text-align:center; font-weight:bold; padding:2px;}
 
-/* 🖥️ DESKTOP NAVIGATION (SIDE BUTTONS) */
-.nav-container { display: flex; align-items: flex-start; gap: 20px; }
-.nav-side-btn {
-  background: var(--card); border: 1px solid var(--border);
-  width: 54px; height: 54px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.8rem; color: var(--text); cursor: pointer;
-  transition: .2s; flex-shrink: 0; text-decoration: none;
-  margin-top: 40px;
+/* STATE OVERLAYS */
+.full-screen-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.9);
+  z-index:100000; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center;
+  padding:24px; backdrop-filter:blur(5px);
 }
-.nav-side-btn:hover { background: var(--blue); color: #fff; border-color: var(--blue); }
-.nav-side-btn:disabled { opacity: 0.2; cursor: not-allowed; background: var(--card); }
-.form-content { flex: 1; min-width: 0; }
+.full-screen-overlay h1 { font-size:1.8rem; margin-bottom:10px; color:#fff; }
+.full-screen-overlay p { color:var(--muted); font-size:1rem; max-width:400px; margin-bottom:20px; }
+.overlay-icon { font-size:4rem; margin-bottom:15px; animation:pop 0.5s ease; }
+@keyframes pop { 0% { transform: scale(0.5); opacity:0; } 100% { transform: scale(1); opacity:1; } }
 
-/* 📱 MOBILE NAVIGATION */
-.mobile-nav { display: none; gap: 10px; margin-top: 16px; }
-.mobile-nav .btn { flex: 1; justify-content: center; }
-
-/* MODAL ENGINE */
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);
-  display:none;align-items:center;justify-content:center;
-  z-index:9999;padding:24px 16px;backdrop-filter:blur(4px);}
-.modal-backdrop.active{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);
-  border-radius:10px;width:100%;max-width:420px;padding:20px 22px;
-  box-shadow:0 20px 50px rgba(0,0,0,.7);animation:pop .18s ease;}
-@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
-.modal-head{display:flex;justify-content:space-between;align-items:center;
-  gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.modal-head h3{margin:0;color:#fff;font-size:1.05rem}
-.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
-.icon-btn{background:transparent;border:none;color:var(--muted);
-  font-size:1.4rem;cursor:pointer;line-height:1;padding:0 4px}
-#appConfirmMessage{margin:0;line-height:1.65;color:var(--text);white-space:pre-wrap;word-break:break-word;}
-
-@media(max-width: 768px) {
-  .nav-container { display: block; }
-  .nav-side-btn { display: none; }
-  .mobile-nav { display: flex; }
-  .wrap { max-width: 720px; }
-}
-@media(max-width:560px){
-  body{padding:12px 8px}
-  .card{padding:12px}
-  h1{font-size:1.15rem}
-  .timer{font-size:1.8rem}
-}
+/* Choices */
 .choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .choice-row{display:flex;gap:8px;align-items:center}
 .choice-letter{width:32px;height:32px;background:#151517;
@@ -139,159 +91,63 @@ textarea{resize:vertical;min-height:70px}
 .tf-row{display:flex;gap:16px;margin-top:8px}
 .tf-row label{flex-direction:row;align-items:center;text-transform:none;
   font-size:.95rem;font-weight:500;gap:8px;margin:0;color:var(--text)}
-table{width:100%;border-collapse:collapse;font-size:.85rem}
-th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #3a3a3a}
-th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
-.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
-@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<!-- ═══════════════ STUDY PHASE ═══════════════ -->
-<div id="studyPhase" style="display:none">
-  <div class="card">
-    <div class="card-title">
-      <h1>📖 Study Material</h1>
-      <div class="row-inline">
-        <span class="tag">Slide <span id="slideNum">1</span> / <span id="slideTotal">1</span></span>
-        <button class="cancel-btn" onclick="exitQuiz()" title="Exit Study">✖</button>
-      </div>
-    </div>
-    <div id="slideContent" class="study-text" style="min-height:200px;font-size:1rem;"></div>
-    <div class="row-inline" style="margin-top:12px; justify-content:space-between;">
-      <button type="button" class="btn btn-ghost" id="slidePrev">← Prev Slide</button>
-      <button type="button" class="btn btn-ghost" id="slideNext">Next Slide →</button>
-    </div>
-  </div>
-  <div class="card">
-    <div class="timer-box">
-      <div class="timer-label">Quiz unlocks in</div>
-      <div class="timer" id="studyTimer">--:--</div>
-    </div>
-    <div class="quiz-locked">🔒 Quiz is locked while you study.</div>
-    <button type="button" class="btn btn-blue btn-block"
-            id="skipStudyBtn" style="display:none;margin-top:12px;">
-      Start Quiz →
-    </button>
-  </div>
+<!-- ═══════════════ ENVIRONMENT CHECK OVERLAY ═══════════════ -->
+<div id="envCheckOverlay" class="full-screen-overlay">
+  <div class="overlay-icon" id="envIcon">📷</div>
+  <h1 id="envTitle">Camera Check</h1>
+  <p id="envMsg">Initializing camera... Please ensure you are in a well-lit room.</p>
+  <div id="envLoader" style="width:40px;height:40px;border:4px solid rgba(255,255,255,0.1);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;display:block;"></div>
 </div>
 
-<!-- ═══════════════ COUNTDOWN PHASE ═══════════════ -->
-<div id="countdownPhase" style="display:none">
-  <div class="card" style="text-align:center;padding:3rem 1rem;">
-    <h2 style="font-size:1.4rem;">Get ready!</h2>
-    <p class="muted small">Your quiz starts in</p>
-    <div class="timer" id="countdownTimer" style="font-size:5rem;margin:1rem 0;">3</div>
-  </div>
+<!-- ═══════════════ COUNTDOWN OVERLAY ═══════════════ -->
+<div id="countdownOverlay" class="full-screen-overlay" style="display:none;">
+  <h1 style="font-size:6rem; color:var(--blue-hover);" id="countdownText">3</h1>
+  <p>Get Ready!</p>
 </div>
 
-<!-- ═══════════════ QUIZ PHASE ═══════════════ -->
-<div id="quizPhase" style="display:none">
-  <div class="card">
+<!-- ═══════════════ RANDOM CHALLENGE OVERLAY ═══════════════ -->
+<div id="challengeOverlay" class="full-screen-overlay" style="display:none;">
+  <div class="overlay-icon" id="challengeIcon">👀</div>
+  <h1 id="challengeTitle">Liveness Check</h1>
+  <p id="challengeMsg">Look Left to proceed...</p>
+</div>
+
+<!-- ═══════════════ QUIZ CONTENT ═══════════════ -->
+<div class="wrap" id="quizWrap" style="display:none;">
+  
+  <div class="card" style="margin-bottom:16px;">
     <div class="card-title" style="margin-bottom:0;">
       <div>
-        <h2 style="margin:0;">Question <span id="qCounter">1</span> / <span id="qTotal">1</span></h2>
-        <p class="muted small mb1" id="qDirection" style="margin-top:6px;"></p>
+        <h1 id="qHeader">Question 1 / X</h1>
+        <p class="muted small" id="qDirection" style="margin-top:6px;"></p>
       </div>
-      <div class="row-inline">
-        <div class="timer-box" style="margin:0;padding:8px 16px;border-radius:8px;border-color:var(--yellow);">
-          <div class="timer-label" style="color:var(--yellow);">Time left</div>
-          <div class="timer" id="questionTimer" style="font-size:1.4rem;color:var(--yellow);">--:--</div>
-        </div>
-        <button class="cancel-btn" onclick="exitQuiz()" title="Exit Quiz">✖</button>
+      <div class="timer-box">
+        <div class="timer-label">Time Left</div>
+        <div class="timer" id="questionTimer">--:--</div>
       </div>
     </div>
-    <div style="margin-top:12px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+    <div style="margin-top:16px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
       <div id="progressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1877f2,#a855f7);transition:width .3s;"></div>
     </div>
   </div>
 
-  <div class="nav-container">
-    <!-- Left: Previous Button -->
-    <button type="button" class="nav-side-btn" id="sidePrevBtn" title="Previous Question" style="display:none;">&lt;</button>
-
-    <div class="form-content">
-      <div class="card">
-        <p id="qText" style="font-size:1.15rem;min-height:3rem;margin-bottom:1rem;"></p>
-        <div id="answerArea"></div>
-      </div>
-
-      <!-- Mobile Navigation (Previous only) -->
-      <div class="mobile-nav">
-        <button type="button" class="btn btn-ghost" id="mobilePrevBtn" style="display:none;">← Previous</button>
-      </div>
-    </div>
-
-    <!-- Right: Hidden (Timer handles auto-advance) -->
-    <button type="button" class="nav-side-btn" id="sideNextBtn" style="display:none;"></button>
-  </div>
-</div>
-
-<!-- ═══════════════ RESULT PHASE ═══════════════ -->
-<div id="resultPhase" style="display:none">
-  <div class="card" style="text-align:center;">
-    <h1>🎉 Quiz Submitted!</h1>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
-         gap:14px;max-width:640px;margin:1rem auto 0;">
-      <div class="card" style="margin:0;text-align:center;">
-        <div class="timer-label">Score</div>
-        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rScore">0</div>
-      </div>
-      <div class="card" style="margin:0;text-align:center;">
-        <div class="timer-label">Correct</div>
-        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rCorrect">0/0</div>
-      </div>
-      <div class="card" style="margin:0;text-align:center;">
-        <div class="timer-label">Medal</div>
-        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rMedal">—</div>
-      </div>
-    </div>
-    <p class="muted small" id="rNote" style="display:none;margin-top:14px;">
-      📌 May mga essay / file upload items na kailangan i-grade ng teacher. Hintayin ang update.
-    </p>
-  </div>
-
-  <!-- ✅ NEW: VIOLATION LOGS PARA SA STUDENT -->
-  <div class="card" id="violationSummary" style="display:none; border-color:var(--red);">
-    <div class="card-title">
-      <h2 style="color:var(--red);">🚨 Proctoring Logs</h2>
-    </div>
-    <p class="muted small">Ang mga sumusunod ay na-detect ng system habang nagsasagot ka:</p>
-    <div id="studentViolationList" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;"></div>
-  </div>
-
   <div class="card">
-    <div class="card-title"><h2>Review your answers</h2></div>
-    <div id="reviewList"></div>
-  </div>
-
-  <div style="text-align:center;margin-top:1.5rem;">
-    <a class="btn btn-blue" href="/student#studies">← Back to Dashboard</a>
+    <p id="qText" style="font-size:1.15rem;min-height:3rem;margin-bottom:1rem;"></p>
+    <div id="answerArea"></div>
   </div>
 </div>
 
-<!-- ═══════════════ CAMERA OVERLAY (TOP-RIGHT) ═══════════════ -->
-<!-- ✅ Inilipat sa top: 20px para hindi matakpan ng keyboard -->
-<div id="camera-overlay" style="position:fixed;top:20px;right:20px;width:100px;height:75px;background:#000;border:2px solid var(--red);border-radius:8px;z-index:9999;overflow:hidden;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.5);">
-  <video id="webcam" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;transform:scaleX(-1);"></video>
-  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(239,68,68,0.8);color:#fff;font-size:8px;text-align:center;font-weight:bold;">PROCTORED</div>
+<!-- CAMERA OVERLAY -->
+<div id="camera-overlay">
+  <video id="webcam" autoplay playsinline muted></video>
+  <div class="proctor-badge">PROCTORED</div>
 </div>
 
-<div class="modal-backdrop active" id="cameraPermissionModal" style="z-index: 100000; align-items:center; backdrop-filter: blur(10px);">
-  <div class="modal" style="max-width: 400px; text-align: center;">
-    <div style="font-size: 3rem; margin-bottom: 10px;">📷</div>
-    <h3 style="margin-bottom: 10px;">Proctoring Enabled</h3>
-    <p class="muted small" style="margin-bottom: 20px;">
-      To ensure fairness, this quiz requires camera access. 
-      We will <b>not</b> record your video. We only detect face and head movements.
-    </p>
-    <div id="camStatus" style="margin-bottom: 15px; font-weight: bold; color: var(--yellow);">Waiting for permission...</div>
-    <button type="button" class="btn btn-blue btn-block" id="allowCamBtn">I Agree & Enable Camera</button>
-  </div>
-</div>
-
+<!-- ACTIVITY DATA -->
 <script type="application/json" id="activityData">{{ study|tojson }}</script>
 
 <script>
@@ -306,36 +162,49 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
   var qSecs     = data.question_timer || 30;
   var maxBack   = data.max_back || 0;
 
-  var autosaveKey = 'quiz_autosave_' + data.id + '_' + "{{ user.id }}";
-  var quizActive = false;
-
   var state = {
-    phase:'idle', slides:data.slides||[], slideIdx:0, qIdx:0,
-    answers:new Array(pages.length).fill(null),
-    studyEndAt:0, qEndAt:0,
-    studyInterval:null, qInterval:null, countdownInterval:null,
-    startedAt:Date.now(), submitting:false
+    phase: 'idle', // idle, env_check, ready, countdown, quiz, challenge, submitted
+    qIdx: 0,
+    answers: new Array(pages.length).fill(null),
+    startedAt: Date.now(),
+    submitting: false,
+    qEndAt: 0,
+    qInterval: null
   };
 
-  var pingInterval = null;
-  var leftPage = false;
-  var isSubmitted = false;
+  var lastViolationTime = 0;
+  var lookingAwayTime = 0;
+  var lastBlinkTime = Date.now();
+  var challengeActive = false;
+  var currentChallenge = null;
+  var blinkCount = 0;
+  var faceMesh = null;
 
   /* ═══════════════════════════════════════════════════════════
-     ANTI-CHEAT & LIVENESS SYSTEM
+     UI & STATE MANAGEMENT
      ═══════════════════════════════════════════════════════════ */
-  var lastViolationTime = 0;
-  
+  function setOverlay(id, show) {
+    var el = document.getElementById(id);
+    if(el) el.style.display = show ? 'flex' : 'none';
+  }
+  function updateEnvStatus(title, msg, icon, isLoading) {
+    document.getElementById('envTitle').innerText = title;
+    document.getElementById('envMsg').innerText = msg;
+    document.getElementById('envIcon').innerText = icon;
+    document.getElementById('envLoader').style.display = isLoading ? 'block' : 'none';
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     LOGGING VIOLATIONS
+     ═══════════════════════════════════════════════════════════ */
   function logViolation(type, source) {
-    if (!quizActive || state.phase !== 'quiz' || isSubmitted) return;
-    
+    if (state.phase === 'submitted') return;
     var now = Date.now();
-    if (now - lastViolationTime < 3000) return; // 3 sec throttle para hindi mag-spam
+    if (now - lastViolationTime < 3000) return;
     lastViolationTime = now;
 
-    // Visual Warning
     var warning = document.createElement('div');
-    warning.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:12px 24px;border-radius:8px;z-index:10000;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.5);animation:slideIn .3s ease;';
+    warning.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:12px 24px;border-radius:8px;z-index:100001;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.5);animation:slideIn .3s ease;';
     warning.textContent = '⚠️ WARNING: ' + type.replace(/_/g, ' ');
     document.body.appendChild(warning);
     setTimeout(function() { warning.remove(); }, 4000);
@@ -347,311 +216,266 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
     }).catch(function(){});
   }
 
-  // 1. Tab Switch Detection
-  document.addEventListener('visibilitychange', function() {
-    if (document.hidden && quizActive) {
-      logViolation('TAB_SWITCHED', 'browser');
+  /* ═══════════════════════════════════════════════════════════
+     MEDIAPIPE AI (Environment Check & Proctoring)
+     ═══════════════════════════════════════════════════════════ */
+  async function initCamera() {
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+      var video = document.getElementById('webcam');
+      video.srcObject = stream;
+      video.play();
+      document.getElementById('camera-overlay').style.display = 'block';
+      
+      // Start environment check
+      state.phase = 'env_check';
+      startMediaPipe(video);
+    } catch (err) {
+      updateEnvStatus('Camera Denied', 'You cannot take this quiz without camera access.', '❌', false);
+      logViolation('CAMERA_DENIED', 'camera');
     }
-  });
+  }
 
-  // 2. Copy/Paste/Right Click Blocking
-  document.addEventListener('copy', function(e) { e.preventDefault(); logViolation('RIGHT_CLICK', 'browser'); });
-  document.addEventListener('paste', function(e) { e.preventDefault(); logViolation('RIGHT_CLICK', 'browser'); });
-  document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-  // 3. MediaPipe AI (Head Pose + Liveness)
-  async function startMediaPipe(videoEl) {
-    var faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+  function startMediaPipe(videoEl) {
+    faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
     faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: 0.5 });
     
-    var lookingAwayTime = 0;
-    var lastBlinkTime = Date.now();
-    var challengeActive = false;
-    var challengeType = null;
-
-    // Random Liveness Challenge
-    function triggerRandomChallenge() {
-      if (!quizActive || isSubmitted || challengeActive) return;
-      challengeActive = true;
-      challengeType = Math.random() > 0.5 ? 'BLINK' : 'LOOK_LEFT';
-      
-      var msg = challengeType === 'BLINK' 
-        ? '👁️ LIVENESS CHECK: Pumikit ka dalawang beses (Blink twice)' 
-        : '👀 LIVENESS CHECK: Tumingin ka sa kaliwa (Look Left)';
-
-      var overlay = document.createElement('div');
-      overlay.id = 'livenessChallenge';
-      overlay.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--blue);color:#fff;padding:20px 40px;border-radius:12px;z-index:100001;font-weight:bold;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.8);animation:pop .3s ease;';
-      overlay.innerHTML = msg + '<br><small style="font-size:0.8rem;opacity:0.8;">(Kailangan mong gawin ito sa loob ng 5 segundo)</small>';
-      document.body.appendChild(overlay);
-
-      setTimeout(function() {
-        if (challengeActive && document.getElementById('livenessChallenge')) {
-          document.getElementById('livenessChallenge').remove();
-          logViolation('LIVENESS_FAILED', 'camera');
-          challengeActive = false;
-        }
-      }, 5000);
-    }
-    setInterval(triggerRandomChallenge, 120000 + Math.random() * 60000); // Every 2-3 mins
-
     faceMesh.onResults(function(results) {
-      if (!quizActive || isSubmitted) return;
+      if (state.phase === 'submitted') return;
       
-      if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+      var hasFace = results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0;
+      
+      // --- ENVIRONMENT CHECK LOGIC ---
+      if (state.phase === 'env_check') {
+        if (!hasFace) {
+          updateEnvStatus('Face Not Detected', 'Please position your face in the camera.', '👤', false);
+          return;
+        }
+        
         var landmarks = results.multiFaceLandmarks[0];
-        var nose = landmarks[1];
         var leftEye = landmarks[33];
         var rightEye = landmarks[263];
+        var nose = landmarks[1];
         
-        // 1. Face Too Close (Picture trick)
+        // Check Face Distance
         var faceWidth = Math.abs(rightEye.x - leftEye.x);
-        if (faceWidth > 0.4) { logViolation('FACE_TOO_CLOSE', 'camera'); }
-
-        // 2. Head Pose Detection
-        var leftDist = Math.abs(nose.x - leftEye.x);
-        var rightDist = Math.abs(rightEye.x - nose.x);
-        var ratio = leftDist / rightDist;
-
-        if (challengeActive && challengeType === 'LOOK_LEFT' && (ratio > 1.5 || ratio < 0.6)) {
-           var el = document.getElementById('livenessChallenge');
-           if (el) el.remove();
-           challengeActive = false;
-           lastBlinkTime = Date.now();
-        } 
-        else if (!challengeActive) {
-          if (ratio > 1.8 || ratio < 0.5) {
-            if (lookingAwayTime === 0) lookingAwayTime = Date.now();
-            else if (Date.now() - lookingAwayTime > 2000) {
-              logViolation('LOOKED_SIDE', 'camera');
-              lookingAwayTime = 0; 
-            }
-          } else { lookingAwayTime = 0; }
+        if (faceWidth > 0.4) {
+          updateEnvStatus('Too Close', 'Please move your face further from the screen.', '📏', false);
+          return;
+        }
+        if (faceWidth < 0.1) {
+          updateEnvStatus('Too Far', 'Please move closer to the camera.', '🔍', false);
+          return;
         }
 
-        // 3. Blink Detection
-        var leftEyeTop = landmarks[159];
-        var leftEyeBottom = landmarks[145];
-        var rightEyeTop = landmarks[386];
-        var rightEyeBottom = landmarks[374];
+        // Check Lighting (Simple Canvas check)
+        var canvas = document.createElement('canvas');
+        canvas.width = 100; canvas.height = 100;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(videoEl, 0, 0, 100, 100);
+        var imgData = ctx.getImageData(0,0,100,100).data;
+        var brightness = 0;
+        for(var i=0; i<imgData.length; i+=4) {
+            brightness += (imgData[i] + imgData[i+1] + imgData[i+2]) / 3;
+        }
+        brightness = brightness / (imgData.length / 4);
         
-        var leftEyeOpen = Math.abs(leftEyeTop.y - leftEyeBottom.y);
-        var rightEyeOpen = Math.abs(rightEyeTop.y - rightEyeBottom.y);
-        
-        if (leftEyeOpen < 0.01 && rightEyeOpen < 0.01) {
-           lastBlinkTime = Date.now();
-           if (challengeActive && challengeType === 'BLINK') {
-             var el2 = document.getElementById('livenessChallenge');
-             if (el2) el2.remove();
-             challengeActive = false;
+        if (brightness < 40) {
+          updateEnvStatus('Too Dark', 'Please turn on the lights or move to a well-lit area.', '💡', false);
+          return;
+        }
+
+        // All checks passed!
+        updateEnvStatus('Environment OK', 'Show a 👍 sign to proceed!', '👍', false);
+        state.phase = 'ready';
+        return;
+      }
+
+      // --- READY LOGIC (Waiting for user action to proceed) ---
+      if (state.phase === 'ready') {
+         // We just wait for the user to click the button we will provide
+         // Or we can just check if there is a face
+         return;
+      }
+
+      // --- CHALLENGE LOGIC ---
+      if (state.phase === 'challenge') {
+         if (!hasFace) {
+             document.getElementById('challengeMsg').innerText = "Face not detected! Please look at the camera.";
+             return;
+         }
+         var l = results.multiFaceLandmarks[0];
+         var nose = l[1];
+         var leftEye = l[33];
+         var rightEye = l[263];
+         var leftDist = Math.abs(nose.x - leftEye.x);
+         var rightDist = Math.abs(rightEye.x - nose.x);
+         var ratio = leftDist / rightDist;
+         
+         // Blink detection
+         var leftEyeOpen = Math.abs(l[159].y - l[145].y);
+         var rightEyeOpen = Math.abs(l[386].y - l[374].y);
+         var isBlinking = (leftEyeOpen < 0.01 && rightEyeOpen < 0.01);
+
+         var passed = false;
+
+         if (currentChallenge === 'LOOK_LEFT' && (ratio > 1.5 || ratio < 0.6)) passed = true;
+         if (currentChallenge === 'LOOK_RIGHT' && (ratio > 1.5 || ratio < 0.6)) passed = true; // Simplified logic
+         if (currentChallenge === 'LOOK_UP' && (nose.y < 0.4)) passed = true;
+         if (currentChallenge === 'LOOK_DOWN' && (nose.y > 0.6)) passed = true;
+         if (currentChallenge === 'BLINK_1' && isBlinking) {
+             blinkCount++;
+             if (blinkCount >= 1) passed = true;
+         }
+         if (currentChallenge === 'BLINK_2' && isBlinking) {
+             blinkCount++;
+             if (blinkCount >= 2) passed = true;
+         }
+
+         if (passed) {
+             document.getElementById('challengeTitle').innerText = "✅ Passed!";
+             document.getElementById('challengeMsg').innerText = "Proceeding to next question...";
+             document.getElementById('challengeIcon').innerText = "🎉";
+             setTimeout(function() {
+                 setOverlay('challengeOverlay', false);
+                 startQuestion();
+             }, 1000);
+         }
+         return;
+      }
+
+      // --- QUIZ LOGIC (Proctoring while answering) ---
+      if (state.phase === 'quiz') {
+        if (!hasFace) {
+           if (lookingAwayTime === 0) lookingAwayTime = Date.now();
+           else if (Date.now() - lookingAwayTime > 3000) {
+              logViolation('NO_FACE', 'camera');
+              lookingAwayTime = 0;
            }
-        }
-
-        if (Date.now() - lastBlinkTime > 15000 && !challengeActive) {
-           logViolation('NO_BLINK', 'camera');
-           lastBlinkTime = Date.now();
-        }
-
-      } else {
-        if (lookingAwayTime === 0) lookingAwayTime = Date.now();
-        else if (Date.now() - lookingAwayTime > 3000) {
-          logViolation('NO_FACE', 'camera');
-          lookingAwayTime = 0;
+        } else {
+           lookingAwayTime = 0;
+           var l = results.multiFaceLandmarks[0];
+           var nose = l[1];
+           var leftEye = l[33];
+           var rightEye = l[263];
+           var ratio = Math.abs(nose.x - leftEye.x) / Math.abs(rightEye.x - nose.x);
+           
+           if (ratio > 1.8 || ratio < 0.5) {
+              if (lookingAwayTime === 0) lookingAwayTime = Date.now();
+              else if (Date.now() - lookingAwayTime > 2000) {
+                 logViolation('LOOKED_SIDE', 'camera');
+                 lookingAwayTime = 0;
+              }
+           } else { lookingAwayTime = 0; }
         }
       }
     });
 
     async function processVideo() {
-      if (quizActive && !isSubmitted) {
+      if (faceMesh && videoEl.readyState >= 2) {
         await faceMesh.send({image: videoEl});
-        requestAnimationFrame(processVideo);
       }
+      requestAnimationFrame(processVideo);
     }
     processVideo();
   }
 
   /* ═══════════════════════════════════════════════════════════
-     CAMERA PERMISSION LOGIC
+     QUIZ FLOW LOGIC
      ═══════════════════════════════════════════════════════════ */
-  document.getElementById('allowCamBtn').addEventListener('click', async function() {
-    var btn = this;
-    var status = document.getElementById('camStatus');
-    
-    btn.disabled = true;
-    btn.textContent = 'Requesting...';
-    status.textContent = 'Please click "Allow" on your browser prompt.';
-    status.style.color = 'var(--blue)';
-
-    try {
-      var stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      
-      status.textContent = '✅ Camera access granted. Starting quiz...';
-      status.style.color = 'var(--green)';
-      document.getElementById('cameraPermissionModal').classList.remove('active');
-      document.getElementById('camera-overlay').style.display = 'block';
-      
-      var video = document.getElementById('webcam');
-      video.srcObject = stream;
-      video.play();
-      
-      quizActive = true;
-      startMediaPipe(video);
-
-      // Simulan ang Quiz Flow
-      if (hasPPT && studySecs > 0) startStudyPhase();
-      else startCountdownPhase();
-      
-    } catch (err) {
-      status.textContent = '❌ Camera denied. You cannot take this quiz.';
-      status.style.color = 'var(--red)';
-      btn.textContent = 'Go Back to Dashboard';
-      btn.classList.replace('btn-blue', 'btn-red');
-      
-      logViolation('CAMERA_DENIED', 'camera');
-      btn.onclick = function() { window.location.href = '/student#studies'; };
-    }
-  });
-
-  /* ═══════════════════════════════════════════════════════════
-     QUIZ LOGIC (Timers, Autosave, Auto-advance)
-     ═══════════════════════════════════════════════════════════ */
-  function fmt(v){
-    v = Math.max(0, v|0);
-    var h=(v/3600)|0, m=((v%3600)/60)|0, s=v%60;
-    function p(n){ return String(n).padStart(2,'0'); }
-    return h>0 ? (h+':'+p(m)+':'+p(s)) : (p(m)+':'+p(s));
-  }
-
-  function show(id){
-    var secs = document.querySelectorAll('.content-section, #studyPhase, #countdownPhase, #quizPhase, #resultPhase');
-    for(var i=0;i<secs.length;i++) secs[i].style.display='none';
-    var el = document.getElementById(id);
-    if(el) el.style.display='block';
-    window.scrollTo(0,0);
-  }
-
-  if(!pages.length){
-    document.body.innerHTML = '<div class="card" style="margin:2rem;max-width:720px;margin-left:auto;margin-right:auto;"><h2>⚠️ No questions.</h2></div>';
-    return;
-  }
-
-  // Autosave Logic
-  function saveProgress() {
-    if (state.phase !== 'quiz') return;
-    try {
-      var safeAnswers = state.answers.map(function(a) {
-        if (a instanceof File) return "[FILE_ATTACHED]"; 
-        return a;
-      });
-      var saveData = { qIdx: state.qIdx, answers: safeAnswers, startedAt: state.startedAt };
-      localStorage.setItem(autosaveKey, JSON.stringify(saveData));
-    } catch(e) {}
-  }
-
-  function checkSavedProgress() {
-    try {
-      var saved = localStorage.getItem(autosaveKey);
-      if (!saved) return false;
-      var parsed = JSON.parse(saved);
-      if (parsed.qIdx > 0 || parsed.answers.some(function(a){ return a !== null && a !== ''; })) {
-        return parsed;
-      }
-    } catch(e) {}
-    return false;
-  }
-
-  // Start Phase (Called after Camera is allowed)
-  function startStudyPhase(){
-    state.phase = 'study';
-    show('studyPhase');
-    renderSlide(0);
-    document.getElementById('slideTotal').textContent = state.slides.length;
-    state.studyEndAt = Date.now() + studySecs * 1000;
-    tickStudy();
-    state.studyInterval = setInterval(tickStudy, 250);
-  }
-
-  function tickStudy(){
-    var left = Math.ceil((state.studyEndAt - Date.now())/1000);
-    var t = document.getElementById('studyTimer');
-    if(left <= 0){
-      clearInterval(state.studyInterval); state.studyInterval = null;
-      t.textContent = '00:00'; t.classList.add('done');
-      var skip = document.getElementById('skipStudyBtn');
-      skip.style.display = 'inline-flex';
-      skip.onclick = startQuizPhase;
-      setTimeout(startQuizPhase, 1200);
-      return;
-    }
-    t.textContent = fmt(left);
-  }
-
-  function renderSlide(idx){
-    state.slideIdx = idx;
-    var slide = state.slides[idx] || {};
-    document.getElementById('slideNum').textContent = idx + 1;
-    var box = document.getElementById('slideContent');
-    if(typeof slide === 'string') box.textContent = slide;
-    else if(slide.text) box.textContent = slide.text;
-    else box.textContent = JSON.stringify(slide);
-  }
-
-  var sp = document.getElementById('slidePrev');
-  var sn = document.getElementById('slideNext');
-  if(sp) sp.onclick = function(){ if(state.slideIdx > 0) renderSlide(state.slideIdx - 1); };
-  if(sn) sn.onclick = function(){ if(state.slideIdx < state.slides.length - 1) renderSlide(state.slideIdx + 1); };
-
-  function startCountdownPhase(){
+  function startCountdown() {
+    setOverlay('envCheckOverlay', false);
     state.phase = 'countdown';
-    show('countdownPhase');
+    setOverlay('countdownOverlay', true);
     var n = 3;
-    var el = document.getElementById('countdownTimer');
-    el.textContent = n;
-    state.countdownInterval = setInterval(function(){
-      n--;
-      if(n <= 0){
-        clearInterval(state.countdownInterval);
-        el.textContent = 'GO!';
-        setTimeout(startQuizPhase, 400);
-        return;
-      }
-      el.textContent = n;
+    document.getElementById('countdownText').innerText = n;
+    var timer = setInterval(function(){
+       n--;
+       if(n > 0) {
+           document.getElementById('countdownText').innerText = n;
+       } else {
+           clearInterval(timer);
+           document.getElementById('countdownText').innerText = "GO!";
+           setTimeout(function(){
+               setOverlay('countdownOverlay', false);
+               document.getElementById('quizWrap').style.display = 'block';
+               startQuestion();
+           }, 800);
+       }
     }, 1000);
   }
 
-  function startQuizPhase(){
-    if(state.phase === 'quiz') return;
-    clearInterval(state.studyInterval);
-    clearInterval(state.countdownInterval);
-    state.phase = 'quiz';
-    show('quizPhase');
-    document.getElementById('qTotal').textContent = pages.length;
-    document.getElementById('qDirection').textContent = data.direction || '';
+  function startChallenge() {
+    state.phase = 'challenge';
+    challengeActive = true;
+    blinkCount = 0;
     
-    // Check for saved progress before starting Q1
-    var saved = checkSavedProgress();
-    if (saved) {
-      if(confirm('Nakita namin na may hindi ka pa tapos na pagsusulit. Gusto mo bang ituloy?')) {
-        state.answers = saved.answers;
-        state.startedAt = saved.startedAt;
-        showQuestion(saved.qIdx);
-        return;
-      } else {
-        localStorage.removeItem(autosaveKey);
-      }
-    }
-    showQuestion(0);
+    var challenges = ['LOOK_LEFT', 'LOOK_RIGHT', 'LOOK_UP', 'LOOK_DOWN', 'BLINK_1', 'BLINK_2'];
+    currentChallenge = challenges[Math.floor(Math.random() * challenges.length)];
+    
+    var msg = "";
+    var icon = "👀";
+    if(currentChallenge === 'LOOK_LEFT') { msg = "Look to your LEFT 👈"; }
+    if(currentChallenge === 'LOOK_RIGHT') { msg = "Look to your RIGHT 👉"; }
+    if(currentChallenge === 'LOOK_UP') { msg = "Look UP 👆"; }
+    if(currentChallenge === 'LOOK_DOWN') { msg = "Look DOWN 👇"; }
+    if(currentChallenge === 'BLINK_1') { msg = "Blink 1 time 👁️"; }
+    if(currentChallenge === 'BLINK_2') { msg = "Blink 2 times 👁️👁️"; }
+
+    document.getElementById('challengeTitle').innerText = "Liveness Check";
+    document.getElementById('challengeMsg').innerText = msg;
+    document.getElementById('challengeIcon').innerText = icon;
+    setOverlay('challengeOverlay', true);
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     MIXED-TYPE RENDER LOGIC
-     ═══════════════════════════════════════════════════════════ */
-  function renderAnswerArea(p, saved){
+  function startQuestion() {
+    state.phase = 'quiz';
+    if (state.qIdx >= pages.length) {
+      submitAll();
+      return;
+    }
+    
+    document.getElementById('qHeader').innerText = "Question " + (state.qIdx + 1) + " / " + pages.length;
+    document.getElementById('progressBar').style.width = ((state.qIdx + 1) / pages.length * 100) + '%';
+    document.getElementById('qDirection').innerText = data.direction || '';
+    
+    var p = pages[state.qIdx];
+    document.getElementById('qText').innerText = p.question || '';
+    
+    renderAnswerArea(p, state.answers[state.qIdx]);
+    startQuestionTimer(p.timer || qSecs);
+  }
+
+  function startQuestionTimer(secs) {
+    clearInterval(state.qInterval);
+    state.qEndAt = Date.now() + secs * 1000;
+    var t = document.getElementById('questionTimer');
+    t.classList.remove('done');
+    t.textContent = fmt(secs);
+    
+    state.qInterval = setInterval(function(){
+      var left = Math.ceil((state.qEndAt - Date.now())/1000);
+      if(left <= 0){
+        clearInterval(state.qInterval);
+        t.textContent = '00:00'; t.classList.add('done');
+        captureAnswer();
+        // Timer ends -> Next page or Challenge
+        if (state.qIdx < pages.length - 1) {
+            state.qIdx++;
+            startChallenge();
+        } else {
+            submitAll();
+        }
+        return;
+      }
+      t.textContent = fmt(left);
+    }, 200);
+  }
+
+  function renderAnswerArea(p, saved) {
     var area = document.getElementById('answerArea');
     area.innerHTML = '';
-
-    // ✅ Kunin ang type ng PAGE, default sa study type
-    var pType = p.type || qType; 
+    var pType = p.type || qType;
 
     if(pType === 'identification'){
       var inp = document.createElement('input');
@@ -659,7 +483,6 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
       inp.placeholder = 'Type your answer…';
       inp.value = saved || '';
       area.appendChild(inp);
-
     } else if(pType === 'multiple_choice'){
       var letters = ['A','B','C','D'];
       var wrap = document.createElement('div');
@@ -683,7 +506,6 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
         wrap.appendChild(row);
       });
       area.appendChild(wrap);
-
     } else if(pType === 'true_false'){
       var twrap = document.createElement('div');
       twrap.style.cssText = 'display:flex;gap:16px;flex-wrap:wrap;';
@@ -704,14 +526,12 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
         twrap.appendChild(row);
       });
       area.appendChild(twrap);
-
     } else if(pType === 'essay'){
       var ta = document.createElement('textarea');
       ta.id = 'answerInput'; ta.rows = 5;
       ta.placeholder = 'Write your answer here…';
       ta.value = saved || '';
       area.appendChild(ta);
-
     } else if(pType === 'file_upload'){
       if(p.instruction){
         var note = document.createElement('p');
@@ -725,27 +545,6 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
       fileInp.accept = '.pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png,.zip';
       fileInp.style.cssText = 'padding:10px;border:1px dashed var(--border);border-radius:8px;width:100%;';
       area.appendChild(fileInp);
-
-      var preview = document.createElement('p');
-      preview.id = 'filePreview';
-      preview.className = 'muted small';
-      preview.style.marginTop = '10px';
-
-      if (saved === "[FILE_ATTACHED]") {
-        preview.innerHTML = '<span style="color:var(--yellow);">⚠️ Na-refresh ang page. Paki-upload muli ang file.</span>';
-        state.answers[state.qIdx] = null;
-      } else if (saved instanceof File) {
-        preview.innerHTML = '📄 ' + saved.name + ' (' + Math.round(saved.size/1024) + ' KB) <span style="color:var(--green);">— already attached</span>';
-      } else {
-        preview.textContent = '';
-      }
-      area.appendChild(preview);
-
-      fileInp.addEventListener('change', function(){
-        if(fileInp.files[0]){
-          preview.textContent = '📄 ' + fileInp.files[0].name + ' (' + Math.round(fileInp.files[0].size/1024) + ' KB)';
-        }
-      });
     }
   }
 
@@ -754,18 +553,15 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
     var p = pages[idx] || {};
     var pType = p.type || qType;
 
-    if(pType === 'identification'){
+    if(pType === 'identification' || pType === 'essay'){
       var el = document.getElementById('answerInput');
-      state.answers[idx] = el ? el.value.trim() : '';
+      if(el) state.answers[idx] = el.value.trim();
     } else if(pType === 'multiple_choice'){
       var checked = document.querySelector('input[name="mc_answer"]:checked');
       state.answers[idx] = checked ? parseInt(checked.value) : null;
     } else if(pType === 'true_false'){
       var checked2 = document.querySelector('input[name="tf_answer"]:checked');
       state.answers[idx] = checked2 ? checked2.value : null;
-    } else if(pType === 'essay'){
-      var el2 = document.getElementById('answerInput');
-      state.answers[idx] = el2 ? el2.value.trim() : '';
     } else if(pType === 'file_upload'){
       var f = document.getElementById('answerFile');
       if (f && f.files && f.files[0]) {
@@ -776,102 +572,21 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
     }
   }
 
-  function showQuestion(idx){
-    state.qIdx = idx;
-    var p = pages[idx] || {};
-    document.getElementById('qCounter').textContent = idx + 1;
-    document.getElementById('qText').textContent = p.question || '(no question)';
-    document.getElementById('progressBar').style.width = ((idx + 1) / pages.length * 100) + '%';
-
-    // Previous button logic
-    var isFirst = (idx === 0) || ((idx - maxBack) < 0);
-    if (isFirst) {
-      document.getElementById('sidePrevBtn').style.display = 'none';
-      document.getElementById('mobilePrevBtn').style.display = 'none';
-    } else {
-      document.getElementById('sidePrevBtn').style.display = 'flex';
-      document.getElementById('mobilePrevBtn').style.display = 'inline-flex';
-    }
-
-    renderAnswerArea(p, state.answers[idx]);
-    saveProgress();
-
-    setTimeout(function(){
-      var inp = document.getElementById('answerInput');
-      if(inp && inp.focus) inp.focus();
-    }, 80);
-
-    startQuestionTimer();
+  function fmt(v){
+    v = Math.max(0, v|0);
+    var m=((v%3600)/60)|0, s=v%60;
+    function p(n){ return String(n).padStart(2,'0'); }
+    return p(m)+':'+p(s);
   }
-
-  function startQuestionTimer(){
-    clearInterval(state.qInterval);
-    
-    // ✅ Basahin ang timer ng PAGE, hindi ng buong study
-    var currentPage = pages[state.qIdx] || {};
-    var thisPageTimer = currentPage.timer || qSecs;
-    
-    state.qEndAt = Date.now() + thisPageTimer * 1000;
-    var t = document.getElementById('questionTimer');
-    t.classList.remove('done');
-    t.textContent = fmt(thisPageTimer);
-    state.qInterval = setInterval(function(){
-      var left = Math.ceil((state.qEndAt - Date.now())/1000);
-      if(left <= 0){
-        clearInterval(state.qInterval); state.qInterval = null;
-        t.textContent = '00:00'; t.classList.add('done');
-        autoAdvance();
-        return;
-      }
-      t.textContent = fmt(left);
-    }, 200);
-  }
-
-  function autoAdvance(){
-    captureAnswer();
-    saveProgress();
-    if(state.qIdx >= pages.length - 1) {
-       submitAll();
-    } else {
-       showQuestion(state.qIdx + 1);
-    }
-  }
-
-  function goPrev(){
-    captureAnswer();
-    saveProgress();
-    if(state.qIdx > 0) showQuestion(state.qIdx - 1);
-  }
-
-  document.getElementById('sidePrevBtn').onclick = goPrev;
-  document.getElementById('mobilePrevBtn').onclick = goPrev;
-
-  /* ═══════════════════════════════════════════════════════════
-     EXIT & SUBMIT
-     ═══════════════════════════════════════════════════════════ */
-  window.exitQuiz = async function() {
-    var ok = await showConfirm('Sigurado ka bang gusto mong umalis? Mawawala ang mga hindi pa na-submit na sagot.', {
-      title: '⚠️ Exit Quiz', okText: 'Umalis', danger: true
-    });
-    if (!ok) return;
-
-    leftPage = true;
-    if (pingInterval) clearInterval(pingInterval);
-    clearInterval(state.studyInterval);
-    clearInterval(state.qInterval);
-    clearInterval(state.countdownInterval);
-    
-    window.location.href = '/student#studies';
-  };
 
   function submitAll(){
     if(state.submitting) return;
     state.submitting = true;
-    quizActive = false; // I-off ang logging
+    state.phase = 'submitted';
     clearInterval(state.qInterval);
     captureAnswer();
+    
     var totalTime = Math.round((Date.now() - state.startedAt) / 1000);
-
     var fd = new FormData();
     fd.append('study_id', data.id);
     fd.append('total_time', totalTime);
@@ -892,196 +607,32 @@ th{background:#232326;font-size:.72rem;text-transform:uppercase;color:#999}
       credentials:'same-origin',
       body: fd
     })
-    .then(function(r){return r.json();})
-    .then(function(res){
-      if(res.error){
-        showAlert('❌ ' + res.error, { title: 'Error', danger: true }).then(function() {
-          state.submitting = false;
-        });
+    .then(r => r.json())
+    .then(res => {
+      if(res.error) {
+        alert('❌ ' + res.error);
+        state.submitting = false;
         return;
       }
-      isSubmitted = true;
-      leftPage = true;
-      localStorage.removeItem(autosaveKey);
-      if (pingInterval) clearInterval(pingInterval);
-      showResult(res);
+      window.location.href = '/student?submitted=1'; 
     })
-    .catch(function(err){
-      showAlert('Submit failed. Paki-check ang internet at i-try ulit.\n\nError: ' + err.message, { title: 'Network Error', danger: true }).then(function() {
-        state.submitting = false;
-      });
+    .catch(err => {
+      alert('Network error. Please check your internet.');
+      state.submitting = false;
     });
   }
 
-  function esc(s){
-    return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  function showResult(res){
-    state.phase = 'result';
-    show('resultPhase');
-    document.getElementById('rScore').textContent = res.score;
-    document.getElementById('rCorrect').textContent = res.correct_count + '/' + res.total;
-    document.getElementById('rMedal').innerHTML = res.medal
-      ? '<span class="medal medal-' + res.medal + '">' + res.medal + '</span>' : '—';
-
-    if(res.has_manual) document.getElementById('rNote').style.display = 'block';
-
-    // ✅ NEW: IPAKITA ANG VIOLATIONS SA STUDENT
-    var vSummary = document.getElementById('violationSummary');
-    var vList = document.getElementById('studentViolationList');
-    if (res.violations && res.violations.length > 0) {
-      vSummary.style.display = 'block';
-      vList.innerHTML = res.violations.map(function(v) {
-        return '<div style="padding:8px 12px; border-radius:6px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#fca5a5; font-size:0.85rem;">' +
-               '⚠️ ' + esc(v.type.replace(/_/g, ' ')) + ' <span class="muted" style="float:right; font-size:0.75rem;">' + esc(v.time) + '</span>' +
-               '</div>';
-      }).join('');
-    } else {
-      vSummary.style.display = 'none';
-    }
-
-    var html = '';
-    (res.details || []).forEach(function(d, i){
-      var badge = d.pending
-        ? '<span class="badge badge-yellow">⏳ Pending</span>'
-        : (d.correct
-          ? '<span class="badge badge-green">✓ Correct</span>'
-          : '<span class="badge badge-red">✗ Wrong</span>');
-      var your = d.your_answer !== null && d.your_answer !== ''
-        ? esc(d.your_answer)
-        : '<span class="muted">(blank)</span>';
-      var correctLine = (!d.correct && !d.pending && d.correct_answer)
-        ? '<p class="small" style="margin:.2rem 0;color:#86efac;"><b>Correct:</b> ' + esc(d.correct_answer) + '</p>'
-        : '';
-      html += '<div class="card" style="margin-bottom:.6rem;background:var(--bg);">'
-        + '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">'
-        + '<b>Q' + (i+1) + '.</b>' + badge + '</div>'
-        + '<p style="margin:.5rem 0;font-size:1rem;">' + esc(d.question) + '</p>'
-        + '<p class="small" style="margin:.2rem 0;"><b>Your answer:</b> ' + your + '</p>'
-        + correctLine + '</div>';
-    });
-    document.getElementById('reviewList').innerHTML = html;
-    window.scrollTo(0, 0);
-  }
-
-  /* ═══════════════════════════════════════════════════════════
-     HEARTBEAT
-     ═══════════════════════════════════════════════════════════ */
-  function startHeartbeat() {
-    sendPing();
-    pingInterval = setInterval(sendPing, 10000);
-  }
-  function sendPing() {
-    if (leftPage) return;
-    fetch('/api/studies/' + data.id + '/ping', {
-      method: 'POST',
-      credentials: 'same-origin',
-      keepalive: true
-    }).catch(function(){});
-  }
-  
-  if(state.phase !== 'result') {
-      startHeartbeat();
-  }
-
-  window.addEventListener('pagehide', function() {
-    leftPage = true;
-    if (pingInterval) clearInterval(pingInterval);
+  // Button to start the quiz after env check
+  document.getElementById('envCheckOverlay').addEventListener('click', function() {
+      if (state.phase === 'ready') {
+          startCountdown();
+      }
   });
 
-  /* ═══════════════════════════════════════════════════════════
-     LOCAL CONFIRM / ALERT MODALS
-     ═══════════════════════════════════════════════════════════ */
-  window.showConfirm = function (message, opts) {
-    opts = opts || {};
-    return new Promise(function (resolve) {
-      var dlg = document.getElementById('appConfirmModal');
-      if (!dlg) { resolve(window.confirm(message)); return; }
-      var title = document.getElementById('appConfirmTitle');
-      var msg = document.getElementById('appConfirmMessage');
-      var okBtn = document.getElementById('appConfirmOk');
-      var cancelBtn = document.getElementById('appConfirmCancel');
-      var closeBtn = document.getElementById('appConfirmClose');
-
-      title.textContent = opts.title || '⚠️ Confirm';
-      msg.textContent = message;
-      okBtn.textContent = opts.okText || 'OK';
-      okBtn.className = 'btn ' + (opts.danger === false ? 'btn-blue' : 'btn-red');
-      cancelBtn.textContent = opts.cancelText || 'Cancel';
-      cancelBtn.style.display = '';
-
-      function close(result) {
-        dlg.classList.remove('active');
-        okBtn.onclick = null; cancelBtn.onclick = null; closeBtn.onclick = null; dlg.onclick = null;
-        document.removeEventListener('keydown', onKey);
-        resolve(result);
-      }
-      function onKey(e) {
-        if (e.key === 'Escape') close(false);
-        else if (e.key === 'Enter') close(true);
-      }
-      okBtn.onclick = function () { close(true); };
-      cancelBtn.onclick = function () { close(false); };
-      closeBtn.onclick = function () { close(false); };
-      dlg.onclick = function (e) { if (e.target === dlg) close(false); };
-      document.addEventListener('keydown', onKey);
-      dlg.classList.add('active');
-    });
-  };
-
-  window.showAlert = function (message, opts) {
-    opts = opts || {};
-    return new Promise(function (resolve) {
-      var dlg = document.getElementById('appConfirmModal');
-      if (!dlg) { window.alert(message); resolve(); return; }
-      var title = document.getElementById('appConfirmTitle');
-      var msg = document.getElementById('appConfirmMessage');
-      var okBtn = document.getElementById('appConfirmOk');
-      var cancelBtn = document.getElementById('appConfirmCancel');
-      var closeBtn = document.getElementById('appConfirmClose');
-
-      title.textContent = opts.title || 'ℹ️ Notice';
-      msg.textContent = message;
-      okBtn.textContent = opts.okText || 'OK';
-      okBtn.className = 'btn ' + (opts.danger === true ? 'btn-red' : 'btn-blue');
-      cancelBtn.style.display = 'none';
-
-      function close() {
-        dlg.classList.remove('active');
-        okBtn.onclick = null; closeBtn.onclick = null; dlg.onclick = null;
-        cancelBtn.style.display = '';
-        document.removeEventListener('keydown', onKey);
-        resolve();
-      }
-      function onKey(e) {
-        if (e.key === 'Escape' || e.key === 'Enter') close();
-      }
-      okBtn.onclick = close;
-      closeBtn.onclick = close;
-      dlg.onclick = function (e) { if (e.target === dlg) close(); };
-      document.addEventListener('keydown', onKey);
-      dlg.classList.add('active');
-    });
-  };
+  // Start on load
+  window.addEventListener('load', initCamera);
 
 })();
 </script>
-
-<!-- ═══════════ CUSTOM CONFIRM MODAL ═══════════ -->
-<div class="modal-backdrop" id="appConfirmModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3 id="appConfirmTitle">Confirm</h3>
-      <button class="icon-btn" type="button" id="appConfirmClose">×</button>
-    </div>
-    <p id="appConfirmMessage"></p>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" id="appConfirmCancel">Cancel</button>
-      <button type="button" class="btn btn-red" id="appConfirmOk">OK</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
