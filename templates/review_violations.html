@@ -52,13 +52,13 @@
       <h1>🛡️ Exam Activity Logs</h1>
       <p>Quiz: <b>{{ study.title }}</b></p>
     </div>
-    <a href="/teacher#history" class="btn btn-blue">← Back to Dashboard</a>
+    <a href="/teacher#studies" class="btn btn-blue">← Back to Dashboard</a>
   </div>
 
   {% if not students_data %}
     <div class="empty-state">
-      <h2>✨ Malinis ang Record!</h2>
-      <p>Walang na-detect na kahina-hinalang galaw sa mga estudyante para sa quiz na ito.</p>
+      <h2>✨ Clean Record!</h2>
+      <p>No suspicious activity was detected for this quiz.</p>
     </div>
   {% else %}
     
@@ -74,13 +74,16 @@
       <div class="student-header">
         <div>
           <div class="student-name">👤 {{ s.student_name }}</div>
-          {% if s.result %}
-            <div class="student-score">Current Score: <b>{{ s.result.score }}</b></div>
+          <!-- ✅ FIX: Ginamit ang s.score imbes na s.result.score -->
+          {% if s.result_id %}
+            <div class="student-score">Score: <b>{{ s.score }}</b></div>
           {% else %}
-            <div class="student-score">Hindi pa nag-submit ng quiz</div>
+            <div class="student-score">Quiz not submitted.</div>
           {% endif %}
         </div>
       </div>
+      
+      {% if s.violations %}
       <table>
         <thead>
           <tr>
@@ -115,6 +118,11 @@
           {% endfor %}
         </tbody>
       </table>
+      {% else %}
+      <div style="padding: 20px; text-align: center; color: #999;">
+        ✅ No violations detected for this student.
+      </div>
+      {% endif %}
     </div>
     {% endfor %}
   {% endif %}
