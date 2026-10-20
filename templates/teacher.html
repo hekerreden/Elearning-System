@@ -9,7 +9,6 @@
 <li><a class="adminnav" data-section="students"><span>🎒 My Students</span></a></li>
 <li><a class="adminnav" data-section="studies"><span>📚 Studies</span></a></li>
 <li><a class="adminnav" data-section="history"><span>📝 Quiz Attempts</span></a></li>
-{# ✅ TINANGGAL: Attendance Nav Item #}
 {% endblock %}
 
 {% block content %}
@@ -58,10 +57,10 @@
             <td><span class="badge badge-green">Published</span></td>
             <td class="muted small">{{ s.published_at or s.updated_at or s.created_at or '—' }}</td>
             <td>
-              <a class="btn btn-blue btn-sm" 
-                 href="/teacher/review/{{ s.id }}"
-                 data-action="direct-review" 
-                 data-id="{{ s.id }}">👁 Review Logs</a>
+              <button class="btn btn-blue btn-sm"
+                      data-action="view-study"
+                      data-id="{{ s.id }}"
+                      data-delurl="{{ url_for('delete_study', stid=s.id) }}">👁 View</button>
             </td>
           </tr>
           {% else %}
@@ -225,10 +224,10 @@
             </td>
             <td class="muted small">{{ s.published_at or s.updated_at or s.created_at or '—' }}</td>
             <td>
-              <a class="btn btn-blue btn-sm" 
-                 href="/teacher/review/{{ s.id }}"
-                 data-action="direct-review" 
-                 data-id="{{ s.id }}">👁 Review Logs</a>
+              <button class="btn btn-blue btn-sm"
+                      data-action="view-study"
+                      data-id="{{ s.id }}"
+                      data-delurl="{{ url_for('delete_study', stid=s.id) }}">👁 View</button>
             </td>
           </tr>
           {% else %}
@@ -270,6 +269,7 @@
                           data-current-score="{{ r.score }}"
                           data-action="edit-score">Edit</button>
                 {% endif %}
+                <a class="btn btn-blue btn-sm" href="/teacher/review/{{ r.study_id }}">👁 Review Logs</a>
               </div>
             </td>
           </tr>
@@ -281,8 +281,6 @@
     </div>
   </div>
 </section>
-
-{# ✅ TINANGGAL NA ANG ATTENDANCE SECTION DITO #}
 
 {# ═══════════════ ACCOUNT ═══════════════ #}
 <section class="content-section" data-section="account">
@@ -463,7 +461,7 @@
   }
 
   function updateBadgeInTable(st) {
-    document.querySelectorAll('[data-action="direct-review"][data-id="' + st.id + '"]')
+    document.querySelectorAll('[data-action="view-study"][data-id="' + st.id + '"]')
       .forEach(function(btn) {
         var tr = btn.closest('tr');
         if (!tr) return;
@@ -502,14 +500,92 @@
 
   setTimeout(refreshStudyStatuses, 2000);
 
+  /* ═══════════════════════════════════════════════════════
+     OPEN VIEW MODAL
+     ═══════════════════════════════════════════════════════ */
+  function openViewModal(s, btn) {
+    document.getElementById('v_title').innerText = s.title || '';
+    document.getElementById('v_last').innerText = s.updated_at || '';
+    document.getElementById('v_type').innerText = (s.type || '').replace(/_/g, ' ');
+    document.getElementById('v_direction').innerText = s.direction || '—';
+    document.getElementById('v_study').innerText = (s.study_timer || 0) + 's';
+    document.getElementById('v_question').innerText = (s.question_timer || 0) + 's';
+    document.getElementById('v_back').innerText = s.max_back || 0;
+    document.getElementById('v_score').innerText = s.score || 0;
+    document.getElementById('v_penalty').innerText = s.penalty || 0;
+    document.getElementById('v_pages').innerText = s.total_pages || 0;
+
+    var editBtn = document.querySelector('#viewModal [data-action="edit-study"]');
+    var delBtn = document.querySelector('#viewModal [data-action="confirm-delete"]');
+    var lockNote = document.getElementById('v_lockNote');
+
+    if (s.is_locked || s.locked) {
+      if (editBtn) editBtn.style.display = 'none';
+      if (delBtn) {
+        delBtn.disabled = true;
+        delBtn.style.opacity = '.4';
+      }
+      var msg = s.has_attempts
+        ? '🔒 Locked — may submitted attempts na'
+        : '🔒 May ' + (s.active_count || 1) + ' student(s) active';
+      if (!lockNote) {
+        lockNote = document.createElement('p');
+        lockNote.id = 'v_lockNote';
+        lockNote.className = 'badge badge-red';
+        lockNote.style.marginTop = '10px';
+        lockNote.style.display = 'inline-block';
+        document.getElementById('v_title').parentNode.appendChild(lockNote);
+      }
+      lockNote.textContent = msg;
+      lockNote.style.display = 'inline-block';
+    } else {
+      if (editBtn) {
+        editBtn.style.display = 'inline-flex';
+        editBtn.setAttribute('data-study-id', s.id);
+      }
+      if (delBtn) {
+        delBtn.disabled = false;
+        delBtn.style.opacity = '1';
+      }
+      if (lockNote) lockNote.style.display = 'none';
+    }
+
+    if (delBtn) delBtn.setAttribute('data-delete-url', btn.getAttribute('data-delurl'));
+    window.openModal('viewModal');
+  }
+
+  window.openViewModal = openViewModal;
+
   /* ---------- Modal actions ---------- */
   document.addEventListener('click', async function (ev) {
     var btn = ev.target.closest('[data-action]');
     if (!btn) return;
     var a = btn.getAttribute('data-action');
 
+    /* VIEW STUDY */
+    if (a === 'view-study') {
+      ev.preventDefault();
+      var sid = btn.getAttribute('data-id');
+      var sv = findStudy(sid);
+      if (!sv) return;
+
+      fetch('/api/studies/' + sid + '/lock-status', { credentials: 'same-origin' })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(st) {
+          if (st && !st.error) {
+            sv.is_locked = st.is_locked;
+            sv.active_count = st.active_count;
+            sv.has_attempts = st.has_attempts;
+            sv.locked = st.is_locked;
+            updateBadgeInTable(st);
+          }
+          openViewModal(sv, btn);
+        })
+        .catch(function() { openViewModal(sv, btn); });
+    }
+
     /* ADD STUDY */
-    if (a === 'add-study') {
+    else if (a === 'add-study') {
       ev.preventDefault();
       
       var fd = new FormData();
