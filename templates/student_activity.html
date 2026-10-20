@@ -14,7 +14,7 @@
 body{background:var(--bg);color:var(--text);
   font-family:system-ui,-apple-system,sans-serif;font-size:14px;
   line-height:1.55;min-height:100vh;padding:24px 16px;
-  -webkit-font-smoothing:antialiased;}
+  -webkit-font-smoothing:antialiased; user-select: none;}
 h1{font-size:1.4rem;color:#fff;font-weight:600}
 h2{font-size:1.1rem;color:#fff;font-weight:600;margin-bottom:.35rem}
 .wrap{max-width:900px;margin:0 auto;}
@@ -40,12 +40,12 @@ textarea{resize:vertical;min-height:70px}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
 .btn-block{width:100%}
 .muted{color:var(--muted)}.small{font-size:.8rem}
-.timer-box{text-align:center;padding:12px 16px;border-radius:10px;
+.timer-box{text-align:center;padding:10px 16px;border-radius:8px;
   background:rgba(24,119,242,.08);border:1px solid rgba(24,119,242,.3);
-  min-width: 120px;}
+  min-width: 110px;}
 .timer-label{font-size:.7rem;text-transform:uppercase;
   letter-spacing:.1em;color:var(--text-dim);font-weight:700}
-.timer{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;
+.timer{font-size:1.8rem;font-weight:700;font-variant-numeric:tabular-nums;
   color:var(--blue-hover)}
 .timer.done{color:#4ade80}
 .choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
@@ -58,26 +58,13 @@ textarea{resize:vertical;min-height:70px}
 .tf-row{display:flex;gap:16px;margin-top:8px}
 .tf-row label{flex-direction:row;align-items:center;text-transform:none;
   font-size:.95rem;font-weight:500;gap:8px;margin:0;color:var(--text)}
-
-/* Start Overlay */
-.start-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.95);
-  z-index:100000; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; text-align:center; padding:24px;
-}
-.start-overlay h1 { font-size:1.8rem; margin-bottom:10px; color:#fff; }
-.start-overlay p { color:var(--muted); font-size:1rem; max-width:400px; margin-bottom:20px; }
+.medal{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.7rem;font-weight:700}
+.medal-Gold{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#422006}
+.medal-Silver{background:linear-gradient(135deg,#e2e8f0,#94a3b8);color:#1e293b}
+.medal-Bronze{background:linear-gradient(135deg,#d97706,#92400e);color:#fff7ed}
 </style>
 </head>
 <body>
-
-<!-- ═══════════════ START OVERLAY ═══════════════ -->
-<div class="start-overlay" id="startOverlay">
-  <div style="font-size:4rem; margin-bottom:15px;">🛡️</div>
-  <h1>Proctoring Enabled</h1>
-  <p>This quiz monitors <b>tab switching</b> and <b>window focus</b>. Leaving the quiz area will be recorded as a violation.</p>
-  <button type="button" class="btn btn-blue" id="startQuizBtn" style="padding: 12px 24px; font-size: 1rem;">I Understand, Start Quiz</button>
-</div>
 
 <!-- ═══════════════ QUIZ CONTENT ═══════════════ -->
 <div class="wrap" id="quizWrap" style="display:none;">
@@ -127,14 +114,6 @@ textarea{resize:vertical;min-height:70px}
     </p>
   </div>
 
-  <div class="card" id="violationSummary" style="display:none; border-color:var(--red);">
-    <div class="card-title">
-      <h2 style="color:var(--red);">🚨 Proctoring Logs</h2>
-    </div>
-    <p class="muted small">Ang mga sumusunod ay na-detect ng system habang nagsasagot ka:</p>
-    <div id="studentViolationList" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;"></div>
-  </div>
-
   <div style="text-align:center;margin-top:1.5rem;">
     <a class="btn btn-blue" href="/student#studies">← Back to Dashboard</a>
   </div>
@@ -151,9 +130,9 @@ textarea{resize:vertical;min-height:70px}
   var pages     = data.pages || [];
   var qType     = data.type || 'identification';
   var qSecs     = data.question_timer || 30;
+  var autosaveKey = 'quiz_autosave_' + data.id;
 
   var state = {
-    phase: 'start', // start, quiz, submitted
     qIdx: 0,
     answers: new Array(pages.length).fill(null),
     startedAt: Date.now(),
@@ -164,24 +143,16 @@ textarea{resize:vertical;min-height:70px}
 
   var quizActive = false;
   var lastViolationTime = 0;
-  var blurGuard = false;
 
   /* ═══════════════════════════════════════════════════════════
-     BROWSER VIOLATION DETECTION
+     SILENT BROWSER LIFECYCLE TRACKING
      ═══════════════════════════════════════════════════════════ */
   function logViolation(type) {
-    if (!quizActive || state.phase === 'submitted') return;
+    if (!quizActive || state.submitting) return;
     
     var now = Date.now();
     if (now - lastViolationTime < 2000) return; // 2 sec throttle
     lastViolationTime = now;
-
-    // Visual Warning
-    var warning = document.createElement('div');
-    warning.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:12px 24px;border-radius:8px;z-index:100001;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.5);animation:slideIn .3s ease;';
-    warning.textContent = '⚠️ WARNING: ' + type.replace(/_/g, ' ');
-    document.body.appendChild(warning);
-    setTimeout(function() { warning.remove(); }, 4000);
 
     fetch('/api/violation/start', {
       method: 'POST',
@@ -190,35 +161,33 @@ textarea{resize:vertical;min-height:70px}
     }).catch(function(){});
   }
 
-  // 1. Tab Switch Detection
+  // 1. Tab Switch / Minimize
   document.addEventListener('visibilitychange', function() {
-    if (!quizActive) return;
-    if (document.hidden) {
-      blurGuard = true;
+    if (document.hidden && quizActive) {
       logViolation('TAB_SWITCHED');
-      setTimeout(function() { blurGuard = false; }, 500);
     }
   });
 
-  // 2. Window Blur (Minimize / Click outside)
+  // 2. Window Blur (Click outside)
   window.addEventListener('blur', function() {
-    if (!quizActive || blurGuard) return;
-    logViolation('WINDOW_BLURRED');
+    if (quizActive) {
+      logViolation('WINDOW_BLURRED');
+    }
   });
 
-  // 3. Close / Leave Website
+  // 3. Page Close / Leave
   window.addEventListener('pagehide', function() {
     if (quizActive) {
-      // Use sendBeacon for reliable logging when leaving
       var payload = JSON.stringify({ study_id: data.id, type: 'PAGE_LEFT', source: 'browser' });
       navigator.sendBeacon('/api/violation/start', new Blob([payload], {type: 'application/json'}));
     }
   });
 
+  // 4. Standard Native Close Warning
   window.addEventListener('beforeunload', function(e) {
     if (quizActive) {
       e.preventDefault();
-      e.returnValue = 'Sigurado ka bang gusto mong umalis? Ma-i-record ito bilang violation.';
+      e.returnValue = 'Your quiz is still in progress. Are you sure you want to leave?';
       return e.returnValue;
     }
   });
@@ -226,15 +195,6 @@ textarea{resize:vertical;min-height:70px}
   /* ═══════════════════════════════════════════════════════════
      QUIZ FLOW LOGIC
      ═══════════════════════════════════════════════════════════ */
-  document.getElementById('startQuizBtn').addEventListener('click', function() {
-    document.getElementById('startOverlay').style.display = 'none';
-    document.getElementById('quizWrap').style.display = 'block';
-    state.phase = 'quiz';
-    quizActive = true;
-    state.startedAt = Date.now();
-    startQuestion();
-  });
-
   function startQuestion() {
     if (state.qIdx >= pages.length) {
       submitAll();
@@ -250,6 +210,7 @@ textarea{resize:vertical;min-height:70px}
     
     renderAnswerArea(p, state.answers[state.qIdx]);
     startQuestionTimer(p.timer || qSecs);
+    saveProgress();
   }
 
   function startQuestionTimer(secs) {
@@ -266,7 +227,7 @@ textarea{resize:vertical;min-height:70px}
         t.textContent = '00:00'; t.classList.add('done');
         captureAnswer();
         
-        // Auto-advance to next question or submit
+        // Auto-advance
         if (state.qIdx < pages.length - 1) {
             state.qIdx++;
             startQuestion();
@@ -289,6 +250,7 @@ textarea{resize:vertical;min-height:70px}
       inp.type = 'text'; inp.id = 'answerInput';
       inp.placeholder = 'Type your answer…';
       inp.value = saved || '';
+      inp.oninput = function() { state.answers[state.qIdx] = inp.value.trim(); saveProgress(); };
       area.appendChild(inp);
     } else if(pType === 'multiple_choice'){
       var letters = ['A','B','C','D'];
@@ -303,13 +265,14 @@ textarea{resize:vertical;min-height:70px}
         radio.type = 'radio'; radio.name = 'mc_answer'; radio.value = i;
         radio.style.cssText = 'width:20px;height:20px;flex-shrink:0;';
         if(saved === i) radio.checked = true;
+        radio.onchange = function() { state.answers[state.qIdx] = i; saveProgress(); };
         var txt = document.createElement('b');
         txt.textContent = letters[i] + '.';
         txt.style.cssText = 'color:var(--blue-hover);margin-right:4px;';
         var lbl = document.createElement('span');
         lbl.textContent = c;
         row.appendChild(radio); row.appendChild(txt); row.appendChild(lbl);
-        row.onclick = function(e){ if(e.target.tagName !== 'INPUT') radio.checked = true; };
+        row.onclick = function(e){ if(e.target.tagName !== 'INPUT') { radio.checked = true; radio.onchange(); } };
         wrap.appendChild(row);
       });
       area.appendChild(wrap);
@@ -325,11 +288,12 @@ textarea{resize:vertical;min-height:70px}
         radio.type = 'radio'; radio.name = 'tf_answer'; radio.value = pair[0];
         radio.style.cssText = 'width:20px;height:20px;flex-shrink:0;';
         if(saved === pair[0]) radio.checked = true;
+        radio.onchange = function() { state.answers[state.qIdx] = pair[0]; saveProgress(); };
         row.appendChild(radio);
         var lbl = document.createElement('span');
         lbl.textContent = pair[1];
         row.appendChild(lbl);
-        row.onclick = function(e){ if(e.target.tagName !== 'INPUT') radio.checked = true; };
+        row.onclick = function(e){ if(e.target.tagName !== 'INPUT') { radio.checked = true; radio.onchange(); } };
         twrap.appendChild(row);
       });
       area.appendChild(twrap);
@@ -338,6 +302,7 @@ textarea{resize:vertical;min-height:70px}
       ta.id = 'answerInput'; ta.rows = 5;
       ta.placeholder = 'Write your answer here…';
       ta.value = saved || '';
+      ta.oninput = function() { state.answers[state.qIdx] = ta.value.trim(); saveProgress(); };
       area.appendChild(ta);
     } else if(pType === 'file_upload'){
       if(p.instruction){
@@ -373,10 +338,18 @@ textarea{resize:vertical;min-height:70px}
       var f = document.getElementById('answerFile');
       if (f && f.files && f.files[0]) {
         state.answers[idx] = f.files[0];
-      } else if (state.answers[idx] === null || state.answers[idx] === undefined) {
-        state.answers[idx] = null;
       }
     }
+  }
+
+  function saveProgress() {
+    try {
+      var safeAnswers = state.answers.map(function(a) {
+        if (a instanceof File) return "[FILE_ATTACHED]"; 
+        return a;
+      });
+      localStorage.setItem(autosaveKey, JSON.stringify({ qIdx: state.qIdx, answers: safeAnswers }));
+    } catch(e) {}
   }
 
   function fmt(v){
@@ -389,10 +362,10 @@ textarea{resize:vertical;min-height:70px}
   function submitAll(){
     if(state.submitting) return;
     state.submitting = true;
-    state.phase = 'submitted';
-    quizActive = false; // Disable violation logging
+    quizActive = false; // Disable logging
     clearInterval(state.qInterval);
     captureAnswer();
+    localStorage.removeItem(autosaveKey);
     
     var totalTime = Math.round((Date.now() - state.startedAt) / 1000);
     var fd = new FormData();
@@ -420,6 +393,7 @@ textarea{resize:vertical;min-height:70px}
       if(res.error) {
         alert('❌ ' + res.error);
         state.submitting = false;
+        quizActive = true;
         return;
       }
       document.getElementById('quizWrap').style.display = 'none';
@@ -429,6 +403,7 @@ textarea{resize:vertical;min-height:70px}
     .catch(err => {
       alert('Network error. Please check your internet.');
       state.submitting = false;
+      quizActive = true;
     });
   }
 
@@ -437,490 +412,33 @@ textarea{resize:vertical;min-height:70px}
     document.getElementById('rCorrect').textContent = res.correct_count + '/' + res.total;
     document.getElementById('rMedal').innerHTML = res.medal ? '<span class="medal medal-' + res.medal + '">' + res.medal + '</span>' : '—';
     if(res.has_manual) document.getElementById('rNote').style.display = 'block';
-    
-    var vSummary = document.getElementById('violationSummary');
-    var vList = document.getElementById('studentViolationList');
-    if (res.violations && res.violations.length > 0) {
-      vSummary.style.display = 'block';
-      vList.innerHTML = res.violations.map(function(v) {
-        return '<div style="padding:8px 12px; border-radius:6px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#fca5a5; font-size:0.85rem;">' +
-               '⚠️ ' + v.type.replace(/_/g, ' ') + ' <span class="muted" style="float:right; font-size:0.75rem;">' + v.time + '</span>' +
-               '</div>';
-      }).join('');
-    } else {
-      vSummary.style.display = 'none';
-    }
   }
 
-  // Check if no questions
+  // Init Quiz
   window.addEventListener('load', function() {
     if(!pages.length) {
-      document.body.innerHTML = '<div class="card" style="margin:2rem;"><h2>⚠️ No questions.</h2></div>';
-    }
-  });
-
-})();
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>{{ study.title }}</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#1e1e1e;--card:#2d2d30;--border:#3a3a3a;--text:#e0e0e0;
-  --text-dim:#999;--muted:#ccc;--blue:#1877f2;--blue-hover:#2d88ff;
-  --green:#22c55e;--red:#ef4444;--yellow:#eab308;--purple:#a855f7;
-}
-body{background:var(--bg);color:var(--text);
-  font-family:system-ui,-apple-system,sans-serif;font-size:14px;
-  line-height:1.55;min-height:100vh;padding:24px 16px;
-  -webkit-font-smoothing:antialiased;}
-h1{font-size:1.4rem;color:#fff;font-weight:600}
-h2{font-size:1.1rem;color:#fff;font-weight:600;margin-bottom:.35rem}
-.wrap{max-width:900px;margin:0 auto;}
-.card{background:var(--card);border:1px solid var(--border);
-  border-radius:8px;padding:16px 18px;margin-bottom:16px}
-.card-title{display:flex;justify-content:space-between;align-items:center;
-  gap:10px;margin-bottom:12px;flex-wrap:wrap}
-label{display:flex;flex-direction:column;gap:4px;
-  font-size:.78rem;font-weight:600;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
-input[type=text],textarea,select{
-  width:100%;padding:10px 12px;border-radius:6px;
-  border:1px solid var(--border);background:#151517;color:var(--text);
-  font-size:.9rem;font-family:inherit;outline:none;transition:.15s}
-input:focus,textarea:focus,select:focus{border-color:var(--blue);
-  box-shadow:0 0 0 3px rgba(24,119,242,.18)}
-textarea{resize:vertical;min-height:70px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;
-  border:none;border-radius:6px;padding:9px 16px;font-size:.86rem;
-  font-weight:600;cursor:pointer;font-family:inherit;transition:.15s;
-  color:#fff;text-decoration:none}
-.btn-blue{background:var(--blue)}.btn-green{background:var(--green)}
-.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
-.btn-block{width:100%}
-.muted{color:var(--muted)}.small{font-size:.8rem}
-.timer-box{text-align:center;padding:12px 16px;border-radius:10px;
-  background:rgba(24,119,242,.08);border:1px solid rgba(24,119,242,.3);
-  min-width: 120px;}
-.timer-label{font-size:.7rem;text-transform:uppercase;
-  letter-spacing:.1em;color:var(--text-dim);font-weight:700}
-.timer{font-size:2rem;font-weight:700;font-variant-numeric:tabular-nums;
-  color:var(--blue-hover)}
-.timer.done{color:#4ade80}
-.choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-.choice-row{display:flex;gap:8px;align-items:center}
-.choice-letter{width:32px;height:32px;background:#151517;
-  border:1px solid var(--border);border-radius:6px;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:700;color:var(--text-dim);flex-shrink:0}
-.choice-row input[type=radio]{width:20px;height:20px;flex-shrink:0}
-.tf-row{display:flex;gap:16px;margin-top:8px}
-.tf-row label{flex-direction:row;align-items:center;text-transform:none;
-  font-size:.95rem;font-weight:500;gap:8px;margin:0;color:var(--text)}
-
-/* Start Overlay */
-.start-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.95);
-  z-index:100000; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; text-align:center; padding:24px;
-}
-.start-overlay h1 { font-size:1.8rem; margin-bottom:10px; color:#fff; }
-.start-overlay p { color:var(--muted); font-size:1rem; max-width:400px; margin-bottom:20px; }
-</style>
-</head>
-<body>
-
-<!-- ═══════════════ START OVERLAY ═══════════════ -->
-<div class="start-overlay" id="startOverlay">
-  <div style="font-size:4rem; margin-bottom:15px;">🛡️</div>
-  <h1>Proctoring Enabled</h1>
-  <p>This quiz monitors <b>tab switching</b> and <b>window focus</b>. Leaving the quiz area will be recorded as a violation.</p>
-  <button type="button" class="btn btn-blue" id="startQuizBtn" style="padding: 12px 24px; font-size: 1rem;">I Understand, Start Quiz</button>
-</div>
-
-<!-- ═══════════════ QUIZ CONTENT ═══════════════ -->
-<div class="wrap" id="quizWrap" style="display:none;">
-  
-  <div class="card" style="margin-bottom:16px;">
-    <div class="card-title" style="margin-bottom:0;">
-      <div>
-        <h1 id="qHeader">Question 1 / X</h1>
-        <p class="muted small" id="qDirection" style="margin-top:6px;"></p>
-      </div>
-      <div class="timer-box">
-        <div class="timer-label">Time Left</div>
-        <div class="timer" id="questionTimer">--:--</div>
-      </div>
-    </div>
-    <div style="margin-top:16px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
-      <div id="progressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#1877f2,#a855f7);transition:width .3s;"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <p id="qText" style="font-size:1.15rem;min-height:3rem;margin-bottom:1rem;"></p>
-    <div id="answerArea"></div>
-  </div>
-</div>
-
-<!-- ═══════════════ RESULT PHASE ═══════════════ -->
-<div class="wrap" id="resultWrap" style="display:none;">
-  <div class="card" style="text-align:center;">
-    <h1>🎉 Quiz Submitted!</h1>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px;max-width:640px;margin:1rem auto 0;">
-      <div class="card" style="margin:0;text-align:center;">
-        <div class="timer-label">Score</div>
-        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rScore">0</div>
-      </div>
-      <div class="card" style="margin:0;text-align:center;">
-        <div class="timer-label">Correct</div>
-        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rCorrect">0/0</div>
-      </div>
-      <div class="card" style="margin:0;text-align:center;">
-        <div class="timer-label">Medal</div>
-        <div style="font-size:1.8rem;font-weight:700;color:var(--blue-hover);" id="rMedal">—</div>
-      </div>
-    </div>
-    <p class="muted small" id="rNote" style="display:none;margin-top:14px;">
-      📌 May mga essay / file upload items na kailangan i-grade ng teacher. Hintayin ang update.
-    </p>
-  </div>
-
-  <div class="card" id="violationSummary" style="display:none; border-color:var(--red);">
-    <div class="card-title">
-      <h2 style="color:var(--red);">🚨 Proctoring Logs</h2>
-    </div>
-    <p class="muted small">Ang mga sumusunod ay na-detect ng system habang nagsasagot ka:</p>
-    <div id="studentViolationList" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;"></div>
-  </div>
-
-  <div style="text-align:center;margin-top:1.5rem;">
-    <a class="btn btn-blue" href="/student#studies">← Back to Dashboard</a>
-  </div>
-</div>
-
-<!-- ACTIVITY DATA -->
-<script type="application/json" id="activityData">{{ study|tojson }}</script>
-
-<script>
-(function(){
-  'use strict';
-
-  var data      = JSON.parse(document.getElementById('activityData').textContent);
-  var pages     = data.pages || [];
-  var qType     = data.type || 'identification';
-  var qSecs     = data.question_timer || 30;
-
-  var state = {
-    phase: 'start', // start, quiz, submitted
-    qIdx: 0,
-    answers: new Array(pages.length).fill(null),
-    startedAt: Date.now(),
-    submitting: false,
-    qEndAt: 0,
-    qInterval: null
-  };
-
-  var quizActive = false;
-  var lastViolationTime = 0;
-  var blurGuard = false;
-
-  /* ═══════════════════════════════════════════════════════════
-     BROWSER VIOLATION DETECTION
-     ═══════════════════════════════════════════════════════════ */
-  function logViolation(type) {
-    if (!quizActive || state.phase === 'submitted') return;
-    
-    var now = Date.now();
-    if (now - lastViolationTime < 2000) return; // 2 sec throttle
-    lastViolationTime = now;
-
-    // Visual Warning
-    var warning = document.createElement('div');
-    warning.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:12px 24px;border-radius:8px;z-index:100001;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,.5);animation:slideIn .3s ease;';
-    warning.textContent = '⚠️ WARNING: ' + type.replace(/_/g, ' ');
-    document.body.appendChild(warning);
-    setTimeout(function() { warning.remove(); }, 4000);
-
-    fetch('/api/violation/start', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ study_id: data.id, type: type, source: 'browser' })
-    }).catch(function(){});
-  }
-
-  // 1. Tab Switch Detection
-  document.addEventListener('visibilitychange', function() {
-    if (!quizActive) return;
-    if (document.hidden) {
-      blurGuard = true;
-      logViolation('TAB_SWITCHED');
-      setTimeout(function() { blurGuard = false; }, 500);
-    }
-  });
-
-  // 2. Window Blur (Minimize / Click outside)
-  window.addEventListener('blur', function() {
-    if (!quizActive || blurGuard) return;
-    logViolation('WINDOW_BLURRED');
-  });
-
-  // 3. Close / Leave Website
-  window.addEventListener('pagehide', function() {
-    if (quizActive) {
-      // Use sendBeacon for reliable logging when leaving
-      var payload = JSON.stringify({ study_id: data.id, type: 'PAGE_LEFT', source: 'browser' });
-      navigator.sendBeacon('/api/violation/start', new Blob([payload], {type: 'application/json'}));
-    }
-  });
-
-  window.addEventListener('beforeunload', function(e) {
-    if (quizActive) {
-      e.preventDefault();
-      e.returnValue = 'Sigurado ka bang gusto mong umalis? Ma-i-record ito bilang violation.';
-      return e.returnValue;
-    }
-  });
-
-  /* ═══════════════════════════════════════════════════════════
-     QUIZ FLOW LOGIC
-     ═══════════════════════════════════════════════════════════ */
-  document.getElementById('startQuizBtn').addEventListener('click', function() {
-    document.getElementById('startOverlay').style.display = 'none';
-    document.getElementById('quizWrap').style.display = 'block';
-    state.phase = 'quiz';
-    quizActive = true;
-    state.startedAt = Date.now();
-    startQuestion();
-  });
-
-  function startQuestion() {
-    if (state.qIdx >= pages.length) {
-      submitAll();
+      document.body.innerHTML = '<div class="card" style="margin:2rem;"><h2>⚠️ No questions available.</h2></div>';
       return;
     }
     
-    document.getElementById('qHeader').innerText = "Question " + (state.qIdx + 1) + " / " + pages.length;
-    document.getElementById('progressBar').style.width = ((state.qIdx + 1) / pages.length * 100) + '%';
-    document.getElementById('qDirection').innerText = data.direction || '';
-    
-    var p = pages[state.qIdx];
-    document.getElementById('qText').innerText = p.question || '';
-    
-    renderAnswerArea(p, state.answers[state.qIdx]);
-    startQuestionTimer(p.timer || qSecs);
-  }
-
-  function startQuestionTimer(secs) {
-    clearInterval(state.qInterval);
-    state.qEndAt = Date.now() + secs * 1000;
-    var t = document.getElementById('questionTimer');
-    t.classList.remove('done');
-    t.textContent = fmt(secs);
-    
-    state.qInterval = setInterval(function(){
-      var left = Math.ceil((state.qEndAt - Date.now())/1000);
-      if(left <= 0){
-        clearInterval(state.qInterval);
-        t.textContent = '00:00'; t.classList.add('done');
-        captureAnswer();
-        
-        // Auto-advance to next question or submit
-        if (state.qIdx < pages.length - 1) {
-            state.qIdx++;
-            startQuestion();
+    // Check for saved progress
+    try {
+      var saved = localStorage.getItem(autosaveKey);
+      if (saved) {
+        var parsed = JSON.parse(saved);
+        if (confirm('May hindi ka pa tapos na quiz. Gusto mo bang ituloy?')) {
+          state.qIdx = parsed.qIdx;
+          state.answers = parsed.answers;
         } else {
-            submitAll();
+          localStorage.removeItem(autosaveKey);
         }
-        return;
       }
-      t.textContent = fmt(left);
-    }, 200);
-  }
+    } catch(e) {}
 
-  function renderAnswerArea(p, saved) {
-    var area = document.getElementById('answerArea');
-    area.innerHTML = '';
-    var pType = p.type || qType;
-
-    if(pType === 'identification'){
-      var inp = document.createElement('input');
-      inp.type = 'text'; inp.id = 'answerInput';
-      inp.placeholder = 'Type your answer…';
-      inp.value = saved || '';
-      area.appendChild(inp);
-    } else if(pType === 'multiple_choice'){
-      var letters = ['A','B','C','D'];
-      var wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
-      (p.choices || []).forEach(function(c, i){
-        var row = document.createElement('label');
-        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;' +
-          'border:1px solid var(--border);border-radius:8px;cursor:pointer;' +
-          'text-transform:none;font-size:.95rem;color:var(--text);font-weight:500;margin:0;';
-        var radio = document.createElement('input');
-        radio.type = 'radio'; radio.name = 'mc_answer'; radio.value = i;
-        radio.style.cssText = 'width:20px;height:20px;flex-shrink:0;';
-        if(saved === i) radio.checked = true;
-        var txt = document.createElement('b');
-        txt.textContent = letters[i] + '.';
-        txt.style.cssText = 'color:var(--blue-hover);margin-right:4px;';
-        var lbl = document.createElement('span');
-        lbl.textContent = c;
-        row.appendChild(radio); row.appendChild(txt); row.appendChild(lbl);
-        row.onclick = function(e){ if(e.target.tagName !== 'INPUT') radio.checked = true; };
-        wrap.appendChild(row);
-      });
-      area.appendChild(wrap);
-    } else if(pType === 'true_false'){
-      var twrap = document.createElement('div');
-      twrap.style.cssText = 'display:flex;gap:16px;flex-wrap:wrap;';
-      [['true','✓ True'],['false','✗ False']].forEach(function(pair){
-        var row = document.createElement('label');
-        row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 18px;' +
-          'border:1px solid var(--border);border-radius:8px;cursor:pointer;' +
-          'text-transform:none;font-size:1rem;color:var(--text);font-weight:600;margin:0;';
-        var radio = document.createElement('input');
-        radio.type = 'radio'; radio.name = 'tf_answer'; radio.value = pair[0];
-        radio.style.cssText = 'width:20px;height:20px;flex-shrink:0;';
-        if(saved === pair[0]) radio.checked = true;
-        row.appendChild(radio);
-        var lbl = document.createElement('span');
-        lbl.textContent = pair[1];
-        row.appendChild(lbl);
-        row.onclick = function(e){ if(e.target.tagName !== 'INPUT') radio.checked = true; };
-        twrap.appendChild(row);
-      });
-      area.appendChild(twrap);
-    } else if(pType === 'essay'){
-      var ta = document.createElement('textarea');
-      ta.id = 'answerInput'; ta.rows = 5;
-      ta.placeholder = 'Write your answer here…';
-      ta.value = saved || '';
-      area.appendChild(ta);
-    } else if(pType === 'file_upload'){
-      if(p.instruction){
-        var note = document.createElement('p');
-        note.className = 'muted small';
-        note.style.marginBottom = '10px';
-        note.textContent = '📎 ' + p.instruction;
-        area.appendChild(note);
-      }
-      var fileInp = document.createElement('input');
-      fileInp.type = 'file'; fileInp.id = 'answerFile';
-      fileInp.accept = '.pdf,.doc,.docx,.ppt,.pptx,.txt,.jpg,.png,.zip';
-      fileInp.style.cssText = 'padding:10px;border:1px dashed var(--border);border-radius:8px;width:100%;';
-      area.appendChild(fileInp);
-    }
-  }
-
-  function captureAnswer(){
-    var idx = state.qIdx;
-    var p = pages[idx] || {};
-    var pType = p.type || qType;
-
-    if(pType === 'identification' || pType === 'essay'){
-      var el = document.getElementById('answerInput');
-      if(el) state.answers[idx] = el.value.trim();
-    } else if(pType === 'multiple_choice'){
-      var checked = document.querySelector('input[name="mc_answer"]:checked');
-      state.answers[idx] = checked ? parseInt(checked.value) : null;
-    } else if(pType === 'true_false'){
-      var checked2 = document.querySelector('input[name="tf_answer"]:checked');
-      state.answers[idx] = checked2 ? checked2.value : null;
-    } else if(pType === 'file_upload'){
-      var f = document.getElementById('answerFile');
-      if (f && f.files && f.files[0]) {
-        state.answers[idx] = f.files[0];
-      } else if (state.answers[idx] === null || state.answers[idx] === undefined) {
-        state.answers[idx] = null;
-      }
-    }
-  }
-
-  function fmt(v){
-    v = Math.max(0, v|0);
-    var m=((v%3600)/60)|0, s=v%60;
-    function p(n){ return String(n).padStart(2,'0'); }
-    return p(m)+':'+p(s);
-  }
-
-  function submitAll(){
-    if(state.submitting) return;
-    state.submitting = true;
-    state.phase = 'submitted';
-    quizActive = false; // Disable violation logging
-    clearInterval(state.qInterval);
-    captureAnswer();
-    
-    var totalTime = Math.round((Date.now() - state.startedAt) / 1000);
-    var fd = new FormData();
-    fd.append('study_id', data.id);
-    fd.append('total_time', totalTime);
-
-    var meta = [];
-    state.answers.forEach(function(a, i){
-      if(a instanceof File){
-        fd.append('file_' + i, a);
-        meta.push({ idx: i, type: 'file', name: a.name });
-      } else {
-        meta.push({ idx: i, type: 'value', value: a });
-      }
-    });
-    fd.append('answers_meta', JSON.stringify(meta));
-
-    fetch('/api/quiz/submit', {
-      method:'POST',
-      credentials:'same-origin',
-      body: fd
-    })
-    .then(r => r.json())
-    .then(res => {
-      if(res.error) {
-        alert('❌ ' + res.error);
-        state.submitting = false;
-        return;
-      }
-      document.getElementById('quizWrap').style.display = 'none';
-      document.getElementById('resultWrap').style.display = 'block';
-      showResult(res);
-    })
-    .catch(err => {
-      alert('Network error. Please check your internet.');
-      state.submitting = false;
-    });
-  }
-
-  function showResult(res) {
-    document.getElementById('rScore').textContent = res.score;
-    document.getElementById('rCorrect').textContent = res.correct_count + '/' + res.total;
-    document.getElementById('rMedal').innerHTML = res.medal ? '<span class="medal medal-' + res.medal + '">' + res.medal + '</span>' : '—';
-    if(res.has_manual) document.getElementById('rNote').style.display = 'block';
-    
-    var vSummary = document.getElementById('violationSummary');
-    var vList = document.getElementById('studentViolationList');
-    if (res.violations && res.violations.length > 0) {
-      vSummary.style.display = 'block';
-      vList.innerHTML = res.violations.map(function(v) {
-        return '<div style="padding:8px 12px; border-radius:6px; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); color:#fca5a5; font-size:0.85rem;">' +
-               '⚠️ ' + v.type.replace(/_/g, ' ') + ' <span class="muted" style="float:right; font-size:0.75rem;">' + v.time + '</span>' +
-               '</div>';
-      }).join('');
-    } else {
-      vSummary.style.display = 'none';
-    }
-  }
-
-  // Check if no questions
-  window.addEventListener('load', function() {
-    if(!pages.length) {
-      document.body.innerHTML = '<div class="card" style="margin:2rem;"><h2>⚠️ No questions.</h2></div>';
-    }
+    document.getElementById('quizWrap').style.display = 'block';
+    quizActive = true;
+    state.startedAt = Date.now();
+    startQuestion();
   });
 
 })();
